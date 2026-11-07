@@ -1,0 +1,2199 @@
+<title>Farkle Table</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&family=Figtree:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one phone-width column (max 560px). The game screen stacks scoreboard, table and
+   turn controls so a whole turn fits on a phone without zooming or scrolling. Deliberately
+   single-theme: a casino table at night looks the same on light and dark hosts. */
+:root {
+  --ink: #0c1310;
+  --panel: #141e19;
+  --panel-2: #1b2822;
+  --line: rgba(214, 173, 92, .18);
+  --line-strong: rgba(214, 173, 92, .42);
+  --brass: #d6ad5c;
+  --brass-hi: #f1d48f;
+  --brass-ink: #2b1e06;
+  --cream: #f3ebd9;
+  --muted: #a3b3a9;
+  --felt: #1e6d48;
+  --felt-deep: #0f3f29;
+  --bad: #ef6a52;
+  --good: #6fd39b;
+  --p0: #e5664f;
+  --p1: #5b9bea;
+  --p2: #e9bf55;
+  --p3: #ad85ea;
+  --f-display: "Limelight", "Didot", "Bodoni MT", Georgia, serif;
+  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "DM Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background-color: var(--ink);
+  background-image: radial-gradient(120% 60% at 50% -8%, #1d3a2b 0%, rgba(12, 19, 16, 0) 62%);
+  background-repeat: no-repeat;
+  color: var(--cream);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+}
+#app {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-block: 10px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+
+/* ---------- Top bar ---------- */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.brand-word { font-family: var(--f-display); font-size: 30px; line-height: 1; color: var(--brass-hi); letter-spacing: .02em; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); }
+.brand-sub { font-size: 11px; text-transform: uppercase; letter-spacing: .16em; color: var(--muted); white-space: nowrap; }
+.top-right { display: flex; align-items: center; gap: 8px; }
+.conn { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.conn i { width: 8px; height: 8px; border-radius: 50%; background: #5d6b63; box-shadow: 0 0 0 3px rgba(93, 107, 99, .18); }
+.conn[data-state="on"] i { background: var(--good); box-shadow: 0 0 0 3px rgba(111, 211, 155, .18); }
+.conn[data-state="wait"] i { background: var(--brass); box-shadow: 0 0 0 3px rgba(214, 173, 92, .2); }
+.conn[data-state="lost"] i { background: var(--bad); box-shadow: 0 0 0 3px rgba(239, 106, 82, .2); }
+.icon-btn { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--brass-hi); cursor: pointer; }
+.icon-btn[aria-expanded="true"] { border-color: var(--line-strong); background: var(--panel-2); }
+.icon-btn svg { width: 20px; height: 20px; }
+#snd[aria-pressed="true"] .snd-off, #snd[aria-pressed="false"] .snd-on { display: none; }
+#snd[aria-pressed="false"], #gmusic[aria-pressed="false"] { color: var(--muted); }
+#gmusic[aria-pressed="true"] .mus-off { display: none; }
+@media (max-width: 420px) { .brand-sub { display: none; } }
+/* Four controls don't fit beside the logo on a phone: the connection keeps its dot, the words go to its tooltip. */
+@media (max-width: 400px) { .top-right:has(#gmusic:not([hidden])) #conn-text { display: none; } }
+
+/* ---------- Panels, fields, buttons ---------- */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.eyebrow { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .16em; color: var(--brass); }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+input[type="text"], input[type="password"], input[type="url"], select {
+  width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong);
+  background: var(--ink); color: var(--cream); font: 500 16px var(--f-body);
+}
+input::placeholder { color: #66766d; }
+input:focus-visible, select:focus-visible, button:focus-visible, canvas:focus-visible, summary:focus-visible { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px;
+  border-radius: 11px; border: 1px solid var(--line-strong); background: var(--panel-2); color: var(--cream);
+  font: 600 15px var(--f-body); cursor: pointer; touch-action: manipulation;
+}
+.btn:hover:not(:disabled) { border-color: var(--brass); }
+.btn.primary { background: linear-gradient(180deg, var(--brass-hi), var(--brass)); color: var(--brass-ink); border-color: #a9822f; box-shadow: 0 2px 0 #7d5e1d, inset 0 1px 0 rgba(255, 255, 255, .35); }
+.btn.primary:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 1px 0 #7d5e1d; }
+.btn.big { min-height: 54px; font-size: 17px; }
+.btn.ghost { background: transparent; border-color: var(--line); color: var(--muted); }
+.btn.small { min-height: 36px; padding: 6px 12px; font-size: 13px; }
+.btn:disabled { opacity: .42; cursor: not-allowed; }
+.hint { font-size: 13px; color: var(--muted); }
+.note { font-size: 14px; color: var(--brass-hi); }
+
+/* ---------- Settings ---------- */
+.settings { display: flex; flex-direction: column; gap: 12px; }
+.settings h2 { font-size: 15px; font-weight: 600; }
+.settings .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ---------- Start screen ---------- */
+.screen { display: flex; flex-direction: column; gap: 14px; }
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mode { position: relative; cursor: pointer; }
+.mode input { position: absolute; opacity: 0; pointer-events: none; }
+.mode-card {
+  display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 14px; border-radius: 14px;
+  border: 1px solid var(--line); background: radial-gradient(130% 120% at 30% 0%, var(--felt) 0%, var(--felt-deep) 100%);
+  box-shadow: inset 0 0 0 4px rgba(0, 0, 0, .15);
+}
+.mode-name { font-weight: 700; font-size: 15px; }
+.mode-target { font-family: var(--f-display); font-size: 30px; color: var(--brass-hi); line-height: 1.1; }
+.mode-desc { font-size: 13px; color: #cfe0d5; }
+.mode input:checked + .mode-card { border-color: var(--brass); box-shadow: inset 0 0 0 2px var(--brass), 0 6px 18px rgba(0, 0, 0, .35); }
+.mode input:focus-visible + .mode-card { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
+.join-row { display: flex; gap: 8px; }
+.join-row input { flex: 1; min-width: 0; font-family: var(--f-mono); font-size: 20px; letter-spacing: .3em; text-align: center; }
+.or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+.score-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+.score-table td { padding: 6px 0; border-top: 1px solid var(--line); }
+.score-table td:last-child { text-align: right; font-family: var(--f-mono); color: var(--brass-hi); font-variant-numeric: tabular-nums; }
+.rules p { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+.name-hint { display: flex; justify-content: space-between; gap: 10px; margin-top: -4px; font-size: 12px; }
+.name-hint[data-over="1"] #name-count { color: var(--bad); }
+/* Dice colour picker: a row of little dice, one per colour. */
+.swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.swatch { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border-radius: 12px; border: 1px solid transparent; background: transparent; cursor: pointer; touch-action: manipulation; }
+.swatch i {
+  position: relative; width: 28px; height: 28px; border-radius: 7px; background: var(--dc);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .28), inset 0 2px 0 rgba(255, 255, 255, .22), 0 2px 4px rgba(0, 0, 0, .4);
+}
+.swatch i::before, .swatch i::after { content: ""; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fcf6ea; }
+.swatch i::before { left: 5px; top: 5px; }
+.swatch i::after { right: 5px; bottom: 5px; }
+.swatch[aria-checked="true"] { border-color: var(--brass); background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--brass); }
+.die-sw { width: 12px; height: 12px; flex: none; border-radius: 3px; background: var(--dc); box-shadow: 0 0 0 1px rgba(0, 0, 0, .35); margin-left: auto; }
+
+/* ---------- Lobby ---------- */
+.lobby-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.code { font-family: var(--f-mono); font-size: 44px; letter-spacing: .18em; color: var(--brass-hi); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.slots { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.slot { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); min-height: 92px; min-width: 0; }
+.slot.empty { border-style: dashed; background: transparent; color: #66766d; justify-content: center; align-items: center; }
+.slot-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--pc, var(--muted)); box-shadow: 0 0 0 3px rgba(0, 0, 0, .3); }
+.slot-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); }
+.tag.ready { border-color: rgba(111, 211, 155, .5); color: var(--good); }
+.tag.wait { border-color: var(--line); }
+.tag.host { color: var(--brass-hi); }
+.tag.away { border-color: rgba(239, 106, 82, .5); color: var(--bad); }
+.lobby-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lobby-actions:has(> .btn[hidden]) > .btn { grid-column: 1 / -1; }
+
+/* ---------- Game ---------- */
+.board { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (min-width: 480px) { .board { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.chip { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 8px 10px 9px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); min-width: 0; }
+.chip[data-active="1"] { border-color: var(--pc); box-shadow: 0 0 0 1px var(--pc), 0 0 18px -4px var(--pc); }
+.chip[data-gone="1"] { opacity: .6; }
+/* The leader's crown, perched on the card's corner. */
+.crown { position: absolute; top: -11px; right: -7px; width: 26px; height: 20px; transform: rotate(16deg); filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .55)); pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) { .crown.new { animation: crown-in .45s cubic-bezier(.3, 1.6, .5, 1); } }
+@keyframes crown-in { from { transform: translateY(-8px) rotate(-10deg) scale(.4); opacity: 0; } }
+.chip-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.chip-name { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip-score { font-family: var(--f-mono); font-size: 20px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.chip-bar { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.chip-bar i { display: block; height: 100%; background: var(--pc); border-radius: 4px; transition: width .5s ease; }
+.chip-status { font-size: 11px; color: var(--muted); min-height: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip[data-gone="1"] .chip-status { color: var(--bad); }
+.table-wrap { position: relative; width: 100%; margin-inline: auto; }
+#table { display: block; width: 100%; touch-action: manipulation; cursor: pointer; border-radius: 6px; }
+.banner {
+  position: absolute; left: 0; right: 0; top: 36%; text-align: center; pointer-events: none; opacity: 0;
+  font-family: var(--f-display); font-size: clamp(36px, 11vw, 58px); line-height: 1; color: var(--brass-hi);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, .55), 0 0 26px rgba(0, 0, 0, .7);
+}
+.banner.bad { color: var(--bad); }
+.banner.show { animation: pop 1.8s ease-out forwards; }
+/* Hot dice: a neon sign that sputters on, over a scorched, shaking table. */
+.banner.hot {
+  color: #fff1cf; font-size: clamp(44px, 13vw, 68px); letter-spacing: .03em;
+  text-shadow: 0 0 3px #fff6dc, 0 0 10px #ffc361, 0 0 22px #ff8a1f, 0 0 44px #ff5400, 0 3px 0 rgba(0, 0, 0, .5);
+}
+.banner.hot::after {
+  content: "All six back in play"; display: block; margin-top: 8px; font: 700 12px var(--f-body); letter-spacing: .28em;
+  text-transform: uppercase; color: #ffd9a0; text-shadow: 0 0 8px #ff7a1a, 0 1px 2px rgba(0, 0, 0, .8);
+}
+.banner.hot.show { animation: pop 2.4s ease-out forwards, neon 1s linear 1; }
+@keyframes neon { 0% { filter: brightness(.3); } 7% { filter: brightness(1.4); } 11% { filter: brightness(.4); } 16% { filter: brightness(1.3); } 22% { filter: brightness(.6); } 28%, 100% { filter: brightness(1); } }
+.table-wrap.scorch { animation: scorch 1.5s ease-out; }
+@keyframes scorch {
+  0% { transform: translate(0, 0); filter: saturate(1.7) brightness(1.2); }
+  5% { transform: translate(-4px, 1px); } 10% { transform: translate(4px, -1px); } 15% { transform: translate(-3px, 1px); }
+  20% { transform: translate(2px, 0); } 26% { transform: none; } 100% { transform: none; filter: none; }
+}
+.chip[data-hot="1"] { border-color: #ff9a3c; box-shadow: 0 0 0 1px #ff9a3c, 0 0 24px -2px #ff6a00, inset 0 -18px 24px -18px rgba(255, 110, 20, .55); }
+.float {
+  position: absolute; left: 0; right: 0; top: 52%; text-align: center; pointer-events: none; opacity: 0;
+  font-family: var(--f-mono); font-size: 30px; font-weight: 500; color: var(--good); text-shadow: 0 2px 6px rgba(0, 0, 0, .7);
+}
+.float.show { animation: rise 1.4s ease-out forwards; }
+@keyframes pop { 0% { opacity: 0; transform: scale(.6); } 14% { opacity: 1; transform: scale(1.07); } 24% { transform: scale(1); } 74% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } }
+@keyframes rise { 0% { opacity: 0; transform: translateY(10px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-40px); } }
+@keyframes fade { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .banner.show, .banner.hot.show, .float.show { animation: fade 1.6s linear forwards; } .chip-bar i { transition: none; } }
+.turn { display: flex; flex-direction: column; gap: 10px; }
+.turn-line { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.turn-who { font-weight: 700; font-size: 17px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.turn-pts { font-size: 17px; color: var(--brass-hi); white-space: nowrap; }
+.turn-sub { font-size: 14px; color: var(--muted); min-height: 20px; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions:has(> .btn[hidden]) > .btn { grid-column: 1 / -1; }
+.log { font-size: 13px; color: var(--muted); min-height: 19px; text-align: center; }
+.game-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.over {
+  position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: rgba(5, 10, 8, .72);
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.over .panel { width: min(420px, 100%); display: flex; flex-direction: column; gap: 14px; text-align: center; border-color: var(--line-strong); }
+.over h2 { font-family: var(--f-display); font-weight: 400; font-size: 38px; color: var(--brass-hi); }
+.standings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.standings li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); }
+.standings .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+  width: max-content; max-width: calc(100% - 32px); padding: 10px 14px; border-radius: 12px; background: #263a30; color: var(--cream);
+  border: 1px solid var(--line-strong); box-shadow: 0 8px 24px rgba(0, 0, 0, .45); font-size: 14px;
+}
+</style>
+
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><span class="brand-word">Farkle</span><span class="brand-sub">Live table</span></div>
+    <div class="top-right">
+      <span id="conn" class="conn" data-state="off"><i></i><span id="conn-text">Offline</span></span>
+      <button id="gmusic" class="icon-btn" type="button" aria-pressed="false" aria-label="Music during games" title="Music during games: off" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17.5V6l10-2v11.5"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="15.5" r="2.5"/><path class="mus-off" d="M4 4l16 16"/></svg>
+      </button>
+      <button id="snd" class="icon-btn" type="button" aria-pressed="true" aria-label="Sound" title="Sound on">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="snd-on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="snd-off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+      </button>
+      <button id="gear" class="icon-btn" type="button" aria-expanded="false" aria-controls="settings" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Connection settings. Open at first launch outside Claude when no Supabase project is saved;
+       collapsed behind the gear once saved. -->
+  <section id="settings" class="panel settings" hidden>
+    <h2>Connection</h2>
+    <label class="field" for="net-mode">Network
+      <select id="net-mode">
+        <option value="auto">Automatic</option>
+        <option value="room">Claude room (inside a Claude Artifact)</option>
+        <option value="supabase">Supabase Realtime</option>
+        <option value="tabs">This device only (test in two tabs)</option>
+      </select>
+    </label>
+    <p id="net-hint" class="hint"></p>
+    <div id="supa-fields" class="settings">
+      <label class="field" for="supa-url">Supabase URL
+        <input id="supa-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://your-project.supabase.co">
+      </label>
+      <label class="field" for="supa-key">Supabase publishable key
+        <input id="supa-key" type="password" autocomplete="off" spellcheck="false" placeholder="sb_publishable_...">
+      </label>
+      <p class="hint">Saved in this browser only. Use the publishable key, never a secret key. Game state travels over Realtime Broadcast and Presence; nothing is written to your tables.</p>
+    </div>
+    <div class="row">
+      <button id="settings-save" class="btn primary" type="button">Save</button>
+    </div>
+  </section>
+
+  <main>
+    <!-- 1. Name, game mode, create or join -->
+    <section id="scr-start" class="screen">
+      <div class="panel settings">
+        <label class="field" for="name">Your name at the table
+          <input id="name" type="text" maxlength="16" autocomplete="nickname" placeholder="e.g. Ana" aria-describedby="name-hint" title="Keep it to 12 characters or fewer so it fits on phone score cards">
+        </label>
+        <p id="name-hint" class="hint name-hint"><span>Up to 12 characters fits on phones.</span><span id="name-count" class="mono">0/12</span></p>
+        <div class="field">
+          <span id="dice-label">Your dice</span>
+          <div class="swatches" role="radiogroup" aria-labelledby="dice-label" data-dice-picker></div>
+        </div>
+      </div>
+      <span class="eyebrow">Game mode</span>
+      <div class="modes" role="radiogroup" aria-label="Game mode">
+        <label class="mode">
+          <input type="radio" name="mode" id="mode-classic" value="classic" checked>
+          <span class="mode-card">
+            <span class="mode-name">Classic Farkle</span>
+            <span class="mode-target">10,000</span>
+            <span class="mode-desc">The full game, with a long final round.</span>
+          </span>
+        </label>
+        <label class="mode">
+          <input type="radio" name="mode" id="mode-speed" value="speed">
+          <span class="mode-card">
+            <span class="mode-name">Speed Farkle</span>
+            <span class="mode-target">5,000</span>
+            <span class="mode-desc">Half the target for a quick game.</span>
+          </span>
+        </label>
+      </div>
+      <button id="btn-create" class="btn primary big" type="button">Create room</button>
+      <div class="or">or join a friend</div>
+      <div class="join-row">
+        <input id="join-code" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000" aria-label="4-digit room code">
+        <button id="btn-join" class="btn big" type="button">Join room</button>
+      </div>
+      <details class="rules panel">
+        <summary>How scoring works</summary>
+        <table class="score-table">
+          <tr><td>Each 1</td><td>100</td></tr>
+          <tr><td>Each 5</td><td>50</td></tr>
+          <tr><td>Three 1s</td><td>1,000</td></tr>
+          <tr><td>Three of a kind (2 to 6)</td><td>face &times; 100</td></tr>
+          <tr><td>Four of a kind</td><td>1,000</td></tr>
+          <tr><td>Five of a kind</td><td>2,000</td></tr>
+          <tr><td>Six of a kind</td><td>3,000</td></tr>
+          <tr><td>Straight 1-2-3-4-5-6</td><td>1,500</td></tr>
+          <tr><td>Three pairs</td><td>1,500</td></tr>
+          <tr><td>Four of a kind + a pair</td><td>1,500</td></tr>
+          <tr><td>Two triplets</td><td>2,500</td></tr>
+        </table>
+        <p>Set aside at least one scoring die after every roll, then roll the rest or bank. A roll with nothing that scores is a Farkle: you lose the points from that turn. Set aside all six and you have hot dice: roll all six again. When someone banks past the target, everyone else gets one last turn.</p>
+      </details>
+    </section>
+
+    <!-- 2. Lobby -->
+    <section id="scr-lobby" class="screen" hidden>
+      <div class="panel lobby-head">
+        <div>
+          <span class="eyebrow">Room code</span>
+          <div id="lobby-code" class="code">0000</div>
+        </div>
+        <button id="btn-copy" class="btn small" type="button">Copy code</button>
+      </div>
+      <p id="lobby-mode" class="hint"></p>
+      <p id="lobby-note" class="note" hidden></p>
+      <ol id="slots" class="slots" aria-label="Seats"></ol>
+      <div id="lobby-dice" class="field">
+        <span id="lobby-dice-label">Your dice</span>
+        <div class="swatches" role="radiogroup" aria-labelledby="lobby-dice-label" data-dice-picker></div>
+      </div>
+      <div class="lobby-actions">
+        <button id="btn-ready" class="btn big" type="button" aria-pressed="false">I'm ready</button>
+        <button id="btn-start" class="btn primary big" type="button" hidden>Start game</button>
+      </div>
+      <p id="start-hint" class="hint"></p>
+      <button id="btn-leave" class="btn ghost small" type="button">Leave room</button>
+    </section>
+
+    <!-- 3. Game -->
+    <section id="scr-game" class="screen" hidden>
+      <div id="board" class="board" aria-label="Scores"></div>
+      <div id="table-wrap" class="table-wrap">
+        <canvas id="table" tabindex="0" aria-label="Dice table. On your turn, tap dice to set them aside, or press 1 to 6."></canvas>
+        <div id="banner" class="banner" aria-live="polite"></div>
+        <div id="float" class="float" aria-hidden="true"></div>
+      </div>
+      <div class="turn panel">
+        <div class="turn-line"><span id="turn-who" class="turn-who"></span><span id="turn-pts" class="turn-pts mono"></span></div>
+        <p id="turn-sub" class="turn-sub"></p>
+        <div class="actions">
+          <button id="btn-roll" class="btn primary big" type="button">Roll</button>
+          <button id="btn-bank" class="btn big" type="button">Bank</button>
+        </div>
+      </div>
+      <p id="log" class="log" aria-live="polite"></p>
+      <div class="game-foot"><span id="final-note"></span><button id="btn-leave2" class="btn ghost small" type="button">Leave</button></div>
+      <div id="over" class="over" hidden>
+        <div class="panel" role="dialog" aria-labelledby="over-title">
+          <span class="eyebrow">Game over</span>
+          <h2 id="over-title">Ana wins</h2>
+          <ol id="standings" class="standings"></ol>
+          <button id="btn-again" class="btn primary big" type="button">Play again</button>
+          <p id="over-note" class="hint"></p>
+          <button id="btn-leave3" class="btn ghost small" type="button">Leave room</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status" hidden></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =====================================================================
+     ARCHITECTURE
+     - The room's creator is the HOST and the only writer of game state.
+       Everyone else sends INTENTS ("roll", "bank", "sel") to the host.
+     - The host validates each intent, updates the master state, and
+       broadcasts an EVENT (DICE_ROLLED, DICE_SET_ASIDE, BANKED, FARKLE,
+       TURN_PASSED, ...) together with a full STATE snapshot. Absolute
+       snapshots make late joiners and dropped messages harmless.
+     - Dice rolls: the host picks the face values and a seed, derives the
+       launch positions/velocities from the seed and broadcasts them. Every
+       screen runs the same fixed-step physics from those numbers (pure
+       arithmetic + sqrt, so identical on every browser) and watches the
+       same tumble. The tumble is steered so each die lands on its value.
+     - If the host disconnects, the first connected player takes over with
+       the last snapshot it saw (host migration).
+     - Three interchangeable transports carry the messages:
+         RoomNet   Claude Artifact "room" capability (presence-based)
+         SupaNet   Supabase Realtime Broadcast + Presence
+         TabsNet   BroadcastChannel between tabs of one browser (testing)
+     ===================================================================== */
+
+  /* ---------- 1. Small helpers ---------- */
+  const $ = (s) => document.querySelector(s);
+  const fmt = (n) => Math.round(n).toLocaleString("en-US");
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const r1 = (v) => Math.round(v * 10) / 10;
+  const int = (v, d) => (Number.isFinite(+v) ? Math.trunc(+v) : d);
+  const num = (v) => (Number.isFinite(+v) ? +v : 0);
+  function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function rand32() { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0]; }
+  function randId(len) {
+    const abc = "abcdefghijkmnpqrstuvwxyz23456789"; const a = new Uint32Array(len); crypto.getRandomValues(a);
+    let s = ""; for (const x of a) s += abc[x % abc.length]; return s;
+  }
+  // Fair d6 from the crypto RNG (rejection sampling removes modulo bias).
+  function rollDie() { const a = new Uint32Array(1); let x; do { crypto.getRandomValues(a); x = a[0]; } while (x >= 4294967292); return (x % 6) + 1; }
+  // Small seeded PRNG: the same seed gives the same launch on every screen.
+  function mulberry32(a) {
+    return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  function cleanName(n) { const s = String(n == null ? "" : n).replace(/[\u0000-\u001f\u007f​-‏‪-‮]/g, "").trim().slice(0, 16); return s || "Player"; }
+  // Storage can be missing or throw inside sandboxed frames; every access is guarded.
+  function area(kind) { try { return kind === "s" ? window.sessionStorage : window.localStorage; } catch (e) { return null; } }
+  function load(kind, key) { try { const a = area(kind); const v = a && a.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  function save(kind, key, val) { try { const a = area(kind); if (!a) return; if (val == null) a.removeItem(key); else a.setItem(key, JSON.stringify(val)); } catch (e) { /* storage unavailable */ } }
+  let toastTimer = 0;
+  function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 4200); }
+  const scriptLoads = {};
+  function loadScript(src) {
+    if (!scriptLoads[src]) scriptLoads[src] = new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => { delete scriptLoads[src]; rej(new Error("Couldn't load the Supabase library.")); }; document.head.appendChild(s); });
+    return scriptLoads[src];
+  }
+
+  /* ---------- 2. Constants ---------- */
+  const MODES = { classic: { label: "Classic Farkle", target: 10000 }, speed: { label: "Speed Farkle", target: 5000 } };
+  const MAX_PLAYERS = 4;
+  const GRACE = 3500;           // ms a player may vanish from presence before we call them away
+  const SUPABASE_SRC = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js";
+  const SEAT_COLORS = ["#e5664f", "#5b9bea", "#e9bf55", "#ad85ea"];
+  // Dice body colours a player can pick (RGB). Pips stay ivory on all of them. Green leans
+  // lime so it stands off the felt.
+  const DICE_COLORS = {
+    red: { label: "Red", rgb: [196, 26, 42] }, green: { label: "Green", rgb: [112, 196, 44] }, blue: { label: "Blue", rgb: [34, 92, 210] },
+    orange: { label: "Orange", rgb: [232, 112, 18] }, purple: { label: "Purple", rgb: [122, 52, 190] }, cyan: { label: "Cyan", rgb: [12, 160, 186] },
+  };
+  const diceColor = (k) => (Object.prototype.hasOwnProperty.call(DICE_COLORS, k) ? k : "red");
+  // Set-aside glide: each die takes GLIDE_MS, the next leaves GLIDE_STAGGER later, then a short
+  // pause before the throw. The host allows GLIDE_MAX (six dice) before it calls a farkle.
+  const GLIDE_MS = 380, GLIDE_STAGGER = 45, GLIDE_GAP = 90, GLIDE_MAX = GLIDE_MS + 5 * GLIDE_STAGGER + GLIDE_GAP;
+
+  /* ---------- 3. Scoring ---------- */
+  function counts(vals) { const c = [0, 0, 0, 0, 0, 0, 0]; for (const v of vals) c[v]++; return c; }
+  function kind(face, k) { return k === 3 ? (face === 1 ? 1000 : face * 100) : { 4: 1000, 5: 2000, 6: 3000 }[k]; }
+  const memo = new Map();
+  // Highest score that uses EVERY die in counts `c`, or -Infinity if some die can't score.
+  function best(c) {
+    const key = c.join("");
+    if (memo.has(key)) return memo.get(key);
+    let total = 0; for (let f = 1; f <= 6; f++) total += c[f];
+    if (total === 0) return 0;
+    let res = -Infinity;
+    if (total === 6) {
+      const nz = []; for (let f = 1; f <= 6; f++) if (c[f]) nz.push(c[f]); nz.sort((a, b) => a - b);
+      if (nz.length === 6) res = 1500;                                         // straight
+      else if (nz.length === 3 && nz.every((x) => x === 2)) res = 1500;        // three pairs
+      else if (nz.length === 2 && nz[0] === 2 && nz[1] === 4) res = 1500;      // four of a kind + pair
+      else if (nz.length === 2 && nz[0] === 3 && nz[1] === 3) res = 2500;      // two triplets
+    }
+    // The lowest face present must be used somehow: as single 1s/5s or inside an N-of-a-kind.
+    let f = 1; while (c[f] === 0) f++;
+    if (f === 1 || f === 5) { const c2 = c.slice(); c2[f]--; const r = best(c2); if (r > -Infinity) res = Math.max(res, (f === 1 ? 100 : 50) + r); }
+    for (let k = 3; k <= c[f]; k++) { const c2 = c.slice(); c2[f] -= k; const r = best(c2); if (r > -Infinity) res = Math.max(res, kind(f, k) + r); }
+    memo.set(key, res);
+    return res;
+  }
+  const scoreOf = (vals) => (vals.length ? Math.max(0, best(counts(vals))) : 0);
+  // Does a fresh roll contain anything that scores? (Otherwise it's a Farkle.)
+  function hasScore(vals) {
+    const c = counts(vals);
+    if (c[1] || c[5]) return true;
+    for (let f = 2; f <= 6; f++) if (c[f] >= 3) return true;
+    return vals.length === 6 && c.slice(1).filter((x) => x === 2).length === 3;
+  }
+
+  /* ---------- 4. Physics: deterministic dice on the felt ----------
+     World units: the felt is W x H with y growing toward the viewer and z up.
+     Only + - * / and Math.sqrt are used in the step, all of which IEEE-754
+     defines exactly, so every browser replays an identical trajectory. */
+  const W = 400, H = 300, HS = 17, RAD = 20, DT = 1 / 120, GRAV = 1900, MAX_STEPS = 720;
+
+  // Launch numbers for `n` dice, derived from the host's seed and rounded so they travel compactly.
+  function makeLaunch(seed, n) {
+    const rnd = mulberry32(seed);
+    const cx = W * (0.32 + rnd() * 0.36);
+    const L = [];
+    for (let k = 0; k < n; k++) {
+      const col = k % 3, row = (k / 3) | 0;           // a loose 3x2 handful, no overlaps at release
+      const x = cx + (col - 1) * 46 + (rnd() - 0.5) * 8;
+      const y = H - 32 - row * 46 + (rnd() - 0.5) * 8;
+      const z = 35 + rnd() * 45;
+      const vx = (W / 2 - cx) * 0.9 + (rnd() - 0.5) * 320;
+      const vy = -(520 + rnd() * 320);                  // thrown away from the viewer
+      const vz = 140 + rnd() * 240;
+      const w = (rnd() - 0.5) * 18;                     // spin about the vertical axis
+      const ax = rnd() * Math.PI * 2;                   // tumble-axis jitter (render only)
+      const tum = 0.75 + rnd() * 0.5;                   // tumble rate (render only)
+      L.push([x, y, z, vx, vy, vz, w, ax, tum].map(r1));
+    }
+    return L;
+  }
+
+  // Run the throw to rest. Returns per-step [x, y, z, yaw] for every die plus the path still
+  // to travel at each step, which drives the tumble so it unwinds exactly as the die stops.
+  function simulate(L) {
+    const n = L.length;
+    const b = L.map((a) => ({ x: a[0], y: a[1], z: a[2], vx: a[3], vy: a[4], vz: a[5], w: a[6], yaw: 0 }));
+    const fr = new Float32Array(MAX_STEPS * n * 4);
+    const hits = [];   // [step, kind 0 felt / 1 rail / 2 die, impact speed]: drives the sound, never the motion
+    let steps = 0, still = 0;
+    while (steps < MAX_STEPS) {
+      for (const d of b) {
+        // Airborne: gravity, then a damped bounce off the felt.
+        if (d.z > 0 || d.vz !== 0) {
+          d.vz -= GRAV * DT; d.z += d.vz * DT;
+          if (d.z <= 0) {
+            d.z = 0;
+            if (d.vz < -70) { hits.push([steps, 0, -d.vz]); d.vz =-d.vz * 0.36; d.vx *= 0.85; d.vy *= 0.85; d.w = d.w * 0.7 + (d.vx - d.vy) * 0.004; }
+            else d.vz = 0;
+          }
+        }
+        // On the felt: sliding friction plus a little rolling drag; spin bleeds off too.
+        if (d.z === 0 && d.vz === 0) {
+          const sp = Math.sqrt(d.vx * d.vx + d.vy * d.vy);
+          const dec = 0.42 * GRAV * DT + sp * 1.2 * DT;
+          if (sp <= dec) { d.vx = 0; d.vy = 0; } else { const k = (sp - dec) / sp; d.vx *= k; d.vy *= k; }
+          const aw = d.w < 0 ? -d.w : d.w;
+          const nw = aw - (8 * DT + aw * 2 * DT);
+          d.w = aw <= 0.3 || nw <= 0 ? 0 : (d.w / aw) * nw;
+        }
+        d.x += d.vx * DT; d.y += d.vy * DT; d.yaw += d.w * DT;
+        // Cushioned rails.
+        if (d.x < RAD) { d.x = RAD; if (d.vx < 0) { hits.push([steps, 1, -d.vx]); d.vx = -d.vx * 0.55; d.w += d.vy * 0.01; } }
+        else if (d.x > W - RAD) { d.x = W - RAD; if (d.vx > 0) { hits.push([steps, 1, d.vx]); d.vx = -d.vx * 0.55; d.w -= d.vy * 0.01; } }
+        if (d.y < RAD) { d.y = RAD; if (d.vy < 0) { hits.push([steps, 1, -d.vy]); d.vy = -d.vy * 0.55; d.w -= d.vx * 0.01; } }
+        else if (d.y > H - RAD) { d.y = H - RAD; if (d.vy > 0) { hits.push([steps, 1, d.vy]); d.vy = -d.vy * 0.55; d.w += d.vx * 0.01; } }
+      }
+      // Die-to-die collisions: separate the overlap, then exchange momentum along the contact normal.
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+        const a = b[i], c = b[j];
+        if ((a.z > c.z ? a.z - c.z : c.z - a.z) > HS * 2) continue;   // one is flying over the other
+        let dx = c.x - a.x, dy = c.y - a.y;
+        const d2 = dx * dx + dy * dy, min = RAD * 2;
+        if (d2 >= min * min) continue;
+        let dist = Math.sqrt(d2);
+        if (dist < 1e-6) { dx = 1; dy = 0; dist = 1; }
+        const nx = dx / dist, ny = dy / dist, push = (min - (d2 < 1e-12 ? 0 : dist)) / 2;
+        a.x -= nx * push; a.y -= ny * push; c.x += nx * push; c.y += ny * push;
+        const vn = (c.vx - a.vx) * nx + (c.vy - a.vy) * ny;
+        if (vn < 0) {
+          hits.push([steps, 2, -vn]);
+          const jj = -(1 + 0.45) * vn / 2;
+          a.vx -= jj * nx; a.vy -= jj * ny; c.vx += jj * nx; c.vy += jj * ny;
+          const tang = (c.vx - a.vx) * -ny + (c.vy - a.vy) * nx;
+          a.w += tang * 0.01; c.w -= tang * 0.01;
+        }
+      }
+      for (let i = 0; i < n; i++) {
+        const d = b[i];
+        if (d.x < RAD) d.x = RAD; else if (d.x > W - RAD) d.x = W - RAD;
+        if (d.y < RAD) d.y = RAD; else if (d.y > H - RAD) d.y = H - RAD;
+        const o = (steps * n + i) * 4; fr[o] = d.x; fr[o + 1] = d.y; fr[o + 2] = d.z; fr[o + 3] = d.yaw;
+      }
+      steps++;
+      let moving = false;
+      for (const d of b) if (d.z > 0 || d.vz !== 0 || d.vx !== 0 || d.vy !== 0 || d.w !== 0) { moving = true; break; }
+      if (!moving) { if (++still > 8) break; } else still = 0;
+    }
+    // Remaining path length per die at every step (0 at rest).
+    const srem = new Float32Array(steps * n);
+    for (let i = 0; i < n; i++) {
+      let acc = 0;
+      for (let s = steps - 1; s >= 0; s--) {
+        srem[s * n + i] = acc;
+        if (s > 0) {
+          const o = (s * n + i) * 4, p = ((s - 1) * n + i) * 4;
+          const dx = fr[o] - fr[p], dy = fr[o + 1] - fr[p + 1], dz = fr[o + 2] - fr[p + 2];
+          acc += Math.sqrt(dx * dx + dy * dy) + Math.abs(dz) * 0.7;
+        }
+      }
+    }
+    // Tumble axis per die: across its initial direction of travel, plus seeded jitter.
+    const axes = L.map((a) => { const ang = Math.atan2(a[4], a[3]) + Math.PI / 2 + (a[7] - Math.PI) * 0.15; return [Math.cos(ang), Math.sin(ang)]; });
+    return { n, steps, fr, srem, hits, axes, tum: L.map((a) => a[8]), dur: steps * DT };
+  }
+  const simCache = new Map();
+  function simFor(roll) {
+    const key = roll.seed + ":" + JSON.stringify(roll.L);
+    let s = simCache.get(key);
+    if (!s) { s = simulate(roll.L); simCache.set(key, s); if (simCache.size > 8) simCache.delete(simCache.keys().next().value); }
+    return s;
+  }
+
+  /* ---------- 5. 3D maths for the renderer (display only, never feeds the physics) ---------- */
+  const mul = (A, B) => [
+    A[0] * B[0] + A[1] * B[3] + A[2] * B[6], A[0] * B[1] + A[1] * B[4] + A[2] * B[7], A[0] * B[2] + A[1] * B[5] + A[2] * B[8],
+    A[3] * B[0] + A[4] * B[3] + A[5] * B[6], A[3] * B[1] + A[4] * B[4] + A[5] * B[7], A[3] * B[2] + A[4] * B[5] + A[5] * B[8],
+    A[6] * B[0] + A[7] * B[3] + A[8] * B[6], A[6] * B[1] + A[7] * B[4] + A[8] * B[7], A[6] * B[2] + A[7] * B[5] + A[8] * B[8]];
+  const mv = (M, v) => [M[0] * v[0] + M[1] * v[1] + M[2] * v[2], M[3] * v[0] + M[4] * v[1] + M[5] * v[2], M[6] * v[0] + M[7] * v[1] + M[8] * v[2]];
+  const Rz = (a) => { const c = Math.cos(a), s = Math.sin(a); return [c, -s, 0, s, c, 0, 0, 0, 1]; };
+  const Rx = (a) => { const c = Math.cos(a), s = Math.sin(a); return [1, 0, 0, 0, c, -s, 0, s, c]; };
+  const Ry = (a) => { const c = Math.cos(a), s = Math.sin(a); return [c, 0, s, 0, 1, 0, -s, 0, c]; };
+  // Rotation by `phi` about a horizontal axis (ux, uy, 0) (Rodrigues' formula).
+  function axisRot(ux, uy, phi) { const c = Math.cos(phi), s = Math.sin(phi), t = 1 - c; return [t * ux * ux + c, t * ux * uy, s * uy, t * ux * uy, t * uy * uy + c, -s * ux, -s * uy, s * ux, c]; }
+  // Die faces in die-local space. Opposite faces sum to 7.
+  const FACES = [
+    { v: 1, n: [0, 0, 1], t1: [1, 0, 0], t2: [0, 1, 0] },
+    { v: 6, n: [0, 0, -1], t1: [1, 0, 0], t2: [0, -1, 0] },
+    { v: 2, n: [1, 0, 0], t1: [0, 1, 0], t2: [0, 0, 1] },
+    { v: 5, n: [-1, 0, 0], t1: [0, -1, 0], t2: [0, 0, 1] },
+    { v: 3, n: [0, 1, 0], t1: [-1, 0, 0], t2: [0, 0, 1] },
+    { v: 4, n: [0, -1, 0], t1: [1, 0, 0], t2: [0, 0, 1] }];
+  // Rotation that turns face `v` to point straight up.
+  const RFACE = { 1: [1, 0, 0, 0, 1, 0, 0, 0, 1], 6: Rx(Math.PI), 2: Ry(-Math.PI / 2), 5: Ry(Math.PI / 2), 3: Rx(Math.PI / 2), 4: Rx(-Math.PI / 2) };
+  const PIPS = {
+    1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]],
+    5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [-1, 0], [-1, 1], [1, -1], [1, 0], [1, 1]] };
+  const LIGHT = (() => { const v = [-0.35, 0.45, 1], l = Math.hypot(...v); return v.map((x) => x / l); })();
+
+  // Table geometry beyond the felt: side rails, a deep near rail with a tray for set-aside dice.
+  const RAIL = 26, NEAR = 78, RZ = 16, TX0 = 34, TX1 = W - 34, TY0 = H + 16, TY1 = H + 60, TZ = 5;
+  const TRAY_Y = (TY0 + TY1) / 2;
+
+  // Pinhole camera above the near rail, looking down the table at roughly 45 degrees.
+  const CAM = (() => {
+    const E = [W / 2, H + 250, 640], T = [W / 2, H * 0.52, 0];
+    const norm = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); };
+    const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const f = norm([T[0] - E[0], T[1] - E[1], T[2] - E[2]]);
+    const r = norm(cross([0, 0, 1], f));
+    const u = cross(f, r);
+    return { E, f, r, u };
+  })();
+  function projRaw(x, y, z) {
+    const dx = x - CAM.E[0], dy = y - CAM.E[1], dz = z - CAM.E[2];
+    const zc = dx * CAM.f[0] + dy * CAM.f[1] + dz * CAM.f[2];
+    return [(dx * CAM.r[0] + dy * CAM.r[1] + dz * CAM.r[2]) / zc, -(dx * CAM.u[0] + dy * CAM.u[1] + dz * CAM.u[2]) / zc];
+  }
+  const BOUNDS = (() => {
+    const pts = [[-RAIL, -RAIL, RZ], [W + RAIL, -RAIL, RZ], [W + RAIL, H + NEAR, RZ], [-RAIL, H + NEAR, RZ], [-RAIL, H + NEAR, -14], [W + RAIL, H + NEAR, -14]].map((p) => projRaw(...p));
+    const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+    return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys) - 0.03, y1: Math.max(...ys) };
+  })();
+  const ASPECT = (BOUNDS.y1 - BOUNDS.y0) / (BOUNDS.x1 - BOUNDS.x0);
+  let K = 1, OX = 0, OY = 0, cssW = 0, cssH = 0, dpr = 1;
+  function proj(x, y, z) { const p = projRaw(x, y, z); return { x: OX + K * p[0], y: OY + K * p[1] }; }
+
+  /* ---------- 6. Session state ---------- */
+  const PID = load("s", "fk.pid") || randId(10);   // stable per tab, so a reload reclaims the seat
+  save("s", "fk.pid", PID);
+  const S = {
+    pid: PID,
+    me: { pid: PID, sid: randId(8), name: "", ready: false, dc: diceColor(load("l", "fk.dice")) },
+    net: null, netKind: "", code: "", inRoom: false, joining: false, conn: "off",
+    st: null,             // latest state snapshot seen (everyone)
+    isHost: false, M: null, hostTimer: 0, seenIntents: new Map(),
+    present: new Set([PID]), info: new Map(), absent: new Map(),
+    lastEvN: -1, anim: null, glide: null, localSel: null, myN: 0, awaitEv: null, awaitAt: 0,
+    joinedAt: 0, resume: null, dirty: true,
+  };
+  const CFG = Object.assign({ net: "auto", url: "", key: "" }, load("l", "fk.cfg") || {});
+  // A hosted copy (tools/build-site.js) ships its Supabase project's URL and publishable key, so
+  // players never type them. Values a player saved in Settings take precedence.
+  const HOSTED = window.FARKLE_HOSTED && typeof window.FARKLE_HOSTED === "object" ? window.FARKLE_HOSTED : {};
+  if (!CFG.url && !CFG.key && typeof HOSTED.url === "string" && typeof HOSTED.key === "string") { CFG.url = HOSTED.url; CFG.key = HOSTED.key; }
+  const inClaude = () => !!(window.claude && typeof window.claude.use === "function");
+
+  /* ---------- 7. Transports ----------
+     Common interface:
+       join(code, me, handlers)  handlers: peers(list), host(evs, st, fromPid), intent(i, fromPid), conn(state)
+       publish(evs, st)          host only: events + the full state snapshot
+       sendIntent(i)             any player
+       setMe(me)                 presence info: { pid, sid, name, ready }
+       leave() */
+
+  // Claude Artifact room. Everything rides on presence, which every admitted viewer may set
+  // (event topics would need Contributor access). The host's presence carries the latest
+  // snapshot plus its last few events; a player's presence carries its last few intents.
+  function RoomNet(room) { this.kind = "room"; this.room = room; }
+  RoomNet.prototype.join = async function (code, me, hd) {
+    this.hd = hd; this.evq = []; this.inq = []; this.seen = new Map();
+    this.r = await this.room.join("farkle-" + code);
+    this.offPeers = this.r.onPeers((ch) => this._peers(ch.peers), () => hd.conn("lost"));
+    this.offConn = this.r.onConnection((c) => hd.conn(c ? "on" : "wait"));
+    await this.r.presence({ me });
+  };
+  RoomNet.prototype._peers = function (peers) {
+    const list = [], hostMsgs = [], intents = [];
+    for (const p of peers) {
+      const pr = p.presence || {};
+      const me = pr.me;
+      if (!me || typeof me.pid !== "string") continue;
+      list.push({ pid: me.pid, info: me, isMe: p.sameTab });
+      if (p.sameTab) continue;
+      let s = this.seen.get(p.peer);
+      const first = !s;
+      if (!s) { s = { ref: null, ev: -1, inN: -1 }; this.seen.set(p.peer, s); }
+      if (s.ref === pr) continue;          // unchanged presence object: nothing new
+      s.ref = pr;
+      const eq = Array.isArray(pr.eq) ? pr.eq : [], iq = Array.isArray(pr.iq) ? pr.iq : [];
+      if (pr.st && typeof pr.st === "object") {
+        // On first sight only the snapshot counts; older events are history, not news.
+        const fresh = first ? [] : eq.filter((e) => e && typeof e.n === "number" && e.n > s.ev);
+        for (const e of eq) if (e && typeof e.n === "number" && e.n > s.ev) s.ev = e.n;
+        hostMsgs.push({ evs: fresh, st: pr.st, from: me.pid });
+      }
+      const freshIn = first ? [] : iq.filter((i) => i && typeof i.n === "number" && i.n > s.inN);
+      for (const i of iq) if (i && typeof i.n === "number" && i.n > s.inN) s.inN = i.n;
+      for (const i of freshIn) intents.push({ i, from: me.pid });
+    }
+    this.hd.peers(list);
+    for (const m of hostMsgs) this.hd.host(m.evs, m.st, m.from);
+    for (const m of intents) this.hd.intent(m.i, m.from);
+  };
+  RoomNet.prototype.publish = function (evs, st) {
+    this.evq = this.evq.concat(evs).slice(-3);
+    this.r.presence({ st, eq: this.evq }).catch((err) => {
+      // Presence is capped at 4 KiB; fall back to just the newest event.
+      if (err && err.code === "invalid_argument") { this.evq = this.evq.slice(-1); this.r.presence({ st, eq: this.evq }).catch(() => {}); }
+    });
+  };
+  RoomNet.prototype.clearHost = function () { this.evq = []; this.r && this.r.presence({ st: null, eq: null }).catch(() => {}); };
+  RoomNet.prototype.sendIntent = function (i) { this.inq = this.inq.concat([i]).slice(-6); this.r.presence({ iq: this.inq }).catch(() => {}); };
+  RoomNet.prototype.setMe = function (me) { this.r && this.r.presence({ me }).catch(() => {}); };
+  RoomNet.prototype.leave = function () { try { this.offPeers && this.offPeers(); this.offConn && this.offConn(); this.r && this.r.leave(); } catch (e) { /* already gone */ } };
+
+  // Supabase Realtime: Broadcast for host events and player intents, Presence for who is here.
+  function SupaNet(url, key) { this.kind = "supabase"; this.url = url; this.key = key; }
+  SupaNet.prototype.join = async function (code, me, hd) {
+    await loadScript(SUPABASE_SRC);
+    if (!window.supabase || typeof window.supabase.createClient !== "function") throw new Error("The Supabase library didn't load.");
+    this.hd = hd; this.me = me;
+    this.client = window.supabase.createClient(this.url, this.key, { auth: { persistSession: false, autoRefreshToken: false }, realtime: { params: { eventsPerSecond: 20 } } });
+    const ch = this.ch = this.client.channel("farkle-" + code, { config: { broadcast: { self: false, ack: false }, presence: { key: me.pid } } });
+    ch.on("broadcast", { event: "host" }, ({ payload }) => { if (payload) hd.host(payload.evs || [], payload.st, payload.from); });
+    ch.on("broadcast", { event: "intent" }, ({ payload }) => { if (payload) hd.intent(payload.i, payload.from); });
+    ch.on("presence", { event: "sync" }, () => {
+      const state = ch.presenceState(), list = [];
+      for (const k in state) {
+        const metas = state[k], m = metas && metas[metas.length - 1];
+        if (m && m.me && typeof m.me.pid === "string") list.push({ pid: m.me.pid, info: m.me, isMe: m.me.pid === this.me.pid });
+      }
+      hd.peers(list);
+    });
+    await new Promise((resolve, reject) => {
+      let done = false;
+      const to = setTimeout(() => { if (!done) { done = true; reject(new Error("timeout")); } }, 12000);
+      ch.subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          hd.conn("on");
+          try { await ch.track({ me: this.me }); } catch (e) { /* presence retried on next setMe */ }
+          if (!done) { done = true; clearTimeout(to); resolve(); }
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          hd.conn("lost");
+          if (!done) { done = true; clearTimeout(to); reject(new Error(status)); }
+        } else if (status === "CLOSED") hd.conn("off");
+      });
+    });
+  };
+  SupaNet.prototype.publish = function (evs, st) { this.ch.send({ type: "broadcast", event: "host", payload: { evs, st, from: this.me.pid } }); };
+  SupaNet.prototype.sendIntent = function (i) { this.ch.send({ type: "broadcast", event: "intent", payload: { i, from: this.me.pid } }); };
+  SupaNet.prototype.setMe = function (me) { this.me = me; this.ch && this.ch.track({ me }).catch(() => {}); };
+  SupaNet.prototype.leave = function () { try { this.ch.untrack(); this.client.removeChannel(this.ch); } catch (e) { /* already closed */ } };
+
+  // Same-browser test transport: tabs of one origin talk over a BroadcastChannel,
+  // with a heartbeat standing in for presence.
+  function TabsNet() { this.kind = "tabs"; }
+  TabsNet.prototype.join = async function (code, me, hd) {
+    this.hd = hd; this.me = me; this.peers = new Map();
+    this.bc = new BroadcastChannel("farkle-" + code);
+    this.bc.onmessage = (e) => this._msg(e.data);
+    this.iv = setInterval(() => { this._hello(); this._prune(); }, 1000);
+    this._hello(); hd.conn("on"); this._emit();
+  };
+  TabsNet.prototype._hello = function () { this.bc.postMessage({ k: "hello", me: this.me }); };
+  TabsNet.prototype._msg = function (m) {
+    if (!m || typeof m !== "object") return;
+    if (m.k === "hello" && m.me && typeof m.me.pid === "string") {
+      const old = this.peers.get(m.me.pid);
+      const changed = !old || JSON.stringify(old.info) !== JSON.stringify(m.me);
+      this.peers.set(m.me.pid, { info: m.me, last: Date.now() });
+      if (!old) this._hello();        // answer newcomers at once
+      if (changed) this._emit();
+    } else if (m.k === "bye") { if (this.peers.delete(m.pid)) this._emit(); }
+    else if (m.k === "host") this.hd.host(m.evs || [], m.st, m.from);
+    else if (m.k === "intent") this.hd.intent(m.i, m.from);
+  };
+  TabsNet.prototype._emit = function () {
+    const list = [{ pid: this.me.pid, info: this.me, isMe: true }];
+    for (const [pid, p] of this.peers) list.push({ pid, info: p.info, isMe: false });
+    this.hd.peers(list);
+  };
+  TabsNet.prototype._prune = function () { const t = Date.now(); let ch = false; for (const [pid, p] of this.peers) if (t - p.last > 6000) { this.peers.delete(pid); ch = true; } if (ch) this._emit(); };
+  TabsNet.prototype.publish = function (evs, st) { this.bc.postMessage({ k: "host", evs, st, from: this.me.pid }); };
+  TabsNet.prototype.sendIntent = function (i) { this.bc.postMessage({ k: "intent", i, from: this.me.pid }); };
+  TabsNet.prototype.setMe = function (me) { this.me = me; this._hello(); this._emit(); };
+  TabsNet.prototype.leave = function () { try { this.bc.postMessage({ k: "bye", pid: this.me.pid }); clearInterval(this.iv); this.bc.close(); } catch (e) { /* closed */ } };
+
+  async function pickNet() {
+    let mode = CFG.net;
+    if (mode === "auto") mode = inClaude() ? "room" : CFG.url && CFG.key ? "supabase" : "";
+    if (mode === "room") {
+      if (!inClaude()) throw new Error("Claude rooms only work when this page is open as a Claude Artifact. Pick another network in Settings.");
+      const room = await window.claude.use("room");
+      if (!room) throw new Error("Multiplayer here needs you signed in to claude.ai with access to this page.");
+      return new RoomNet(room);
+    }
+    if (mode === "supabase") {
+      if (!CFG.url || !CFG.key) throw new Error("Add your Supabase URL and publishable key in Settings.");
+      return new SupaNet(CFG.url, CFG.key);
+    }
+    if (mode === "tabs") {
+      if (typeof BroadcastChannel !== "function") throw new Error("This browser can't link tabs. Use Supabase instead.");
+      return new TabsNet();
+    }
+    throw new Error("Add your Supabase URL and publishable key in Settings, or pick \"This device only\" to try the game in two tabs.");
+  }
+
+  /* ---------- 8. Messages arriving from the network ---------- */
+  const HD = {
+    peers(list) { onPeers(list); },
+    host(evs, st, from) { applyHost(Array.isArray(evs) ? evs : [], st, from, false); },
+    intent(i) { if (S.isHost) hostIntent(i); },
+    conn(state) { S.conn = state; renderConn(); },
+  };
+
+  function onPeers(list) {
+    const prev = S.present;
+    S.present = new Set([S.pid]);
+    S.info = new Map([[S.pid, S.me]]);
+    for (const p of list) {
+      if (!p || typeof p.pid !== "string" || p.pid === S.pid) continue;
+      const inf = p.info || {};
+      S.present.add(p.pid);
+      S.info.set(p.pid, { pid: p.pid, name: cleanName(inf.name), ready: !!inf.ready, dc: diceColor(inf.dc) });
+    }
+    updateAbsent();
+    if (S.isHost) {
+      for (const pid of S.present) if (!prev.has(pid)) { hostPublish([]); break; }   // greet newcomers with the snapshot
+      hostPresenceTick();
+    }
+    renderAll();
+  }
+
+  function updateAbsent() {
+    const now = Date.now(), st = S.isHost ? S.M : S.st;
+    if (!st) return;
+    const pids = st.players.map((p) => p.pid).concat([st.host]);
+    for (const pid of pids) {
+      if (S.present.has(pid)) S.absent.delete(pid);
+      else if (!S.absent.has(pid)) S.absent.set(pid, now);
+    }
+  }
+  const absentFor = (pid) => (S.present.has(pid) ? 0 : S.absent.has(pid) ? Date.now() - S.absent.get(pid) : 0);
+
+  // Which snapshot wins: more events, then the lower host id (breaks a tie between two hosts).
+  const ahead = (a, b) => a.evN > b.evN || (a.evN === b.evN && a.host < b.host);
+
+  // Snapshots come from other people's browsers, so check the shape and clamp every number.
+  function cleanLaunch(a) {
+    if (!Array.isArray(a) || a.length !== 9 || !a.every((x) => Number.isFinite(+x))) return null;
+    const v = a.map(Number);
+    return [clamp(v[0], 0, W), clamp(v[1], 0, H), clamp(v[2], 0, 200), clamp(v[3], -2500, 2500), clamp(v[4], -2500, 2500),
+      clamp(v[5], -2500, 2500), clamp(v[6], -40, 40), clamp(v[7], 0, 7), clamp(v[8], 0.5, 1.5)];
+  }
+  function cleanState(st) {
+    if (!st || typeof st !== "object") return null;
+    if (typeof st.evN !== "number" || typeof st.host !== "string" || !MODES[st.mode]) return null;
+    if (!Array.isArray(st.players) || st.players.length > MAX_PLAYERS || !Array.isArray(st.dice) || st.dice.length !== 6) return null;
+    const players = st.players.map((p) => ({ pid: String((p && p.pid) || ""), name: cleanName(p && p.name), dc: diceColor(p && p.dc), score: num(p && p.score), ready: !!(p && p.ready), gone: !!(p && p.gone), skips: num(p && p.skips) }));
+    const dice = st.dice.map((d) => ({ v: clamp(int(d && d.v, 1), 1, 6), s: clamp(int(d && d.s, 0), 0, 2) }));
+    let roll = null;
+    const R = st.roll;
+    if (R && Array.isArray(R.idx) && Array.isArray(R.L) && R.idx.length === R.L.length && R.L.length >= 1 && R.L.length <= 6) {
+      const L = R.L.map(cleanLaunch);
+      if (L.every(Boolean)) roll = { seed: num(R.seed), idx: R.idx.map((k) => clamp(int(k, 0), 0, 5)), L };
+    }
+    return {
+      v: 1, code: String(st.code || ""), mode: st.mode, target: MODES[st.mode].target,
+      phase: ["lobby", "play", "over"].includes(st.phase) ? st.phase : "lobby",
+      host: st.host, evN: st.evN, players,
+      turn: clamp(int(st.turn, 0), 0, Math.max(0, players.length - 1)),
+      dice, ts: ["pre", "rolled", "farkle", "banked"].includes(st.ts) ? st.ts : "pre",
+      tp: num(st.tp), th: !!st.th, roll, fin: st.fin == null ? null : clamp(int(st.fin, 0), 0, 3),
+      win: Array.isArray(st.win) ? st.win.map(String).slice(0, 4) : [], busy: !!st.busy,
+      log: Array.isArray(st.log) ? st.log.slice(-2).map((x) => String(x).slice(0, 140)) : [],
+    };
+  }
+
+  function applyHost(evs, raw, from, local) {
+    const st = cleanState(raw);
+    if (!st || (S.code && st.code !== S.code)) return;
+    if (!local) {
+      if (S.isHost) {
+        // Another host is ahead of us (e.g. we came back after a takeover): step down.
+        if (st.host !== S.pid && ahead(st, S.M)) stepDown(); else return;
+      } else if (S.st && ahead(S.st, st)) return;   // stale
+    }
+    const prev = S.st;
+    const fresh = evs.filter((e) => e && typeof e.n === "number" && typeof e.t === "string" && e.n > S.lastEvN).sort((a, b) => a.n - b.n);
+    // Where every die sat before this snapshot, so the dice just set aside can glide from there to the tray.
+    const before = prev && fresh.some((e) => e.t === "DICE_ROLLED" || e.t === "BANKED") ? poses(performance.now()) : null;
+    S.st = st;
+    for (const ev of fresh) playEvent(ev, st, prev, before);
+    S.lastEvN = Math.max(S.lastEvN, st.evN);
+    if (S.awaitEv != null && st.evN > S.awaitEv) S.awaitEv = null;
+    // Drop my optimistic selection once the host's snapshot agrees with it (or the turn moved on).
+    if (S.localSel) {
+      const hostSel = st.dice.map((d, k) => (d.s === 1 ? k : -1)).filter((k) => k >= 0).join(",");
+      if (!myTurn(st) || st.ts !== "rolled" || hostSel === S.localSel.join(",")) S.localSel = null;
+    }
+    if (prev && prev.phase === "over" && st.phase === "lobby") setReady(false);
+    if (!prev || prev.mode !== st.mode) S.cacheKey = "";
+    updateAbsent();
+    renderAll();
+  }
+
+  // Visual side effects of events. The state snapshot carries the truth; these are the show.
+  function playEvent(ev, st, prev, before) {
+    const d = ev.d && typeof ev.d === "object" ? ev.d : {};
+    switch (ev.t) {
+      case "DICE_ROLLED": {
+        S.localSel = null;
+        const wait = glideToTray(prev, st, before, !!d.hot);   // the set-aside dice reach the tray before the throw
+        if (d.hot) { banner("Hot dice!", "hot", wait); setTimeout(hotFlair, wait); SND.hot(wait / 1000); }
+        if (st.roll && st.roll.seed === num(d.seed)) {
+          const sim = simFor(st.roll);
+          S.anim = { sim, idx: st.roll.idx.slice(), t0: performance.now() + wait, hot: !!d.hot };
+          SND.roll(sim, wait / 1000);
+          setTimeout(() => { if (S.anim && S.anim.sim === sim) S.anim = null; S.dirty = true; renderTurn(); }, wait + sim.dur * 1000 + 40);
+        }
+        break;
+      }
+      case "DICE_SET_ASIDE":
+        // My own taps already clicked; this is for watching someone else pick.
+        if (prev && !myTurn(st)) {
+          const was = prev.dice.filter((x) => x.s === 1).length, now = st.dice.filter((x) => x.s === 1).length;
+          if (now !== was) SND.select(now > was);
+        }
+        break;
+      case "FARKLE": banner("Farkle!", "bad", animLeft()); SND.farkle(animLeft() / 1000); break;
+      case "BANKED": {
+        const pts = num(d.pts);
+        glideToTray(prev, st, before, false);
+        floatText("+" + fmt(pts)); SND.bank(pts);
+        // Applause for a turn that survived hot dice, or a bank of 1,000 or more; longer when it's both.
+        if (d.hot || pts >= 1000) SND.applause(!!d.hot && pts >= 1000);
+        if (d.fin) banner("Final round", "", 900);
+        break;
+      }
+      case "TURN_PASSED": S.localSel = null; if (myTurn(st)) { banner("Your turn", "", 150); SND.turn(0.15); } break;
+      case "GAME_STARTED": S.localSel = null; S.anim = null; S.glide = null; banner("Game on", ""); if (myTurn(st)) SND.turn(0.9); break;
+    }
+    S.dirty = true;
+  }
+  // Glide the dice that were just set aside from the felt into the tray, one after another.
+  // Returns how long (ms) the throw should wait for them.
+  function glideToTray(prev, st, before, hot) {
+    if (!prev || !before || prev.phase !== "play") return 0;
+    const from = new Map(before.map((p) => [p.i, p])), lag = new Map();
+    for (let k = 0; k < 6; k++) {
+      const b = from.get(k);
+      if (!b || b.where !== "felt" || b.hand || b.rolling) continue;
+      // Hot dice: every die still on the felt was set aside (the snapshot already shows all six back in hand).
+      if (hot || (st.dice[k].s === 2 && prev.dice[k].s !== 2)) lag.set(k, lag.size * GLIDE_STAGGER);
+    }
+    if (!lag.size) return 0;
+    const t0 = performance.now(), total = GLIDE_MS + (lag.size - 1) * GLIDE_STAGGER + GLIDE_GAP;
+    S.glide = { t0, from, lag, until: t0 + total };
+    SND.tray([...lag.values()].map((l) => (l + GLIDE_MS - 20) / 1000));
+    return total;
+  }
+  const animLeft = () => (S.anim ? Math.max(0, S.anim.sim.dur * 1000 - (performance.now() - S.anim.t0)) : 0);
+
+  /* ---------- 9. Host: the only writer of game state ---------- */
+  function newPlayer(pid) { const inf = S.info.get(pid) || {}; return { pid, name: cleanName(inf.name), dc: diceColor(inf.dc), score: 0, ready: !!inf.ready, gone: false, skips: 0 }; }
+  function newState(code, mode) {
+    return { v: 1, code, mode, target: MODES[mode].target, phase: "lobby", host: S.pid, evN: 0,
+      players: [newPlayer(S.pid)], turn: 0, dice: [1, 2, 3, 4, 5, 6].map((v) => ({ v, s: 0 })),
+      ts: "pre", tp: 0, th: false, roll: null, fin: null, win: [], busy: false, log: [] };
+  }
+  function hostPublish(evs) {
+    if (!S.isHost || !S.M) return;
+    const snap = JSON.parse(JSON.stringify(S.M));
+    if (S.net) S.net.publish(evs, snap);
+    save("s", "fk.host", snap);   // lets the host survive a page reload
+    applyHost(evs, snap, S.pid, true);
+  }
+  function hostEmit(type, d, msg) {
+    const M = S.M;
+    M.evN++;
+    if (msg) M.log = M.log.concat([msg]).slice(-2);
+    hostPublish([{ n: M.evN, t: type, d: d || {} }]);
+  }
+  function hostLater(ms, fn) { clearTimeout(S.hostTimer); S.hostTimer = setTimeout(() => { S.hostTimer = 0; if (S.isHost && S.M) fn(); }, ms); }
+  const selIdx = () => S.M.dice.map((d, k) => (d.s === 1 ? k : -1)).filter((k) => k >= 0);
+  function applySel(sel) {
+    const set = new Set((Array.isArray(sel) ? sel : []).filter((k) => Number.isInteger(k) && k >= 0 && k < 6));
+    S.M.dice.forEach((d, k) => { if (d.s !== 2) d.s = set.has(k) ? 1 : 0; });
+  }
+
+  function hostIntent(i) {
+    if (!S.isHost || !S.M || !i || typeof i !== "object" || typeof i.t !== "string" || typeof i.sid !== "string" || typeof i.n !== "number") return;
+    const last = S.seenIntents.get(i.sid);
+    if (last != null && i.n <= last) return;          // duplicate or replayed
+    S.seenIntents.set(i.sid, i.n);
+    const M = S.M, d = i.d && typeof i.d === "object" ? i.d : {};
+    if (i.t === "sync") { hostPublish([]); return; }
+    if (i.t === "start") {
+      if (i.pid !== M.host || M.phase !== "lobby" || !M.players.length || !M.players.every((p) => p.ready)) return;
+      M.phase = "play"; M.turn = 0; M.fin = null; M.win = []; M.tp = 0; M.th = false; M.ts = "pre"; M.roll = null; M.busy = false;
+      M.players.forEach((p) => { p.score = 0; p.gone = false; p.skips = 0; });
+      M.dice = [1, 2, 3, 4, 5, 6].map((v) => ({ v, s: 0 }));
+      hostEmit("GAME_STARTED", {}, `Game on. First to ${fmt(M.target)} wins. ${M.players[0].name} rolls first.`);
+      return;
+    }
+    if (i.t === "again") {
+      if (i.pid !== M.host || M.phase !== "over") return;
+      M.phase = "lobby"; M.fin = null; M.win = []; M.tp = 0; M.ts = "pre"; M.roll = null; M.busy = false;
+      M.players.forEach((p) => { p.score = 0; p.ready = false; p.gone = false; p.skips = 0; });
+      hostEmit("LOBBY", {}, "New game. Ready up.");
+      return;
+    }
+    // Turn actions: only the player whose turn it is, and never mid-farkle or mid-bank.
+    if (M.phase !== "play" || M.busy || !M.players[M.turn] || M.players[M.turn].pid !== i.pid) return;
+    if (i.t === "sel") {
+      if (M.ts !== "rolled") return;
+      applySel(d.sel);
+      hostEmit("DICE_SET_ASIDE", { sel: selIdx() }, null);
+    } else if (i.t === "roll") hostRoll(d.sel);
+    else if (i.t === "bank") hostBank(d.sel);
+  }
+
+  function hostRoll(sel) {
+    const M = S.M, p = M.players[M.turn], setAside = M.ts === "rolled";
+    if (M.ts === "rolled") {
+      applySel(sel);
+      const idx = selIdx(), val = scoreOf(idx.map((k) => M.dice[k].v));
+      if (val <= 0) { hostPublish([]); return; }      // must set aside at least one scoring die
+      idx.forEach((k) => { M.dice[k].s = 2; });
+      M.tp += val;
+    } else if (M.ts !== "pre") return;
+    let free = M.dice.map((d, k) => (d.s === 0 ? k : -1)).filter((k) => k >= 0), hot = false;
+    if (!free.length) { hot = true; M.th = true; M.dice.forEach((d) => { d.s = 0; }); free = [0, 1, 2, 3, 4, 5]; }
+    const seed = rand32(), L = makeLaunch(seed, free.length), v = free.map(rollDie);
+    free.forEach((k, j) => { M.dice[k].v = v[j]; });
+    M.roll = { seed, idx: free, L };
+    M.ts = "rolled";
+    const farkle = !hasScore(v);
+    if (farkle) M.busy = true;
+    hostEmit("DICE_ROLLED", { seed, idx: free, v, hot }, hot ? `Hot dice! ${p.name} rolls all six.` : `${p.name} rolled ${free.length} ${free.length === 1 ? "die" : "dice"}.`);
+    // Screens play the set-aside glide before the throw, so wait that out too before calling the farkle.
+    if (farkle) hostLater(simFor(M.roll).dur * 1000 + 350 + (setAside ? GLIDE_MAX : 0), hostFarkle);
+  }
+  function hostFarkle() {
+    const M = S.M;
+    if (M.phase !== "play" || M.ts !== "rolled") return;
+    const p = M.players[M.turn], lost = M.tp;
+    M.tp = 0; M.ts = "farkle"; M.busy = true;
+    hostEmit("FARKLE", { lost }, lost ? `Farkle! ${p.name} loses ${fmt(lost)}.` : `Farkle! Nothing for ${p.name}.`);
+    hostLater(2100, passTurn);
+  }
+  function hostBank(sel) {
+    const M = S.M, p = M.players[M.turn];
+    if (M.ts !== "rolled") return;
+    applySel(sel);
+    const idx = selIdx(), val = scoreOf(idx.map((k) => M.dice[k].v));
+    if (val <= 0) { hostPublish([]); return; }
+    idx.forEach((k) => { M.dice[k].s = 2; });
+    M.tp += val;
+    const pts = M.tp;
+    p.score += pts;
+    M.ts = "banked"; M.busy = true;
+    let fin = false;
+    if (M.fin === null && p.score >= M.target) { M.fin = M.turn; fin = true; }
+    hostEmit("BANKED", { pts, total: p.score, fin, hot: !!M.th }, fin ? `${p.name} banked ${fmt(pts)} and reached ${fmt(p.score)}. Everyone else gets one last turn.` : `${p.name} banked ${fmt(pts)}.`);
+    hostLater(1400, passTurn);
+  }
+  // Next seated player who is still here. Away players are skipped (and counted).
+  // In the final round, coming back around to the player who triggered it ends the game.
+  function passTurn(leaver) {
+    const M = S.M;
+    if (M.phase !== "play") return;
+    M.busy = false;
+    const n = M.players.length, skipped = [];
+    if (leaver) { leaver.skips++; skipped.push(leaver.name); }   // left in the middle of their own turn
+    let i = M.turn, over = false;
+    for (let step = 0; step < n; step++) {
+      i = (i + 1) % n;
+      if (M.fin !== null && i === M.fin) { over = true; break; }
+      const p = M.players[i];
+      if (p.gone && i !== M.turn) { p.skips++; skipped.push(p.name); continue; }
+      break;
+    }
+    if (over) { endGame(); return; }
+    M.turn = i; M.ts = "pre"; M.tp = 0; M.th = false; M.roll = null;
+    M.dice.forEach((d) => { d.s = 0; });
+    const away = skipped.length ? `${skipped.join(", ")} ${skipped.length === 1 ? "is" : "are"} away, turn skipped. ` : "";
+    hostEmit("TURN_PASSED", { skipped }, `${away}${M.players[i].name}'s turn.`);
+  }
+  function endGame() {
+    const M = S.M;
+    const top = Math.max(...M.players.map((p) => p.score));
+    const winners = M.players.filter((p) => p.score === top);
+    M.phase = "over"; M.busy = false; M.win = winners.map((p) => p.pid);
+    hostEmit("GAME_OVER", { win: M.win }, winners.length > 1 ? `Tie at ${fmt(top)}: ${winners.map((p) => p.name).join(" and ")}.` : `${winners[0].name} wins with ${fmt(top)}.`);
+  }
+
+  // Presence-driven housekeeping, run on every presence change and on a slow tick.
+  function hostPresenceTick() {
+    const M = S.M;
+    if (!S.isHost || !M) return;
+    updateAbsent();
+    let changed = false;
+    if (M.phase === "lobby") {
+      const before = JSON.stringify(M.players);
+      M.players = M.players.filter((p) => p.pid === S.pid || absentFor(p.pid) < GRACE);
+      for (const pid of S.present) if (M.players.length < MAX_PLAYERS && !M.players.some((p) => p.pid === pid)) M.players.push(newPlayer(pid));
+      for (const p of M.players) { const inf = S.info.get(p.pid); if (inf) { p.name = inf.name; p.ready = inf.ready; p.dc = diceColor(inf.dc); } }
+      changed = JSON.stringify(M.players) !== before;
+      if (changed) hostEmit("LOBBY", {}, null);
+      return;
+    }
+    for (const p of M.players) {
+      const away = p.pid !== S.pid && absentFor(p.pid) >= GRACE;
+      if (away !== p.gone) { p.gone = away; hostEmit(away ? "PLAYER_LEFT" : "PLAYER_BACK", { pid: p.pid }, away ? `${p.name} left the table.` : `${p.name} is back.`); }
+    }
+    // The active player walked away: move on (unless a farkle or bank is already resolving).
+    if (M.phase === "play" && M.players[M.turn] && M.players[M.turn].gone && !M.busy) passTurn(M.players[M.turn]);
+  }
+
+  // Non-hosts watch for a missing host and the first connected seat takes over.
+  function hostCheck() {
+    if (S.isHost || !S.st || !S.inRoom) return;
+    if (absentFor(S.st.host) < GRACE) return;
+    const cand = S.st.players.find((p) => S.present.has(p.pid));
+    if (cand && cand.pid === S.pid) becomeHost(S.st, "took over as host");
+  }
+  function becomeHost(base, why) {
+    S.isHost = true;
+    S.M = JSON.parse(JSON.stringify(base));
+    S.M.host = S.pid;
+    S.seenIntents = new Map();
+    const me = S.M.players.find((p) => p.pid === S.pid);
+    hostEmit("HOST_CHANGED", {}, `${me ? me.name : "A spectator"} ${why}.`);
+    // Resume whatever the old host was waiting on.
+    const M = S.M;
+    if (M.phase === "play") {
+      if (M.ts === "rolled" && M.busy) hostLater(1200, hostFarkle);
+      else if (M.ts === "farkle" || M.ts === "banked") hostLater(1500, passTurn);
+    }
+    hostPresenceTick();
+  }
+  function stepDown() { clearTimeout(S.hostTimer); S.isHost = false; S.M = null; save("s", "fk.host", null); if (S.net && S.net.clearHost) S.net.clearHost(); }
+
+  /* ---------- 10. Player actions ---------- */
+  const myTurn = (st) => !!st && st.phase === "play" && !!st.players[st.turn] && st.players[st.turn].pid === S.pid;
+  function act(t, d) {
+    const i = { sid: S.me.sid, n: ++S.myN, pid: S.pid, t, d: d || {} };
+    if (S.isHost) hostIntent(i); else if (S.net) S.net.sendIntent(i);
+  }
+  function curSel() {
+    const st = S.st;
+    if (!st) return [];
+    if (S.localSel && myTurn(st) && st.ts === "rolled") return S.localSel.filter((k) => st.dice[k].s !== 2);
+    return st.dice.map((d, k) => (d.s === 1 ? k : -1)).filter((k) => k >= 0);
+  }
+  const canAct = () => myTurn(S.st) && !S.anim && !S.st.busy && S.awaitEv == null && (S.st.ts === "pre" || S.st.ts === "rolled");
+  function toggleDie(k) {
+    const st = S.st;
+    if (!canAct() || st.ts !== "rolled" || st.dice[k].s === 2) return;
+    const sel = curSel();
+    const next = sel.includes(k) ? sel.filter((x) => x !== k) : sel.concat([k]).sort((a, b) => a - b);
+    S.localSel = next;
+    SND.select(next.includes(k));
+    act("sel", { sel: next });
+    S.dirty = true;
+    renderTurn();
+  }
+  function sendTurn(t) {
+    if (!canAct()) return;
+    S.awaitEv = S.st.evN; S.awaitAt = Date.now();   // block double taps until the host answers
+    act(t, { sel: curSel() });
+    renderTurn();
+  }
+  function setReady(v) { S.me.ready = v; if (S.net) S.net.setMe(S.me); if (S.isHost) hostPresenceTick(); renderAll(); }
+
+  /* ---------- 11. Rooms: create, join, leave ---------- */
+  async function enterRoom(code, create, mode) {
+    if (S.inRoom || S.joining) return;
+    const name = $("#name").value.trim();
+    S.me.name = cleanName(name || "Player " + (1 + (rand32() % 90)));
+    if (!name) { $("#name").value = S.me.name; renderNameHint(); }
+    save("l", "fk.name", S.me.name);
+    S.me.ready = false;
+    S.joining = true;
+    let net;
+    try { net = await pickNet(); } catch (e) { S.joining = false; toast(e.message); openSettings(true); return; }
+    Object.assign(S, { net, netKind: net.kind, code, inRoom: true, st: null, M: null, isHost: false, lastEvN: -1, anim: null, localSel: null,
+      present: new Set([S.pid]), info: new Map([[S.pid, S.me]]), absent: new Map(), seenIntents: new Map(), joinedAt: Date.now(), conn: "wait", resume: null });
+    if (create) { S.isHost = true; S.M = newState(code, mode); }
+    else { const saved = load("s", "fk.host"); if (saved && saved.code === code && saved.host === S.pid) S.resume = saved; }
+    renderAll();
+    try { await net.join(code, S.me, HD); }
+    catch (e) {
+      S.joining = false; leaveRoom();
+      toast(net.kind === "supabase" ? "Couldn't reach Supabase Realtime. Check the URL and publishable key in Settings, that the project isn't paused, and that Realtime allows public access." : "Couldn't open the room: " + (e && e.message ? e.message : "unknown error"));
+      return;
+    }
+    S.joining = false;
+    save("s", "fk.sess", { code, name: S.me.name });   // per tab: a reload rejoins as the same person
+    if (S.isHost) hostPublish([]);
+    else {
+      act("sync");
+      setTimeout(() => { if (S.inRoom && !S.st && !S.isHost) act("sync"); }, 2500);
+      if (S.resume) setTimeout(tryResume, 2200);
+    }
+  }
+  // A host that reloads comes back with its saved snapshot, unless someone else took over meanwhile.
+  function tryResume() {
+    const saved = cleanState(S.resume); S.resume = null;
+    if (!saved || !S.inRoom || S.isHost) return;
+    if (S.st && S.st.host !== S.pid && S.present.has(S.st.host)) return;
+    becomeHost(S.st && ahead(S.st, saved) ? S.st : saved, "is back as host");
+  }
+  function leaveRoom() {
+    try { if (S.net) S.net.leave(); } catch (e) { /* ignore */ }
+    clearTimeout(S.hostTimer);
+    Object.assign(S, { net: null, inRoom: false, st: null, M: null, isHost: false, anim: null, localSel: null, conn: "off", code: "" });
+    save("s", "fk.sess", null); save("s", "fk.host", null);
+    renderAll();
+  }
+
+  /* ---------- 12a. Sound ----------
+     Everything is synthesized with Web Audio, so there are no files to load. Signal flow:
+       lounge bus (jazz trio + room tone) --> master     faded out while a game is in play
+       sfx bus (dice, chips, hot dice)    --> master
+       both send into one long convolution reverb: the big, smoky casino floor.
+     Browsers only allow audio after a tap or key press, so nothing plays until then. */
+  const SND = (() => {
+    let A = null;      // graph in use: the live one, or an offline one while measure() renders
+    let live = null, muted = !!load("l", "fk.mute"), want = 0, running = false;   // want: lounge level 0..1
+    let stopTimer = 0, pumpTimer = 0, nextBar = 0, bar = 0, nextAmb = 0;
+    const rnd = Math.random;
+    const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+
+    function noiseBuffer(ac, secs) {
+      const n = Math.floor(ac.sampleRate * secs), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = rnd() * 2 - 1;
+      return b;
+    }
+    function impulse(ac, secs) {
+      const n = Math.floor(ac.sampleRate * secs), b = ac.createBuffer(2, n, ac.sampleRate);
+      for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (rnd() * 2 - 1) * Math.pow(1 - i / n, 3.2); }
+      return b;
+    }
+    function build(ac) {
+      const g = (v) => { const n = ac.createGain(); n.gain.value = v; return n; };
+      const comp = ac.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 3; comp.connect(ac.destination);
+      const master = g(muted ? 0 : 0.9); master.connect(comp);
+      const verb = ac.createConvolver(); verb.buffer = impulse(ac, 2.8);
+      const verbOut = g(0.3); verb.connect(verbOut); verbOut.connect(master);
+      const lounge = g(0); lounge.connect(master);
+      const loungeSend = g(0.35); lounge.connect(loungeSend); loungeSend.connect(verb);
+      const warm = ac.createBiquadFilter(); warm.type = "lowpass"; warm.frequency.value = 5200; warm.connect(lounge);
+      const music = g(0.4); music.connect(warm);
+      // Electric piano bus with a slow tremolo, the classic lounge Rhodes wobble.
+      const rhodes = g(0.78); rhodes.connect(music);
+      const lfo = ac.createOscillator(), depth = g(0.22); lfo.frequency.value = 4.2; lfo.connect(depth); depth.connect(rhodes.gain); lfo.start();
+      const amb = g(0.5); amb.connect(lounge);
+      const sfx = g(1); sfx.connect(master);
+      const sfxSend = g(0.12); sfx.connect(sfxSend); sfxSend.connect(verb);
+      return { ac, master, lounge, music, rhodes, amb, sfx, verb, white: noiseBuffer(ac, 2, false) };
+    }
+
+    // Small building blocks. Every node is scheduled to stop, so nothing leaks.
+    function env(param, t, peak, a, d) { param.setValueAtTime(0.0001, t); param.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + a); param.exponentialRampToValueAtTime(0.0001, t + a + d); }
+    function osc(type, f, t, end) { const o = A.ac.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); o.start(t); o.stop(end); return o; }
+    function noise(t, end, buf) { const s = A.ac.createBufferSource(); s.buffer = buf || A.white; s.loop = true; s.start(t, rnd() * 1.5); s.stop(end); return s; }
+    function filt(type, f, q) { const b = A.ac.createBiquadFilter(); b.type = type; b.frequency.value = f; if (q != null) b.Q.value = q; return b; }
+    function amp() { const n = A.ac.createGain(); n.gain.value = 0; return n; }
+    function out(node, p, dest) {
+      if (A.ac.createStereoPanner) { const s = A.ac.createStereoPanner(); s.pan.value = clamp(p, -1, 1); node.connect(s); s.connect(dest); } else node.connect(dest);
+    }
+
+    /* --- The trio: Rhodes, upright bass, brushes and ride, plus a little vibraphone --- */
+    function rhodes(t, m, dur, vel) {
+      const f = mtof(m), end = t + dur + 0.8;
+      const car = osc("sine", f, t, end), mod = osc("sine", f, t, end), mg = A.ac.createGain();
+      mg.gain.setValueAtTime(f * 1.4 * vel, t); mg.gain.exponentialRampToValueAtTime(f * 0.08, t + 0.5);   // FM bark that mellows
+      mod.connect(mg); mg.connect(car.frequency);
+      const tine = osc("sine", f * 7.1, t, t + 0.3), tg = amp(); env(tg.gain, t, 0.012 * vel, 0.002, 0.25); tine.connect(tg);
+      const a = amp();
+      a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(0.07 * vel, t + 0.008);
+      a.gain.exponentialRampToValueAtTime(0.025 * vel, t + dur); a.gain.exponentialRampToValueAtTime(0.0001, end);
+      car.connect(a); out(a, (m - 62) / 30, A.rhodes); out(tg, 0, A.rhodes);
+    }
+    function bassNote(t, m, dur) {
+      const f = mtof(m), end = t + dur + 0.3;
+      const o1 = osc("triangle", f, t, end), o2 = osc("sine", f, t, end), lp = filt("lowpass", 520, 0.7), a = amp();
+      a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(0.32, t + 0.012);
+      a.gain.exponentialRampToValueAtTime(0.12, t + 0.18); a.gain.exponentialRampToValueAtTime(0.0001, end);
+      o1.connect(lp); o2.connect(lp); lp.connect(a); a.connect(A.music);
+    }
+    function brush(t, peak, len) {
+      const n = noise(t, t + len + 0.05), bp = filt("bandpass", 5200, 0.7), a = amp();
+      a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(peak, t + len * 0.4); a.gain.exponentialRampToValueAtTime(0.0001, t + len);
+      n.connect(bp); bp.connect(a); out(a, 0.25, A.music);
+    }
+    function ride(t, peak) {
+      const n = noise(t, t + 0.6), hp = filt("highpass", 7500), a = amp(); env(a.gain, t, peak, 0.003, 0.5); n.connect(hp); hp.connect(a); out(a, -0.3, A.music);
+      const o = osc("sine", 5274, t, t + 0.6), og = amp(); env(og.gain, t, peak * 0.25, 0.002, 0.5); o.connect(og); out(og, -0.3, A.music);
+    }
+    function vibes(t, m, vel, dest) {
+      const f = mtof(m), o = osc("sine", f, t, t + 2.2), o2 = osc("sine", f * 4, t, t + 0.4), a = amp(), a2 = amp();
+      env(a.gain, t, 0.05 * vel, 0.004, 2.0); env(a2.gain, t, 0.01 * vel, 0.002, 0.3);
+      o.connect(a); o2.connect(a2); out(a, 0.35, dest || A.music); out(a2, 0.35, dest || A.music);
+    }
+    // A slow ii-V turnaround in F with rootless jazz voicings. q is the third the bass walks to.
+    const PROG = [
+      { b: 41, q: 4, v: [57, 60, 64, 67] },   // Fmaj9
+      { b: 38, q: 3, v: [53, 57, 60, 64] },   // Dm9
+      { b: 43, q: 3, v: [58, 62, 65, 69] },   // Gm9
+      { b: 36, q: 4, v: [58, 64, 69] },       // C13
+      { b: 45, q: 3, v: [55, 60, 64] },       // Am7
+      { b: 38, q: 4, v: [54, 60, 63] },       // D7b9
+      { b: 43, q: 3, v: [58, 62, 65, 69] },   // Gm9
+      { b: 36, q: 4, v: [58, 64, 67] },       // C7
+    ];
+    const BEAT = 60 / 74, SW = 2 / 3;   // 74 bpm, swung eighths
+    function scheduleBar(t, i) {
+      const ch = PROG[i % PROG.length], nx = PROG[(i + 1) % PROG.length];
+      const comp = i % 2 ? [[0, 2.4, 0.9], [2 + SW, 1.0, 0.6]] : [[0, 1.4, 1], [1 + SW, 2.0, 0.7]];
+      for (const [b, d, v] of comp) ch.v.forEach((m, k) => rhodes(t + b * BEAT + k * 0.012, m, d * BEAT, v * (0.85 + rnd() * 0.3)));
+      const r = ch.b, approach = nx.b + (nx.b > r ? -1 : 1);   // walk up the chord, then a half step into the next root
+      [r, r + ch.q, r + 7, approach].forEach((m, k) => bassNote(t + k * BEAT, m, BEAT * 0.92));
+      for (let k = 0; k < 4; k++) brush(t + k * BEAT, k % 2 ? 0.035 : 0.018, BEAT * 0.9);
+      for (const b of [0, 1, 1 + SW, 2, 3, 3 + SW]) ride(t + b * BEAT, b % 1 ? 0.006 : 0.01);
+      if (i % 2 === 1) {   // a few vibraphone notes from the chord, every other bar
+        const tones = ch.v.map((m) => m + 12);
+        let k = Math.floor(rnd() * tones.length);
+        for (const b of [1, 1 + SW, 2, 2 + SW, 3, 3 + SW].filter(() => rnd() < 0.5).slice(0, 4)) {
+          vibes(t + b * BEAT, tones[k], 0.6 + rnd() * 0.4);
+          k = clamp(k + (rnd() < 0.5 ? -1 : 1), 0, tones.length - 1);
+        }
+      }
+    }
+
+    /* --- Room tone: now and then chips, glasses, a slot machine across the floor. (The steady
+           crowd murmur was cut: as filtered noise it read as wind and sat over the music.) --- */
+    function chipClack(t, peak, dest, f) {
+      const o = osc("sine", f || 2600 + rnd() * 1600, t, t + 0.08), a = amp(); env(a.gain, t, peak, 0.001, 0.06); o.connect(a); a.connect(dest);
+      const n = noise(t, t + 0.03), bp = filt("bandpass", 4200, 2), na = amp(); env(na.gain, t, peak * 1.3, 0.001, 0.018); n.connect(bp); bp.connect(na); na.connect(dest);
+    }
+    function clink(t, peak) {
+      for (const f of [2637, 3520 * (1 + rnd() * 0.01)]) { const o = osc("sine", f, t, t + 1.2), a = amp(); env(a.gain, t, peak, 0.001, 1.1); o.connect(a); out(a, (rnd() - 0.5) * 1.4, A.amb); }
+    }
+    function slotJingle(t) {
+      const base = 72 + Math.floor(rnd() * 5), side = rnd() < 0.5 ? -0.8 : 0.8;
+      [0, 4, 7, 12, 7, 12, 16].forEach((s, i) => {
+        const tt = t + i * 0.09, o = osc("square", mtof(base + s), tt, tt + 0.25), lp = filt("lowpass", 2400), a = amp();
+        env(a.gain, tt, 0.004, 0.003, 0.2); o.connect(lp); lp.connect(a); out(a, side, A.amb);
+      });
+    }
+    function ambEvent(t) {
+      const r = rnd();
+      if (r < 0.5) { const g = A.ac.createGain(); out(g, (rnd() - 0.5) * 1.6, A.amb); const n = 2 + Math.floor(rnd() * 4); for (let i = 0; i < n; i++) chipClack(t + i * (0.035 + rnd() * 0.04), 0.012, g); }
+      else if (r < 0.82) clink(t, 0.008);
+      else slotJingle(t);
+    }
+
+    // Lookahead scheduler: keep 1.5 s of music and room tone queued on the audio clock.
+    function pump(horizon) {
+      while (nextBar < horizon) { scheduleBar(nextBar, bar++); nextBar += 4 * BEAT; }
+      while (nextAmb < horizon) { ambEvent(nextAmb); nextAmb += 2 + rnd() * 5; }
+    }
+    function startLounge() {
+      if (running) return;
+      running = true;
+      const t = A.ac.currentTime + 0.1;
+      nextBar = t + 0.4; bar = 0; nextAmb = t + 1.5;
+      pump(t + 1.5);
+      pumpTimer = setInterval(() => pump(live.ac.currentTime + 1.5), 250);
+    }
+    function stopLounge() { running = false; clearInterval(pumpTimer); }
+    // Fade the lounge toward the level the screen wants: full at the door and lobby; during play,
+    // silent unless the player kept the music on (then a little under the dice).
+    function sync() {
+      if (!live) return;
+      const lvl = muted ? 0 : want, g = live.lounge.gain, now = live.ac.currentTime;
+      clearTimeout(stopTimer);
+      g.cancelScheduledValues(now); g.setValueAtTime(g.value, now);
+      if (lvl > 0) { startLounge(); g.setTargetAtTime(lvl, now, 1.0); }
+      else { g.setTargetAtTime(0, now, 1.3); stopTimer = setTimeout(() => { if (!(want > 0 && !muted)) stopLounge(); }, 7000); }
+    }
+
+    /* --- Table sounds --- */
+    function click(t, k) {   // die against die: a bright, hard click
+      const o = osc("sine", 1900 + rnd() * 1300, t, t + 0.06), a = amp(); env(a.gain, t, 0.09 * k + 0.01, 0.001, 0.045); o.connect(a); a.connect(A.sfx);
+      const n = noise(t, t + 0.02), bp = filt("bandpass", 3800, 3), na = amp(); env(na.gain, t, 0.12 * k + 0.01, 0.001, 0.012); n.connect(bp); bp.connect(na); na.connect(A.sfx);
+    }
+    function thud(t, k) {    // landing on felt: dull and short
+      const o = osc("sine", 150 + rnd() * 50, t, t + 0.08), a = amp(); o.frequency.exponentialRampToValueAtTime(80, t + 0.06);
+      env(a.gain, t, 0.14 * k + 0.01, 0.002, 0.06); o.connect(a); a.connect(A.sfx);
+      const n = noise(t, t + 0.05), lp = filt("lowpass", 900), na = amp(); env(na.gain, t, 0.1 * k + 0.005, 0.002, 0.035); n.connect(lp); lp.connect(na); na.connect(A.sfx);
+    }
+    function knock(t, k) {   // into the padded rail: a wooden knock
+      const o = osc("triangle", 260 + rnd() * 40, t, t + 0.1), a = amp(); o.frequency.exponentialRampToValueAtTime(170, t + 0.08);
+      env(a.gain, t, 0.16 * k + 0.01, 0.002, 0.08); o.connect(a); a.connect(A.sfx);
+      const n = noise(t, t + 0.04), bp = filt("bandpass", 1500, 1.2), na = amp(); env(na.gain, t, 0.08 * k, 0.001, 0.03); n.connect(bp); bp.connect(na); na.connect(A.sfx);
+    }
+    // The impacts come from the physics step, so every screen hears each hit as the die lands there.
+    function roll(sim, t0) {
+      for (let i = 0; i < 4; i++) click(t0 + i * 0.022 + rnd() * 0.01, 0.35);   // dice leaving the hand
+      const last = [-1, -1, -1];
+      let count = 0;
+      for (const [s, kind, v] of sim.hits) {
+        if (v < 45 || count > 48) continue;
+        const t = t0 + s * DT;
+        if (t - last[kind] < 0.018) continue;
+        last[kind] = t; count++;
+        const k = Math.min(1, v / 700);
+        if (kind === 0) thud(t, k); else if (kind === 1) knock(t, k); else click(t, k);
+      }
+      // Sliding across the felt: a soft hiss that follows how fast the dice are moving.
+      const n = sim.n, every = 3, vals = [];
+      for (let s = every; s < sim.steps; s += every) {
+        let sp = 0;
+        for (let i = 0; i < n; i++) {
+          const o = (s * n + i) * 4, p = ((s - every) * n + i) * 4;
+          if (sim.fr[o + 2] > 0.5) continue;
+          sp += Math.hypot(sim.fr[o] - sim.fr[p], sim.fr[o + 1] - sim.fr[p + 1]) / (every * DT);
+        }
+        vals.push(Math.min(0.06, 0.0001 + sp / 30000));
+      }
+      if (vals.length > 2) {
+        const nz = noise(t0, t0 + sim.dur + 0.1), bp = filt("bandpass", 1100, 0.6), a = amp();
+        a.gain.setValueCurveAtTime(Float32Array.from(vals), t0, sim.dur);
+        nz.connect(bp); bp.connect(a); a.connect(A.sfx);
+      }
+    }
+    function select(on, t) {   // a soft tick, up for set aside and down for put back
+      const o = osc("sine", on ? 1320 : 990, t, t + 0.1), a = amp(); o.frequency.exponentialRampToValueAtTime(on ? 1560 : 820, t + 0.06);
+      env(a.gain, t, 0.05, 0.003, 0.08); o.connect(a); a.connect(A.sfx);
+      const n = noise(t, t + 0.02), bp = filt("bandpass", 3000, 2), na = amp(); env(na.gain, t, 0.03, 0.001, 0.012); n.connect(bp); bp.connect(na); na.connect(A.sfx);
+    }
+    function bank(pts, t) {    // chips stacking up, then the house's two-note bell
+      const n = clamp(Math.round(pts / 150), 4, 12);
+      let tt = t;
+      for (let i = 0; i < n; i++) { chipClack(tt, 0.06, A.sfx, 2300 + i * 90 + rnd() * 200); tt += 0.05 + rnd() * 0.02; }
+      const tb = tt + 0.05;
+      [[84, 0], [91, 0.11]].forEach(([m, d]) => {
+        const o = osc("sine", mtof(m), tb + d, tb + d + 1.6), o2 = osc("sine", mtof(m) * 2.76, tb + d, tb + d + 0.5), a = amp(), a2 = amp();
+        env(a.gain, tb + d, 0.06, 0.004, 1.4); env(a2.gain, tb + d, 0.015, 0.002, 0.35);
+        o.connect(a); o2.connect(a2); a.connect(A.sfx); a2.connect(A.sfx);
+      });
+    }
+    function hot(t) {          // ignition: a rising whoosh, a low thump, crackling embers and a bright run up the vibes
+      const n = noise(t, t + 1.1), bp = filt("bandpass", 300, 1.4), a = amp();
+      bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(4200, t + 0.7);
+      a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(0.22, t + 0.45); a.gain.exponentialRampToValueAtTime(0.0001, t + 1.05);
+      n.connect(bp); bp.connect(a); a.connect(A.sfx);
+      const o = osc("sine", 110, t, t + 0.5), oa = amp(); o.frequency.exponentialRampToValueAtTime(45, t + 0.4); env(oa.gain, t, 0.3, 0.005, 0.4); o.connect(oa); oa.connect(A.sfx);
+      for (let i = 0; i < 26; i++) {
+        const tt = t + 0.2 + rnd() * 1.6, c = noise(tt, tt + 0.02), hp = filt("highpass", 2000 + rnd() * 3000), ca = amp();
+        env(ca.gain, tt, 0.02 + rnd() * 0.04, 0.0005, 0.008 + rnd() * 0.01); c.connect(hp); hp.connect(ca); out(ca, (rnd() - 0.5) * 1.6, A.sfx);
+      }
+      [72, 76, 79, 84, 88].forEach((m, i) => vibes(t + 0.12 + i * 0.075, m, 1.4, A.sfx));
+    }
+    // Applause from a well-heeled crowd: a dozen-odd pairs of hands, unhurried, swelling and settling
+    // in the hall's reverb. Each pair keeps its own tempo, tone and seat, so it never sounds looped.
+    function clap(t, peak, f, dest) {
+      const n = noise(t, t + 0.06), bp = filt("bandpass", f, 1.1), a = amp();
+      a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + 0.002);
+      a.gain.exponentialRampToValueAtTime(0.0001, t + 0.03 + rnd() * 0.025);
+      n.connect(bp); bp.connect(a); a.connect(dest);
+    }
+    function applause(t, secs) {
+      const hall = A.ac.createGain(); hall.gain.value = 1; hall.connect(A.sfx);
+      const send = A.ac.createGain(); send.gain.value = 0.5; hall.connect(send); send.connect(A.verb);
+      for (let h = 0; h < 16; h++) {
+        const g = A.ac.createGain(); out(g, (rnd() - 0.5) * 1.7, hall);
+        const rate = 3.4 + rnd() * 1.5, tone = 800 + rnd() * 1500, stop = t + secs * (0.7 + rnd() * 0.3);
+        for (let tt = t + rnd() * 0.3; tt < stop; tt += (0.85 + rnd() * 0.3) / rate) {
+          const u = (tt - t) / secs, swell = Math.min(1, u * 4.5) * Math.pow(Math.max(0, 1 - u), 1.4);
+          clap(tt, 0.9 * swell * (0.6 + rnd() * 0.5), tone, g);
+        }
+      }
+    }
+    // Farkle: the dice go dead. A muffled thump, then a muted horn sagging down by half steps.
+    function horn(t, m, len, last) {
+      const f = mtof(m), end = t + len + 0.2;
+      const o = osc("sawtooth", f, t, end), o2 = osc("sawtooth", f * 1.006, t, end), lp = filt("lowpass", 450, 5), a = amp();
+      lp.frequency.setValueAtTime(380, t); lp.frequency.linearRampToValueAtTime(1300, t + 0.09); lp.frequency.linearRampToValueAtTime(480, t + len);   // the mute opening and closing
+      if (last) {   // the last note droops and wobbles
+        o.frequency.linearRampToValueAtTime(f * 0.94, end); o2.frequency.linearRampToValueAtTime(f * 1.006 * 0.94, end);
+        const lfo = osc("sine", 5.5, t + 0.2, end), d = A.ac.createGain(); d.gain.value = f * 0.012; lfo.connect(d); d.connect(o.frequency); d.connect(o2.frequency);
+      }
+      a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(0.07, t + 0.035);
+      a.gain.setValueAtTime(0.07, t + len * 0.75); a.gain.exponentialRampToValueAtTime(0.0001, end);
+      o.connect(lp); o2.connect(lp); lp.connect(a); out(a, 0.15, A.sfx);
+    }
+    function farkle(t) {
+      const o = osc("sine", 95, t, t + 0.4), oa = amp(); o.frequency.exponentialRampToValueAtTime(48, t + 0.3);
+      env(oa.gain, t, 0.28, 0.004, 0.32); o.connect(oa); oa.connect(A.sfx);
+      [[55, 0.12, 0.3], [54, 0.46, 0.3], [53, 0.8, 0.95]].forEach(([m, d, len], i) => horn(t + d, m, len, i === 2));
+    }
+    // Your turn: two soft notes up the vibes, like a call bell at the cage.
+    function turn(t) { [[77, 0], [84, 0.11]].forEach(([m, d]) => vibes(t + d, m, 1.5, A.sfx)); }
+    // A die set down in the tray.
+    function tray(t) { thud(t, 0.32); click(t + 0.004, 0.1); }
+
+    const now = () => live.ac.currentTime + 0.01;
+    const ready = () => !!live && live.ac.state === "running" && !muted;
+    return {
+      // First tap or key press: create the audio context (or wake it) and start the lounge if wanted.
+      unlock() {
+        if (!live) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          try { live = A = build(new AC()); } catch (e) { return; }
+        }
+        if (live.ac.state === "suspended" && !document.hidden) live.ac.resume();
+        sync();
+      },
+      lounge(lvl) { if (want !== lvl) { want = lvl; sync(); } },
+      get muted() { return muted; },
+      setMuted(m) {
+        muted = m; save("l", "fk.mute", m ? 1 : null);
+        if (live) live.master.gain.setTargetAtTime(m ? 0 : 0.9, live.ac.currentTime, 0.05);
+        sync();
+      },
+      state: () => (live ? { ctx: live.ac.state, lounge: +live.lounge.gain.value.toFixed(3), running } : null),
+      pause(hidden) { if (live) { if (hidden) live.ac.suspend(); else live.ac.resume(); } },
+      // Optional `delay` (seconds) lines a sound up with an animation that starts later.
+      roll(sim, delay) { if (ready()) roll(sim, now() + (delay || 0)); },
+      select(on) { if (ready()) select(on, now()); },
+      bank(pts) { if (ready()) bank(pts, now()); },
+      hot(delay) { if (ready()) hot(now() + (delay || 0)); },
+      applause(big) { if (ready()) applause(now() + 0.55, big ? 4.2 : 3.2); },
+      farkle(delay) { if (ready()) farkle(now() + (delay || 0)); },
+      turn(delay) { if (ready()) turn(now() + (delay || 0)); },
+      tray(delays) { if (ready()) for (const d of delays) tray(now() + d); },
+      // Test aid: render a part of the mix offline and report its loudness (RMS dBFS) and peak.
+      async measure(part) {
+        const sr = 44100, secs = 10, off = new OfflineAudioContext(2, sr * secs, sr), saved = A;
+        A = build(off); A.master.gain.value = 0.9; A.lounge.gain.value = 1;
+        if (part === "music") for (let i = 0; i < 3; i++) scheduleBar(0.1 + i * 4 * BEAT, i);
+        if (part === "room") [1, 3.5, 6, 8].forEach(ambEvent);
+        if (part === "roll") roll(simulate(makeLaunch(12345, 6)), 0.1);
+        if (part === "bank") bank(600, 0.1);
+        if (part === "hot") hot(0.1);
+        if (part === "select") select(true, 0.1);
+        if (part === "applause") applause(0.1, 4.2);
+        if (part === "farkle") farkle(0.1);
+        if (part === "turn") turn(0.1);
+        A = saved;
+        const buf = await off.startRendering();
+        let sum = 0, peak = 0, n = 0;
+        for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) { const x = Math.abs(d[i]); if (x > peak) peak = x; sum += x * x; n++; } }
+        return { rmsDb: +(10 * Math.log10(sum / n || 1e-12)).toFixed(1), peak: +peak.toFixed(3) };
+      },
+    };
+  })();
+  // Music fades out when the dice come out, unless the player turned "Music in games" on (kept in
+  // localStorage); then it stays, a little under the table sounds.
+  let gameMusic = !!load("l", "fk.gmusic");
+  const syncSound = () => SND.lounge(!S.st || S.st.phase !== "play" ? 1 : gameMusic ? 0.6 : 0);
+  const unlockAudio = () => { SND.unlock(); syncSound(); };
+  document.addEventListener("pointerdown", unlockAudio, true);
+  document.addEventListener("keydown", unlockAudio, true);
+  document.addEventListener("visibilitychange", () => SND.pause(document.hidden));
+
+  /* ---------- 12. Table renderer ---------- */
+  const cv = $("#table"), ctx = cv.getContext("2d");
+  const bgC = document.createElement("canvas"), fgC = document.createElement("canvas");
+  let noisePat = null;
+  function poly(g, pts) { g.beginPath(); pts.forEach((p, i) => { const q = proj(p[0], p[1], p[2]); if (i) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); }); g.closePath(); }
+  function planeXf(g, x, y, z) {
+    const P = proj(x, y, z), A = proj(x + 1, y, z), B = proj(x, y + 1, z);
+    g.setTransform(dpr * (A.x - P.x), dpr * (A.y - P.y), dpr * (B.x - P.x), dpr * (B.y - P.y), dpr * P.x, dpr * P.y);
+  }
+  function woodGrad(g, yTop, yBot, a, b) { const gr = g.createLinearGradient(0, yTop, 0, yBot); gr.addColorStop(0, a); gr.addColorStop(1, b); return gr; }
+  function resize() {
+    const wrap = $("#table-wrap");
+    const w = Math.round(wrap.clientWidth);
+    if (!w) return;
+    const newDpr = Math.min(2, window.devicePixelRatio || 1);
+    if (w === cssW && newDpr === dpr && cv.width) return;
+    cssW = w; dpr = newDpr; cssH = Math.round(w * ASPECT * 1.04);
+    cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+    cv.style.height = cssH + "px";
+    const m = 6;
+    K = (cssW - 2 * m) / (BOUNDS.x1 - BOUNDS.x0);
+    OX = cssW / 2 - K * (BOUNDS.x0 + BOUNDS.x1) / 2;
+    OY = cssH / 2 - K * (BOUNDS.y0 + BOUNDS.y1) / 2;
+    S.cacheKey = "";
+    S.dirty = true;
+  }
+  // Static layers, rebuilt only on resize or mode change: everything behind the dice (bg) and the near rail in front (fg).
+  function buildCaches() {
+    const target = S.st ? S.st.target : 10000;
+    const key = cssW + "x" + dpr + ":" + target;
+    if (S.cacheKey === key) return;
+    S.cacheKey = key;
+    for (const c of [bgC, fgC]) { c.width = cv.width; c.height = cv.height; }
+    if (!noisePat) {
+      const nc = document.createElement("canvas"); nc.width = nc.height = 96;
+      const nx = nc.getContext("2d"), img = nx.createImageData(96, 96), rnd = mulberry32(7);
+      for (let i = 0; i < img.data.length; i += 4) { const v = rnd() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 38; }
+      nx.putImageData(img, 0, 0); noisePat = nc;
+    }
+    let g = bgC.getContext("2d");
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, cssW, cssH);
+    const top = proj(0, -RAIL, RZ).y, bot = proj(0, H + NEAR, -14).y;
+    // Table body and drop shadow.
+    g.save(); g.shadowColor = "rgba(0,0,0,.55)"; g.shadowBlur = 24; g.shadowOffsetY = 10;
+    poly(g, [[-RAIL, -RAIL, RZ], [W + RAIL, -RAIL, RZ], [W + RAIL, H + NEAR, RZ], [-RAIL, H + NEAR, RZ]]);
+    g.fillStyle = woodGrad(g, top, bot, "#5e2c15", "#3a190b"); g.fill(); g.restore();
+    // Inner cushion walls (far, left, right) seen above the felt.
+    poly(g, [[0, 0, RZ], [W, 0, RZ], [W, 0, 0], [0, 0, 0]]); g.fillStyle = "#24100a"; g.fill();
+    poly(g, [[0, 0, RZ], [0, 0, 0], [0, H, 0], [0, H, RZ]]); g.fillStyle = "#2e150b"; g.fill();
+    poly(g, [[W, 0, RZ], [W, H, RZ], [W, H, 0], [W, 0, 0]]); g.fillStyle = "#2a1309"; g.fill();
+    // Felt: lit from above, darker toward the cushions, with a fine nap.
+    poly(g, [[0, 0, 0], [W, 0, 0], [W, H, 0], [0, H, 0]]);
+    const c0 = proj(W / 2, H * 0.48, 0);
+    const fg = g.createRadialGradient(c0.x, c0.y, 10, c0.x, c0.y, cssW * 0.62);
+    fg.addColorStop(0, "#2c9363"); fg.addColorStop(0.55, "#1d6e48"); fg.addColorStop(1, "#0e3d27");
+    g.fillStyle = fg; g.fill();
+    g.save(); g.clip(); g.globalAlpha = 0.5; g.fillStyle = g.createPattern(noisePat, "repeat"); g.fillRect(0, 0, cssW, cssH); g.restore();
+    // Printed table markings, laid in the felt plane.
+    planeXf(g, W / 2, H * 0.47, 0);
+    g.strokeStyle = "rgba(241, 212, 143, .22)"; g.lineWidth = 1.6;
+    g.beginPath(); g.ellipse(0, 0, 150, 92, 0, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.ellipse(0, 0, 143, 85, 0, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = "rgba(241, 212, 143, .2)"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = "46px Limelight, Georgia, serif"; g.fillText("FARKLE", 0, -8);
+    g.font = "600 13px Figtree, system-ui, sans-serif"; g.fillText("FIRST TO " + fmt(target) + "  ·  HOT DICE ROLL AGAIN", 0, 30);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Brass inlay along the cushion tops.
+    g.strokeStyle = "rgba(241, 212, 143, .75)"; g.lineWidth = 1.2;
+    g.beginPath(); [[0, H, RZ], [0, 0, RZ], [W, 0, RZ], [W, H, RZ]].forEach((p, i) => { const q = proj(...p); if (i) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); }); g.stroke();
+    g.strokeStyle = "rgba(241, 212, 143, .25)";
+    poly(g, [[-RAIL + 5, -RAIL + 5, RZ], [W + RAIL - 5, -RAIL + 5, RZ], [W + RAIL - 5, H, RZ], [-RAIL + 5, H, RZ]]); g.stroke();
+
+    // Near rail (drawn over the dice) with the tray for set-aside dice.
+    g = fgC.getContext("2d");
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, cssW, cssH);
+    const nTop = proj(0, H, RZ).y;
+    poly(g, [[-RAIL, H, RZ], [W + RAIL, H, RZ], [W + RAIL, H + NEAR, RZ], [-RAIL, H + NEAR, RZ]]);
+    g.fillStyle = woodGrad(g, nTop, bot, "#6b331a", "#4a220f"); g.fill();
+    poly(g, [[TX0, TY0, TZ], [TX1, TY0, TZ], [TX1, TY1, TZ], [TX0, TY1, TZ]]); g.fillStyle = "#0f3624"; g.fill();
+    g.save(); g.clip(); g.globalAlpha = 0.45; g.fillStyle = g.createPattern(noisePat, "repeat"); g.fillRect(0, 0, cssW, cssH); g.restore();
+    poly(g, [[TX0, TY0, RZ], [TX1, TY0, RZ], [TX1, TY0, TZ], [TX0, TY0, TZ]]); g.fillStyle = "#2a1209"; g.fill();
+    poly(g, [[TX0, TY0, RZ], [TX0, TY0, TZ], [TX0, TY1, TZ], [TX0, TY1, RZ]]); g.fillStyle = "#331709"; g.fill();
+    poly(g, [[TX1, TY0, RZ], [TX1, TY1, RZ], [TX1, TY1, TZ], [TX1, TY0, TZ]]); g.fillStyle = "#331709"; g.fill();
+    poly(g, [[-RAIL, TY1, RZ], [W + RAIL, TY1, RZ], [W + RAIL, H + NEAR, RZ], [-RAIL, H + NEAR, RZ]]);
+    g.fillStyle = woodGrad(g, proj(0, TY1, RZ).y, bot, "#70361b", "#4c2310"); g.fill();
+    poly(g, [[-RAIL, H + NEAR, RZ], [W + RAIL, H + NEAR, RZ], [W + RAIL, H + NEAR, -14], [-RAIL, H + NEAR, -14]]); g.fillStyle = "#2d1409"; g.fill();
+    g.strokeStyle = "rgba(241, 212, 143, .8)"; g.lineWidth = 1.2;
+    g.beginPath(); let q = proj(0, H, RZ); g.moveTo(q.x, q.y); q = proj(W, H, RZ); g.lineTo(q.x, q.y); g.stroke();
+    g.strokeStyle = "rgba(241, 212, 143, .35)";
+    poly(g, [[TX0, TY0, RZ], [TX1, TY0, RZ], [TX1, TY1, RZ], [TX0, TY1, RZ]]); g.stroke();
+    g.fillStyle = "rgba(241, 212, 143, .5)"; g.font = "600 9px Figtree, system-ui, sans-serif"; g.textAlign = "center";
+    q = proj(W / 2, H + NEAR - 6, RZ); g.fillText("SET ASIDE", q.x, q.y);
+  }
+
+  // Where every die is right now: in the tray, tumbling, at rest on the felt, or waiting in hand.
+  function poses(now) {
+    const st = S.st, out = [];
+    if (!st) return out;
+    if (S.anim && (now - S.anim.t0) / 1000 >= S.anim.sim.dur) S.anim = null;
+    const sel = new Set(curSel());
+    const rest = st.roll && st.phase !== "lobby" ? simFor(st.roll) : null;
+    const dim = st.ts === "farkle" && !S.anim;
+    const G = S.glide && now < S.glide.until ? S.glide : (S.glide = null);
+    const waiting = !!S.anim && now < S.anim.t0;   // the throw starts once the glide is done
+    for (let i = 0; i < 6; i++) {
+      const d = st.dice[i], v = d.v, tx = W / 2 + (i - 2.5) * 52;
+      let k;
+      if (G && G.lag.has(i)) {
+        // Lifted off the felt, carried in a low arc and set down in the tray, straightening as it goes.
+        const b = G.from.get(i), u = clamp((now - G.t0 - G.lag.get(i)) / GLIDE_MS, 0, 1);
+        const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2, yaw = b.yaw * (1 - e);
+        if (u >= 1) out.push({ i, where: "tray", x: tx, y: TRAY_Y, z: TZ, R: RFACE[b.v], v: b.v, yaw: 0 });
+        else out.push({ i, where: "glide", x: b.x + (tx - b.x) * e, y: b.y + (TRAY_Y - b.y) * e, z: b.z + (TZ - b.z) * e + Math.sin(Math.PI * u) * 40, R: mul(Rz(yaw), RFACE[b.v]), v: b.v, yaw });
+      } else if (G && waiting && S.anim.idx.includes(i) && G.from.has(i)) {
+        out.push(Object.assign({}, G.from.get(i), { sel: false }));   // still where it was, about to be picked up
+      } else if (d.s === 2 && !(S.anim && S.anim.idx.includes(i))) {
+        out.push({ i, where: "tray", x: tx, y: TRAY_Y, z: TZ, R: RFACE[v], v, yaw: 0 });
+      } else if (S.anim && (k = S.anim.idx.indexOf(i)) >= 0) {
+        const sim = S.anim.sim, t = Math.max(0, now - S.anim.t0) / 1000, f = t / DT;
+        const s0 = Math.min(sim.steps - 1, Math.floor(f)), s1 = Math.min(sim.steps - 1, s0 + 1), a = Math.min(1, f - s0);
+        const o0 = (s0 * sim.n + k) * 4, o1 = (s1 * sim.n + k) * 4, fr = sim.fr;
+        const x = fr[o0] + (fr[o1] - fr[o0]) * a, y = fr[o0 + 1] + (fr[o1 + 1] - fr[o0 + 1]) * a, z = fr[o0 + 2] + (fr[o1 + 2] - fr[o0 + 2]) * a;
+        const yaw = fr[o0 + 3] + (fr[o1 + 3] - fr[o0 + 3]) * a;
+        const sr = sim.srem[s0 * sim.n + k] + (sim.srem[s1 * sim.n + k] - sim.srem[s0 * sim.n + k]) * a;
+        const ax = sim.axes[k];
+        // The tumble angle is proportional to the path still ahead, so it reaches zero (value face up) exactly at rest.
+        const R = mul(Rz(yaw), mul(axisRot(ax[0], ax[1], (sr / HS) * sim.tum[k]), RFACE[v]));
+        out.push({ i, where: "felt", x, y, z, R, v, yaw, rolling: true, hot: S.anim.hot });
+      } else if (rest && (k = st.roll.idx.indexOf(i)) >= 0) {
+        const o = ((rest.steps - 1) * rest.n + k) * 4, yaw = rest.fr[o + 3];
+        out.push({ i, where: "felt", x: rest.fr[o], y: rest.fr[o + 1], z: 0, R: mul(Rz(yaw), RFACE[v]), v, yaw, sel: sel.has(i), dim });
+      } else {
+        const yaw = (i - 2.5) * 0.12;
+        out.push({ i, where: "felt", x: tx, y: H - 46, z: 0, R: mul(Rz(yaw), RFACE[v]), v, yaw, hand: true });
+      }
+    }
+    return out;
+  }
+
+  function shade(rgb, l) { return `rgb(${Math.min(255, Math.round(rgb[0] * l))},${Math.min(255, Math.round(rgb[1] * l))},${Math.min(255, Math.round(rgb[2] * l))})`; }
+  const PIP = [252, 246, 234];
+  let BODY = DICE_COLORS.red.rgb;   // set per frame to the colour of the roller's dice
+  function rrect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  function drawDie(p) {
+    const C = [p.x, p.y, p.z + HS], E = CAM.E, vis = [];
+    for (const f of FACES) {
+      const n = mv(p.R, f.n);
+      const fc = [C[0] + HS * n[0], C[1] + HS * n[1], C[2] + HS * n[2]];
+      const tx = E[0] - fc[0], ty = E[1] - fc[1], tz = E[2] - fc[2];
+      if (n[0] * tx + n[1] * ty + n[2] * tz <= 0) continue;             // facing away from the camera
+      vis.push({ f, n, fc, d: tx * tx + ty * ty + tz * tz });
+    }
+    vis.sort((a, b) => b.d - a.d);
+    for (const s of vis) {
+      const t1 = mv(p.R, s.f.t1), t2 = mv(p.R, s.f.t2), fc = s.fc;
+      const P = proj(fc[0], fc[1], fc[2]);
+      const A = proj(fc[0] + HS * t1[0], fc[1] + HS * t1[1], fc[2] + HS * t1[2]);
+      const B = proj(fc[0] + HS * t2[0], fc[1] + HS * t2[1], fc[2] + HS * t2[2]);
+      ctx.setTransform(dpr * (A.x - P.x), dpr * (A.y - P.y), dpr * (B.x - P.x), dpr * (B.y - P.y), dpr * P.x, dpr * P.y);
+      const lum = (0.4 + 0.62 * Math.max(0, s.n[0] * LIGHT[0] + s.n[1] * LIGHT[1] + s.n[2] * LIGHT[2])) * (p.dim ? 0.55 : 1) * (p.sel ? 1.12 : 1) * (p.hot ? 1.18 : 1);
+      rrect(ctx, -1, -1, 2, 2, 0.34);
+      ctx.fillStyle = shade(BODY, lum); ctx.fill();
+      // Hot dice tumble with glowing, ember-orange edges.
+      if (p.hot) { ctx.lineWidth = 0.16; ctx.strokeStyle = "rgba(255, 168, 64, .95)"; }
+      else { ctx.lineWidth = 0.08; ctx.strokeStyle = shade(BODY, 0.32); }
+      ctx.stroke();
+      ctx.fillStyle = shade(PIP, Math.min(1, lum + 0.25));
+      for (const [u, v] of PIPS[s.f.v]) { ctx.beginPath(); ctx.arc(u * 0.52, v * 0.52, 0.17, 0, Math.PI * 2); ctx.fill(); }
+    }
+  }
+  function drawShadow(p) {
+    planeXf(ctx, p.x + p.z * 0.35, p.y - p.z * 0.45, 0);
+    const r = HS * 1.45 + p.z * 0.08, a = Math.max(0.08, 0.45 - p.z * 0.003);
+    const gr = ctx.createRadialGradient(0, 0, r * 0.25, 0, 0, r);
+    gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+  }
+  function drawRing(p, now) {
+    planeXf(ctx, p.x, p.y, 0.5);
+    const pulse = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : Math.sin(now / 260) * 0.8;
+    ctx.lineWidth = 7; ctx.strokeStyle = "rgba(241, 212, 143, .28)"; ctx.beginPath(); ctx.arc(0, 0, HS * 1.62 + pulse, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 2.2; ctx.strokeStyle = "#f1d48f"; ctx.beginPath(); ctx.arc(0, 0, HS * 1.62 + pulse, 0, Math.PI * 2); ctx.stroke();
+  }
+  // Hot dice flair: a heat flash across the felt and embers drifting up off it, plus (in CSS)
+  // a neon banner, a short scorched shake of the table and the roller's chip catching fire.
+  const FX = { embers: [], start: 0, until: 0 };
+  function hotFlair() {
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const t = performance.now();
+    FX.start = t; FX.until = t + 2600; FX.embers = [];
+    for (let i = 0; i < (reduce ? 24 : 110); i++) {
+      FX.embers.push({ wx: 20 + Math.random() * (W - 40), wy: 20 + Math.random() * (H - 10), vx: (Math.random() - 0.5) * 26, vy: -(50 + Math.random() * 110),
+        max: 0.8 + Math.random() * 1.4, r: 0.8 + Math.random() * 2, delay: Math.random() * 900, ph: Math.random() * 6.283 });
+    }
+    const wrap = $("#table-wrap");
+    wrap.classList.remove("scorch"); void wrap.offsetWidth;
+    if (!reduce) wrap.classList.add("scorch");
+    setTimeout(() => { if (S.st && S.st.phase !== "lobby" && performance.now() >= FX.until) renderGame(); }, 2700);
+    S.dirty = true;
+  }
+  // Ember positions are a function of age, so a dropped frame never bunches them up.
+  function drawFx(now) {
+    if (now >= FX.until) { FX.embers = []; return; }
+    const age = (now - FX.start) / 1000, sc = cssW / 360;
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Normal blending throughout: additive light turns orange to lime on green felt.
+    const glow = Math.max(0, 1 - age / 1.6);
+    if (glow > 0) {
+      const c = proj(W / 2, H * 0.5, 0), g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, cssW * 0.6);
+      g.addColorStop(0, `rgba(255, 110, 25, ${0.3 * glow})`); g.addColorStop(1, "rgba(200, 40, 0, 0)");
+      ctx.fillStyle = g; poly(ctx, [[0, 0, 0], [W, 0, 0], [W, H, 0], [0, H, 0]]); ctx.fill();
+    }
+    for (const e of FX.embers) {
+      const a = (now - FX.start - e.delay) / 1000;
+      if (a < 0 || a > e.max) continue;
+      const p = proj(e.wx, e.wy, 0), life = 1 - a / e.max, hue = 14 + life * 28;
+      const x = p.x + (e.vx * a + Math.sin(a * 5 + e.ph) * 5) * sc, y = p.y + e.vy * a * sc;
+      ctx.fillStyle = `hsla(${hue - 6}, 100%, 48%, ${0.38 * life})`;
+      ctx.beginPath(); ctx.arc(x, y, e.r * 2.2 * sc, 0, 6.283); ctx.fill();
+      ctx.fillStyle = `hsla(${hue + 6}, 100%, ${55 + life * 18}%, ${life})`;
+      ctx.beginPath(); ctx.arc(x, y, e.r * sc * (0.5 + life * 0.5), 0, 6.283); ctx.fill();
+    }
+    ctx.restore();
+  }
+  function draw(now) {
+    buildCaches();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(bgC, 0, 0);
+    const roller = S.st && S.st.players[S.st.turn];
+    BODY = DICE_COLORS[diceColor(roller && roller.dc)].rgb;
+    const ps = poses(now);
+    const felt = ps.filter((p) => p.where === "felt").sort((a, b) => a.y - b.y || a.z - b.z);
+    for (const p of felt) drawShadow(p);
+    for (const p of felt) if (p.sel) drawRing(p, now);
+    for (const p of felt) drawDie(p);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(fgC, 0, 0);
+    for (const p of ps.filter((q) => q.where === "tray")) drawDie(p);
+    for (const p of ps.filter((q) => q.where === "glide")) drawDie(p);   // in the air above the near rail
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    drawFx(now);
+  }
+  // Redraw only while something moves; idle tables cost nothing.
+  function loop(now) {
+    requestAnimationFrame(loop);
+    if ($("#scr-game").hidden || !S.st) return;
+    const pulsing = S.st.dice.some((d) => d.s === 1) || (S.localSel && S.localSel.length);
+    if (S.dirty || S.anim || S.glide || pulsing || now < FX.until + 50) { S.dirty = false; draw(now); }
+  }
+  requestAnimationFrame(loop);
+
+  // Tap to set a die aside: find the die whose projected top is nearest the tap.
+  function pickDie(cx, cy) {
+    let best = null, bd = Infinity;
+    for (const p of poses(performance.now())) {
+      if (p.where !== "felt" || p.rolling || p.hand) continue;
+      const c = proj(p.x, p.y, p.z + HS), e = proj(p.x + HS, p.y, p.z + HS);
+      const r = Math.hypot(e.x - c.x, e.y - c.y) * 1.6, d = Math.hypot(cx - c.x, cy - c.y);
+      if (d < r && d < bd) { bd = d; best = p; }
+    }
+    return best;
+  }
+  // "click" fires once per tap on every device; pointerdown can arrive twice under touch emulation and undo itself.
+  cv.addEventListener("click", (e) => {
+    const r = cv.getBoundingClientRect();
+    const p = pickDie(e.clientX - r.left, e.clientY - r.top);
+    if (p) toggleDie(p.i);
+  });
+  cv.addEventListener("keydown", (e) => {
+    if (/^[1-6]$/.test(e.key)) {
+      // Keys 1-6 pick dice on the felt from left to right.
+      const felt = poses(performance.now()).filter((p) => p.where === "felt" && !p.hand && !p.rolling).sort((a, b) => proj(a.x, a.y, 0).x - proj(b.x, b.y, 0).x);
+      const p = felt[+e.key - 1];
+      if (p) { toggleDie(p.i); e.preventDefault(); }
+    } else if (e.key === "r" || e.key === "R") { if (!$("#btn-roll").disabled && !$("#btn-roll").hidden) sendTurn("roll"); }
+    else if (e.key === "b" || e.key === "B") { if (!$("#btn-bank").disabled && !$("#btn-bank").hidden) sendTurn("bank"); }
+  });
+
+  /* ---------- 13. Screens ---------- */
+  function showScreen(id) { for (const s of ["start", "lobby", "game"]) $("#scr-" + s).hidden = s !== id; }
+  function renderAll() {
+    const st = S.st;
+    const screen = !S.inRoom ? "start" : !st || st.phase === "lobby" ? "lobby" : "game";
+    showScreen(screen);
+    $("#gmusic").hidden = screen !== "game";   // the lounge always plays at the door and lobby
+    renderConn();
+    if (screen === "lobby") renderLobby();
+    if (screen === "game") { resize(); renderGame(); }
+    syncSound();
+    S.dirty = true;
+  }
+  function renderConn() {
+    const c = $("#conn");
+    const state = S.inRoom ? S.conn : "off";
+    c.dataset.state = state;
+    const label = { room: "Claude room", supabase: "Supabase", tabs: "This device" }[S.netKind] || "Online";
+    $("#conn-text").textContent = c.title = state === "on" ? label : state === "wait" ? "Connecting" : state === "lost" ? "Reconnecting" : "Offline";
+  }
+  function seatColor(i) { return SEAT_COLORS[i] || "#a3b3a9"; }
+  const rgbCss = (k) => "rgb(" + DICE_COLORS[diceColor(k)].rgb.join(",") + ")";
+  function crownEl() {
+    const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.setAttribute("class", "crown"); s.setAttribute("viewBox", "0 0 26 20"); s.setAttribute("role", "img"); s.setAttribute("aria-label", "In the lead");
+    s.innerHTML = '<defs><linearGradient id="crg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe7a8"/><stop offset="1" stop-color="#c9952f"/></linearGradient></defs>'
+      + '<path d="M2 7l5.5 4L13 3l5.5 8L24 7l-2.2 10H4.2z" fill="url(#crg)" stroke="#6e4c10" stroke-width="1.1" stroke-linejoin="round"/>'
+      + '<rect x="4.2" y="15.2" width="17.6" height="2.6" rx="1" fill="#b98424" stroke="#6e4c10" stroke-width="0.8"/>'
+      + '<circle cx="13" cy="3" r="1.6" fill="#e5664f"/><circle cx="2" cy="7" r="1.3" fill="#fbe7a8"/><circle cx="24" cy="7" r="1.3" fill="#fbe7a8"/>';
+    return s;
+  }
+  // Dice colour pickers (start screen and lobby). A change mid-lobby goes out with my presence.
+  function renderDicePickers() {
+    for (const box of document.querySelectorAll("[data-dice-picker]")) {
+      if (!box.children.length) {
+        for (const k of Object.keys(DICE_COLORS)) {
+          const b = el("button", "swatch"); b.type = "button"; b.dataset.dc = k;
+          b.setAttribute("role", "radio"); b.setAttribute("aria-label", DICE_COLORS[k].label); b.title = DICE_COLORS[k].label;
+          const die = el("i"); die.style.setProperty("--dc", rgbCss(k)); b.appendChild(die);
+          b.addEventListener("click", () => setDiceColor(k));
+          box.appendChild(b);
+        }
+        // Arrow keys move through the colours, as in any radio group.
+        box.addEventListener("keydown", (e) => {
+          const keys = Object.keys(DICE_COLORS), step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+          if (!step) return;
+          e.preventDefault();
+          const k = keys[(keys.indexOf(S.me.dc) + step + keys.length) % keys.length];
+          setDiceColor(k); box.querySelector(`[data-dc="${k}"]`).focus();
+        });
+      }
+      for (const b of box.children) { const on = b.dataset.dc === S.me.dc; b.setAttribute("aria-checked", String(on)); b.tabIndex = on ? 0 : -1; }
+    }
+  }
+  function setDiceColor(k) {
+    S.me.dc = diceColor(k); save("l", "fk.dice", S.me.dc);
+    renderDicePickers();
+    if (S.net) S.net.setMe(S.me);
+    if (S.isHost) hostPresenceTick();
+  }
+  function renderNameHint() {
+    const n = $("#name").value.trim().length;
+    $("#name-count").textContent = n + "/12";
+    $("#name-hint").dataset.over = n > 12 ? "1" : "0";
+  }
+
+  function renderLobby() {
+    const st = S.st;
+    $("#lobby-code").textContent = S.code;
+    const note = $("#lobby-note"), slots = $("#slots");
+    slots.textContent = "";
+    if (!st) {
+      $("#lobby-mode").textContent = "Looking for room " + S.code + "...";
+      const waited = Date.now() - S.joinedAt;
+      note.hidden = waited < 6000;
+      note.textContent = "No host has answered yet. Check the code with whoever created the room, or keep waiting.";
+      $("#btn-ready").hidden = true; $("#btn-start").hidden = true; $("#start-hint").textContent = "";
+      return;
+    }
+    $("#lobby-mode").textContent = `${MODES[st.mode].label}, first to ${fmt(st.target)}. Share the code so friends can join.`;
+    const amPlayer = st.players.some((p) => p.pid === S.pid);
+    $("#lobby-dice").hidden = !amPlayer;
+    note.hidden = amPlayer;
+    note.textContent = "This table is full. You're watching.";
+    for (let i = 0; i < MAX_PLAYERS; i++) {
+      const p = st.players[i];
+      const li = el("li", "slot" + (p ? "" : " empty"));
+      if (!p) { li.textContent = "Open seat"; slots.appendChild(li); continue; }
+      li.style.setProperty("--pc", seatColor(i));
+      const top = el("div", "slot-top"); top.appendChild(el("span", "dot")); top.appendChild(el("span", "slot-name", p.name));
+      const sw = el("span", "die-sw"); sw.style.setProperty("--dc", rgbCss(p.dc)); sw.title = DICE_COLORS[p.dc].label + " dice"; top.appendChild(sw);
+      li.appendChild(top);
+      const tags = el("div", "tags");
+      if (p.pid === st.host) tags.appendChild(el("span", "tag host", "Host"));
+      if (p.pid === S.pid) tags.appendChild(el("span", "tag", "You"));
+      tags.appendChild(el("span", "tag " + (p.ready ? "ready" : "wait"), p.ready ? "Ready" : "Not ready"));
+      li.appendChild(tags);
+      slots.appendChild(li);
+    }
+    const rb = $("#btn-ready");
+    rb.hidden = !amPlayer;
+    rb.textContent = S.me.ready ? "Not ready" : "I'm ready";
+    rb.setAttribute("aria-pressed", String(S.me.ready));
+    const sb = $("#btn-start");
+    sb.hidden = !S.isHost;
+    const waiting = st.players.filter((p) => !p.ready).map((p) => p.name);
+    sb.disabled = !st.players.length || waiting.length > 0;
+    $("#start-hint").textContent = S.isHost
+      ? waiting.length ? `Waiting for ${waiting.join(", ")} to ready up.` : st.players.length === 1 ? "Everyone's ready. Starting alone gives you a practice game." : "Everyone's ready."
+      : waiting.length ? "The host starts the game once everyone is ready." : "Everyone's ready. Waiting for the host to start.";
+  }
+
+  function renderGame() {
+    const st = S.st;
+    const board = $("#board");
+    board.textContent = "";
+    // The crown goes to a single outright leader; nobody wears it at 0 or in a tie.
+    const top = Math.max(...st.players.map((p) => p.score)), leaders = st.players.filter((p) => p.score === top);
+    const leader = top > 0 && leaders.length === 1 ? leaders[0].pid : null, crownNew = leader !== S.leader;
+    S.leader = leader;
+    st.players.forEach((p, i) => {
+      const c = el("div", "chip");
+      c.style.setProperty("--pc", seatColor(i));
+      c.dataset.active = st.phase === "play" && st.turn === i ? "1" : "0";
+      c.dataset.gone = p.gone ? "1" : "0";
+      c.dataset.hot = performance.now() < FX.until && st.turn === i ? "1" : "0";
+      const top = el("div", "chip-top"); top.appendChild(el("span", "dot")); top.appendChild(el("span", "chip-name", p.name + (p.pid === S.pid ? " (you)" : ""))); c.appendChild(top);
+      c.appendChild(el("span", "chip-score", fmt(p.score)));
+      const bar = el("span", "chip-bar"), fill = el("i"); fill.style.width = clamp((p.score / st.target) * 100, 0, 100) + "%"; bar.appendChild(fill); c.appendChild(bar);
+      const status = p.gone ? `Away${p.skips ? `, skipped ${p.skips}` : ""}` : st.phase === "play" && st.turn === i ? "Rolling now" : p.pid === st.host ? "Host" : "";
+      c.appendChild(el("span", "chip-status", status));
+      if (p.pid === leader) {
+        const cr = crownEl(); if (crownNew) cr.classList.add("new");
+        c.appendChild(cr);
+      }
+      board.appendChild(c);
+    });
+    renderTurn();
+    $("#log").textContent = st.log.length ? st.log[st.log.length - 1] : "";
+    const watching = [...S.present].filter((pid) => !st.players.some((p) => p.pid === pid)).length;
+    const fin = st.fin != null && st.players[st.fin];
+    $("#final-note").textContent = (fin && st.phase === "play" ? `Final round: beat ${fin.name}'s ${fmt(fin.score)}.` : `First to ${fmt(st.target)}.`) + (watching ? ` ${watching} watching.` : "");
+    renderOver();
+  }
+
+  function renderTurn() {
+    const st = S.st;
+    if (!st || st.phase === "lobby") return;
+    const cur = st.players[st.turn], mine = myTurn(st), name = cur ? cur.name : "Someone";
+    const sel = curSel(), selV = scoreOf(sel.map((k) => st.dice[k].v)), bad = sel.length > 0 && selV === 0;
+    const inPlay = st.dice.filter((d) => d.s !== 2).length, remaining = inPlay - sel.length;
+    const rolling = !!S.anim;
+    $("#turn-who").textContent = st.phase === "over" ? "Game over" : mine ? "Your turn" : `${name}'s turn`;
+    $("#turn-pts").textContent = st.phase === "play" ? `Turn ${fmt(st.tp)}${selV > 0 ? " + " + fmt(selV) : ""}` : "";
+    let sub = "";
+    if (st.phase === "play") {
+      if (rolling) sub = "Rolling...";
+      else if (st.ts === "farkle") sub = `Farkle. ${mine ? "You score" : name + " scores"} nothing this turn.`;
+      else if (st.ts === "banked") sub = `${mine ? "You" : name} banked.`;
+      else if (st.busy) sub = "Checking the dice...";
+      else if (!mine) sub = st.ts === "pre" ? `${name} is about to roll.` : sel.length ? `${name} is setting aside ${bad ? "dice" : fmt(selV)}.` : `${name} is choosing dice.`;
+      else if (st.ts === "pre") sub = "Roll all six dice to start your turn.";
+      else if (!sel.length) sub = "Tap the dice that score to set them aside.";
+      else if (bad) sub = "Every die you set aside has to score.";
+      else if (remaining === 0) sub = `All six score. Roll them all again, or bank ${fmt(st.tp + selV)}.`;
+      else sub = `Roll the other ${remaining}, or bank ${fmt(st.tp + selV)}.`;
+    }
+    $("#turn-sub").textContent = sub;
+    const rb = $("#btn-roll"), bb = $("#btn-bank");
+    const show = mine && st.phase === "play";
+    rb.hidden = !show; bb.hidden = !show || st.ts !== "rolled";
+    const ok = canAct();
+    rb.textContent = st.ts === "pre" ? "Roll 6 dice" : !sel.length || bad ? "Roll" : remaining === 0 ? "Hot dice: roll 6" : `Roll ${remaining}`;
+    rb.disabled = !ok || (st.ts === "rolled" && (selV <= 0));
+    bb.textContent = `Bank ${fmt(st.tp + Math.max(0, selV))}`;
+    bb.disabled = !ok || selV <= 0;
+  }
+
+  function renderOver() {
+    const st = S.st, ov = $("#over");
+    ov.hidden = st.phase !== "over";
+    if (ov.hidden) return;
+    const winners = st.players.filter((p) => st.win.includes(p.pid));
+    $("#over-title").textContent = winners.length > 1 ? "It's a tie" : winners[0] ? (winners[0].pid === S.pid ? "You win" : `${winners[0].name} wins`) : "Game over";
+    const list = $("#standings"); list.textContent = "";
+    st.players.map((p, i) => ({ p, i })).sort((a, b) => b.p.score - a.p.score).forEach(({ p, i }) => {
+      const li = el("li"); const dot = el("span", "dot"); dot.style.setProperty("--pc", seatColor(i));
+      li.appendChild(dot); li.appendChild(el("span", "nm", p.name + (p.pid === S.pid ? " (you)" : ""))); li.appendChild(el("span", "mono", fmt(p.score)));
+      list.appendChild(li);
+    });
+    $("#btn-again").hidden = !S.isHost;
+    $("#over-note").textContent = S.isHost ? "Play again keeps everyone at the table." : "Waiting for the host to start another game.";
+  }
+
+  // Banners also clear on a timer, so a paused animation (background tab) can't leave one on screen.
+  let bannerTimer = 0, bannerOff = 0, floatOff = 0;
+  function banner(text, kind, delay) {
+    clearTimeout(bannerTimer); clearTimeout(bannerOff);
+    bannerTimer = setTimeout(() => {
+      const b = $("#banner"); b.textContent = text; b.className = "banner " + (kind || ""); void b.offsetWidth; b.classList.add("show");
+      bannerOff = setTimeout(() => { b.className = "banner"; }, kind === "hot" ? 2500 : 1900);
+    }, delay || 0);
+  }
+  function floatText(text) {
+    const f = $("#float"); f.textContent = text; f.className = "float"; void f.offsetWidth; f.classList.add("show");
+    clearTimeout(floatOff); floatOff = setTimeout(() => { f.className = "float"; }, 1500);
+  }
+
+  /* ---------- 14. Settings ---------- */
+  function openSettings(open) {
+    $("#settings").hidden = !open;
+    $("#gear").setAttribute("aria-expanded", String(open));
+    if (open) renderSettings();
+  }
+  function renderSettings() {
+    const mode = $("#net-mode").value;
+    const claude = inClaude();
+    let hint;
+    if (mode === "auto") hint = claude ? "Inside Claude: rooms use the Artifact's built-in channel, no keys needed. Anyone joining must be signed in and have access to this page." : "Outside Claude: rooms use your Supabase project below.";
+    else if (mode === "room") hint = claude ? "Uses the Artifact's built-in channel. Players need claude.ai access to this page." : "Only works when this page is open as a Claude Artifact.";
+    else if (mode === "supabase") hint = claude ? "Claude Artifacts block outside connections, so Supabase can't connect from here. Host this file elsewhere to use it." : "Uses Supabase Realtime Broadcast and Presence.";
+    else hint = "Open this page in two tabs of the same browser to try a game on your own.";
+    $("#net-hint").textContent = hint;
+    $("#supa-fields").hidden = !(mode === "supabase" || (mode === "auto" && !claude));
+  }
+  $("#gear").addEventListener("click", () => openSettings($("#settings").hidden));
+  function renderSnd() { const b = $("#snd"); b.setAttribute("aria-pressed", String(!SND.muted)); b.title = SND.muted ? "Sound off" : "Sound on"; }
+  $("#snd").addEventListener("click", () => { SND.setMuted(!SND.muted); renderSnd(); });
+  renderSnd();
+  function renderMusic() { const b = $("#gmusic"); b.setAttribute("aria-pressed", String(gameMusic)); b.title = "Music during games: " + (gameMusic ? "on" : "off"); }
+  $("#gmusic").addEventListener("click", () => {
+    gameMusic = !gameMusic; save("l", "fk.gmusic", gameMusic ? 1 : null);
+    renderMusic(); syncSound();
+    if (gameMusic && SND.muted) toast("Sound is off. Turn it on to hear the music.");
+  });
+  renderMusic();
+  $("#net-mode").addEventListener("change", renderSettings);
+  $("#settings-save").addEventListener("click", () => {
+    CFG.net = $("#net-mode").value;
+    CFG.url = $("#supa-url").value.trim().replace(/\/+$/, "");
+    CFG.key = $("#supa-key").value.trim();
+    if (CFG.url && !/^https?:\/\//i.test(CFG.url)) { toast("The Supabase URL starts with https://"); return; }
+    // Secret keys bypass every security rule and must never sit in a browser.
+    if (/^sb_secret_/i.test(CFG.key)) { CFG.key = ""; $("#supa-key").value = ""; toast("That's a secret key. Use the publishable key (sb_publishable_...)."); return; }
+    save("l", "fk.cfg", CFG);
+    openSettings(false);
+    toast(S.inRoom ? "Saved. New settings apply the next time you join a room." : "Saved.");
+  });
+
+  /* ---------- 15. Wiring ---------- */
+  $("#btn-create").addEventListener("click", () => {
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    enterRoom(String(rand32() % 10000).padStart(4, "0"), true, mode);
+  });
+  $("#join-code").addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
+  $("#join-code").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#btn-join").click(); });
+  $("#btn-join").addEventListener("click", () => {
+    const code = $("#join-code").value;
+    if (!/^\d{4}$/.test(code)) { toast("Room codes are 4 digits."); $("#join-code").focus(); return; }
+    enterRoom(code, false);
+  });
+  $("#btn-ready").addEventListener("click", () => setReady(!S.me.ready));
+  $("#btn-start").addEventListener("click", () => act("start"));
+  $("#btn-again").addEventListener("click", () => act("again"));
+  $("#btn-roll").addEventListener("click", () => sendTurn("roll"));
+  $("#btn-bank").addEventListener("click", () => sendTurn("bank"));
+  for (const id of ["#btn-leave", "#btn-leave2", "#btn-leave3"]) $(id).addEventListener("click", leaveRoom);
+  $("#btn-copy").addEventListener("click", () => {
+    const code = S.code;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(() => toast("Code copied."), () => selectCode());
+    else selectCode();
+  });
+  function selectCode() { const r = document.createRange(); r.selectNodeContents($("#lobby-code")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Code selected. Copy it from here."); }
+  window.addEventListener("pagehide", () => { try { if (S.net) S.net.leave(); } catch (e) { /* closing */ } });
+  new ResizeObserver(() => { if (!$("#scr-game").hidden) { resize(); S.dirty = true; } }).observe($("#table-wrap"));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { S.cacheKey = ""; S.dirty = true; });
+
+  // Slow housekeeping tick: away detection, host migration, unanswered taps.
+  setInterval(() => {
+    if (!S.inRoom) return;
+    updateAbsent();
+    if (S.isHost) hostPresenceTick(); else hostCheck();
+    if (S.awaitEv != null && Date.now() - S.awaitAt > 3000) { S.awaitEv = null; renderTurn(); }
+    if (!S.st) renderLobby();
+  }, 700);
+
+  // Local test hook (localhost only): lets a test script read state and pick dice by index.
+  if (location.hostname === "localhost") window.__farkle = { S, toggleDie, scoreOf, pickDie, canAct, SND, hotFlair, poses, setDiceColor };
+
+  // Start-up: restore name and settings, open Settings when there's no way to connect yet,
+  // and rejoin the room this tab was in before a reload.
+  $("#name").value = load("l", "fk.name") || "";
+  $("#name").addEventListener("input", renderNameHint);
+  renderNameHint();
+  renderDicePickers();
+  $("#net-mode").value = CFG.net;
+  $("#supa-url").value = CFG.url;
+  $("#supa-key").value = CFG.key;
+  renderAll();
+  setTimeout(() => {
+    const needsKeys = !inClaude() && (CFG.net === "auto" || CFG.net === "supabase") && !(CFG.url && CFG.key);
+    if (needsKeys) openSettings(true);
+    const sess = load("s", "fk.sess");
+    if (sess && /^\d{4}$/.test(sess.code)) { if (sess.name) { $("#name").value = cleanName(sess.name); renderNameHint(); } enterRoom(sess.code, false); }
+  }, 500);
+})();
+</script>
