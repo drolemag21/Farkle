@@ -1454,7 +1454,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     }
 
     /* --- Table sounds --- */
-    function click(t, k) {   // die against die: a bright, hard click
+    function click(t, k) {   // a bright, hard click (a die set down in the tray)
       const o = osc("sine", 1900 + rnd() * 1300, t, t + 0.06), a = amp(); env(a.gain, t, 0.09 * k + 0.01, 0.001, 0.045); o.connect(a); a.connect(A.sfx);
       const n = noise(t, t + 0.02), bp = filt("bandpass", 3800, 3), na = amp(); env(na.gain, t, 0.12 * k + 0.01, 0.001, 0.012); n.connect(bp); bp.connect(na); na.connect(A.sfx);
     }
@@ -1468,17 +1468,31 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       env(a.gain, t, 0.16 * k + 0.01, 0.002, 0.08); o.connect(a); a.connect(A.sfx);
       const n = noise(t, t + 0.04), bp = filt("bandpass", 1500, 1.2), na = amp(); env(na.gain, t, 0.08 * k, 0.001, 0.03); n.connect(bp); bp.connect(na); na.connect(A.sfx);
     }
+    function clack(t, k) {   // die against die: a dry, unpitched clack, so it can't be mistaken for the tray click of a keep
+      const n = noise(t, t + 0.03), bp = filt("bandpass", 2200 + rnd() * 700, 1.6), na = amp(); env(na.gain, t, 0.13 * k + 0.008, 0.0008, 0.018); n.connect(bp); bp.connect(na); na.connect(A.sfx);
+      const o = osc("triangle", 1100 + rnd() * 400, t, t + 0.04), a = amp(); env(a.gain, t, 0.035 * k + 0.004, 0.0008, 0.016); o.connect(a); a.connect(A.sfx);
+    }
+    function whoosh(t, land) {   // the throw: air past the dice, swelling and fading out as the first die lands
+      const end = t + Math.max(0.2, land), n = noise(t, end + 0.05), bp = filt("bandpass", 450, 0.9), a = amp();
+      bp.frequency.setValueAtTime(450, t); bp.frequency.exponentialRampToValueAtTime(1600, t + 0.14); bp.frequency.exponentialRampToValueAtTime(700, end);
+      a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(0.07, t + 0.1); a.gain.exponentialRampToValueAtTime(0.0001, end);
+      n.connect(bp); bp.connect(a); a.connect(A.sfx);
+    }
     // The impacts come from the physics step, so every screen hears each hit as the die lands there.
     function roll(sim, t0) {
       const last = [-1, -1, -1];
       let count = 0;
+      // The handful leaves the hand packed tight and the dice graze each other in the air; those bumps
+      // stay silent until the first die meets the felt.
+      const land = (sim.hits.find((h) => h[1] === 0) || [sim.steps])[0];
+      whoosh(t0, land * DT);
       for (const [s, kind, v] of sim.hits) {
-        if (v < 45 || count > 48) continue;
+        if (v < 45 || count > 48 || (kind === 2 && s < land)) continue;
         const t = t0 + s * DT;
         if (t - last[kind] < 0.018) continue;
         last[kind] = t; count++;
         const k = Math.min(1, v / 700);
-        if (kind === 0) thud(t, k); else if (kind === 1) knock(t, k); else click(t, k);
+        if (kind === 0) thud(t, k); else if (kind === 1) knock(t, k); else clack(t, k);
       }
       // Sliding across the felt: a soft hiss that follows how fast the dice are moving.
       const n = sim.n, every = 3, vals = [];
