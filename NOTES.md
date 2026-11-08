@@ -1,7 +1,7 @@
 # Farkle Table notes
 
 ## Links
-- Claude Artifact: https://claude.ai/artifact/RUFecz7jvWXuykXgvA2YvR (capabilities `{room: {}}`, owned by the work Claude account)
+- Claude Artifact: https://claude.ai/artifact/MYxU8tfKmhoyYrgSV6vnoF (capabilities `{room: {}}`, owned by the personal Claude account; current). The older link https://claude.ai/artifact/RUFecz7jvWXuykXgvA2YvR belongs to the work account and still has the pre-#2 table until that account republishes it.
 - GitHub Pages: not yet recorded
 - Supabase project: `https://shmufgduaylmqyqajbgj.supabase.co`
 
