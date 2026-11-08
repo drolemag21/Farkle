@@ -677,6 +677,32 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   const PIPS = {
     1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]],
     5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [-1, 0], [-1, 1], [1, -1], [1, 0], [1, 1]] };
+  // Rounded edges: the die is a cube whose edges are quarter-cylinders of radius RND (in half-sizes), cut
+  // into EB flat bands, with a small fan at each corner. Built once in die-local space, in half-size units.
+  const RND = 0.2, EB = 3;
+  const DIE_PATCHES = (() => {
+    const out = [], add = (a, k, b, l) => [a[0] * k + b[0] * l, a[1] * k + b[1] * l, a[2] * k + b[2] * l];
+    const unit = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); };
+    const axes = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+    const arc = (a, b, th) => add(add(a, 1 - RND, b, 1 - RND), 1, add(a, Math.cos(th), b, Math.sin(th)), RND);
+    for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) {
+      const a = axes[i], b = axes[j];
+      if (a[0] * b[0] + a[1] * b[1] + a[2] * b[2] !== 0) continue;   // opposite faces share no edge
+      const e = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], s = 1 - RND;
+      for (let k = 0; k < EB; k++) {
+        const t0 = k / EB * Math.PI / 2, t1 = (k + 1) / EB * Math.PI / 2, p0 = arc(a, b, t0), p1 = arc(a, b, t1);
+        out.push({ n: add(a, Math.cos((t0 + t1) / 2), b, Math.sin((t0 + t1) / 2)), pts: [add(p0, 1, e, -s), add(p1, 1, e, -s), add(p1, 1, e, s), add(p0, 1, e, s)] });
+      }
+    }
+    for (const sx of [1, -1]) for (const sy of [1, -1]) for (const sz of [1, -1]) {
+      const a = [sx, 0, 0], b = [0, sy, 0], c = [0, 0, sz], o = add(add(a, 1 - RND, b, 1 - RND), 1, c, 1 - RND);
+      const ring = [];
+      for (const [u, v] of [[a, b], [b, c], [c, a]]) for (let k = 0; k < EB; k++) ring.push(add(o, 1, add(u, Math.cos(k / EB * Math.PI / 2), v, Math.sin(k / EB * Math.PI / 2)), RND));
+      const tip = add(o, 1, unit([sx, sy, sz]), RND);
+      ring.forEach((p, k) => { const q = ring[(k + 1) % ring.length]; out.push({ n: unit(add(add(p, 1, q, 1), 1, add(tip, 1, o, -3), 1)), pts: [tip, p, q] }); });
+    }
+    return out;
+  })();
   const LIGHT = (() => { const v = [-0.35, 0.45, 1], l = Math.hypot(...v); return v.map((x) => x / l); })();
 
   // Table geometry beyond the felt: side rails, a deep near rail with a tray for set-aside dice.
@@ -1795,32 +1821,47 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   function shade(rgb, l) { return `rgb(${Math.min(255, Math.round(rgb[0] * l))},${Math.min(255, Math.round(rgb[1] * l))},${Math.min(255, Math.round(rgb[2] * l))})`; }
   const PIP = [252, 246, 234];
   let BODY = DICE_COLORS.red.rgb;   // set per frame to the colour of the roller's dice
-  function rrect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  const EMBER = [255, 150, 56];
   function drawDie(p) {
-    const C = [p.x, p.y, p.z + HS], E = CAM.E, vis = [];
-    for (const f of FACES) {
-      const n = mv(p.R, f.n);
-      const fc = [C[0] + HS * n[0], C[1] + HS * n[1], C[2] + HS * n[2]];
-      const tx = E[0] - fc[0], ty = E[1] - fc[1], tz = E[2] - fc[2];
-      if (n[0] * tx + n[1] * ty + n[2] * tz <= 0) continue;             // facing away from the camera
-      vis.push({ f, n, fc, d: tx * tx + ty * ty + tz * tz });
+    const C = [p.x, p.y, p.z + HS], E = CAM.E;
+    const mod = (p.dim ? 0.55 : 1) * (p.sel ? 1.12 : 1) * (p.hot ? 1.18 : 1);
+    const lit = (n) => (0.4 + 0.62 * Math.max(0, n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2])) * mod;
+    const world = (q) => { const w = mv(p.R, q); return [C[0] + HS * w[0], C[1] + HS * w[1], C[2] + HS * w[2]]; };
+    const facing = (n, q) => n[0] * (E[0] - q[0]) + n[1] * (E[1] - q[1]) + n[2] * (E[2] - q[2]) > 0;
+    // The die is convex: back pieces first, front pieces over them, so no felt shows through a seam.
+    const front = [], back = [];
+    for (const pc of DIE_PATCHES) {
+      const n = mv(p.R, pc.n), pts = pc.pts.map(world);
+      (facing(n, pts[0]) ? front : back).push({ n, pts });
     }
-    vis.sort((a, b) => b.d - a.d);
-    for (const s of vis) {
-      const t1 = mv(p.R, s.f.t1), t2 = mv(p.R, s.f.t2), fc = s.fc;
-      const P = proj(fc[0], fc[1], fc[2]);
+    const s = 1 - RND, faces = [];
+    for (const f of FACES) {
+      const n = mv(p.R, f.n), fc = world(f.n);
+      const t1 = mv(p.R, f.t1), t2 = mv(p.R, f.t2);
+      const pts = [[-s, -s], [s, -s], [s, s], [-s, s]].map(([u, v]) => [fc[0] + HS * (u * t1[0] + v * t2[0]), fc[1] + HS * (u * t1[1] + v * t2[1]), fc[2] + HS * (u * t1[2] + v * t2[2])]);
+      (facing(n, fc) ? faces : back).push({ n, pts, f, fc, t1, t2 });
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineJoin = "round"; ctx.lineWidth = 0.6;
+    // Hot dice tumble with glowing, ember-orange edges.
+    const fillPiece = (pc, rgb) => {
+      ctx.beginPath();
+      pc.pts.forEach((q, k) => { const P = proj(q[0], q[1], q[2]); if (k) ctx.lineTo(P.x, P.y); else ctx.moveTo(P.x, P.y); });
+      ctx.closePath();
+      ctx.fillStyle = ctx.strokeStyle = shade(rgb, lit(pc.n));
+      ctx.fill(); ctx.stroke();   // the matching stroke closes antialiasing hairlines between pieces
+    };
+    for (const pc of back) fillPiece(pc, BODY);
+    for (const pc of front) fillPiece(pc, p.hot ? EMBER : BODY);
+    for (const fp of faces) {
+      fillPiece(fp, BODY);
+      const fc = fp.fc, t1 = fp.t1, t2 = fp.t2, P = proj(fc[0], fc[1], fc[2]);
       const A = proj(fc[0] + HS * t1[0], fc[1] + HS * t1[1], fc[2] + HS * t1[2]);
       const B = proj(fc[0] + HS * t2[0], fc[1] + HS * t2[1], fc[2] + HS * t2[2]);
       ctx.setTransform(dpr * (A.x - P.x), dpr * (A.y - P.y), dpr * (B.x - P.x), dpr * (B.y - P.y), dpr * P.x, dpr * P.y);
-      const lum = (0.4 + 0.62 * Math.max(0, s.n[0] * LIGHT[0] + s.n[1] * LIGHT[1] + s.n[2] * LIGHT[2])) * (p.dim ? 0.55 : 1) * (p.sel ? 1.12 : 1) * (p.hot ? 1.18 : 1);
-      rrect(ctx, -1, -1, 2, 2, 0.34);
-      ctx.fillStyle = shade(BODY, lum); ctx.fill();
-      // Hot dice tumble with glowing, ember-orange edges.
-      if (p.hot) { ctx.lineWidth = 0.16; ctx.strokeStyle = "rgba(255, 168, 64, .95)"; }
-      else { ctx.lineWidth = 0.08; ctx.strokeStyle = shade(BODY, 0.32); }
-      ctx.stroke();
-      ctx.fillStyle = shade(PIP, Math.min(1, lum + 0.25));
-      for (const [u, v] of PIPS[s.f.v]) { ctx.beginPath(); ctx.arc(u * 0.52, v * 0.52, 0.17, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = shade(PIP, Math.min(1, lit(fp.n) + 0.25));
+      for (const [u, v] of PIPS[fp.f.v]) { ctx.beginPath(); ctx.arc(u * 0.52, v * 0.52, 0.17, 0, Math.PI * 2); ctx.fill(); }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
   }
   function drawShadow(p) {
