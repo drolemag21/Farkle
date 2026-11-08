@@ -1470,7 +1470,6 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     }
     // The impacts come from the physics step, so every screen hears each hit as the die lands there.
     function roll(sim, t0) {
-      for (let i = 0; i < 4; i++) click(t0 + i * 0.022 + rnd() * 0.01, 0.35);   // dice leaving the hand
       const last = [-1, -1, -1];
       let count = 0;
       for (const [s, kind, v] of sim.hits) {
