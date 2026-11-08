@@ -144,6 +144,32 @@ input:focus-visible, select:focus-visible, button:focus-visible, canvas:focus-vi
 .mode-desc { font-size: 13px; color: #cfe0d5; }
 .mode input:checked + .mode-card { border-color: var(--brass); box-shadow: inset 0 0 0 2px var(--brass), 0 6px 18px rgba(0, 0, 0, .35); }
 .mode input:focus-visible + .mode-card { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
+/* Rules: a list of rule rows (home summary and lobby card), and the Custom pickers. */
+.rule-list { display: flex; flex-direction: column; }
+.rule { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; }
+.rule + .rule { border-top: 1px solid var(--line); }
+.rule-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-weight: 600; }
+.rule-val { font-family: var(--f-mono); font-weight: 500; color: var(--brass-hi); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rule-val.bad { color: var(--bad); }
+.rule-desc { font-size: 13px; color: var(--muted); }
+.rule-was { font-size: 12px; color: #cfe0d5; }
+.rules-card { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: radial-gradient(130% 120% at 30% 0%, var(--felt) 0%, var(--felt-deep) 100%); }
+.rules-card .rule + .rule { border-top-color: rgba(243, 235, 217, .16); }
+.rules-card .rule-desc { color: #cfe0d5; }
+.rules-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-bottom: 6px; font-weight: 700; font-size: 16px; }
+.rule-picks { display: flex; flex-direction: column; gap: 16px; }
+.pick { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.pick legend { padding: 0; font-weight: 600; }
+.pick-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+.pick-chip { position: relative; cursor: pointer; }
+.pick-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.pick-chip span {
+  display: grid; place-items: center; min-height: 44px; border-radius: 12px; border: 1px solid var(--line-strong);
+  background: var(--panel-2); font-family: var(--f-mono); font-size: 14px; font-variant-numeric: tabular-nums;
+}
+.pick-chip input:checked + span { background: var(--brass); border-color: var(--brass); color: var(--brass-ink); }
+.pick-chip input:focus-visible + span { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
+.rule-picks #rules-reset { align-self: flex-start; }
 .join-row { display: flex; gap: 8px; }
 .join-row input { flex: 1; min-width: 0; font-family: var(--f-mono); font-size: 20px; letter-spacing: .3em; text-align: center; }
 .or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; }
@@ -209,6 +235,11 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
 .chip-bar { position: absolute; left: 10px; right: 10px; bottom: 4px; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, .08); overflow: hidden; }
 .chip-bar i { display: block; height: 100%; background: var(--pc); border-radius: 4px; transition: width .5s ease; }
 .chip-status { font-size: 11px; color: var(--bad); white-space: nowrap; }
+.chip-score.off { font: 600 10px var(--f-body); letter-spacing: .04em; flex: none; text-transform: uppercase; color: var(--muted); white-space: nowrap; line-height: 19px; }
+/* Farkles in a row toward the penalty: filled dots out of three. */
+.chip-fk { display: flex; gap: 3px; flex: none; }
+.chip-fk i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--line-strong); }
+.chip-fk i.on { background: var(--bad); border-color: var(--bad); }
 .chip-status:empty { display: none; }
 .table-wrap { position: relative; width: 100%; margin-inline: auto; }
 #table { display: block; width: 100%; touch-action: manipulation; cursor: pointer; border-radius: 6px; }
@@ -235,6 +266,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   position: absolute; left: 0; right: 0; top: 52%; text-align: center; pointer-events: none; opacity: 0;
   font-family: var(--f-mono); font-size: 30px; font-weight: 500; color: var(--good); text-shadow: 0 2px 6px rgba(0, 0, 0, .7);
 }
+.float.bad { color: var(--bad); }
 .float.show { animation: rise 1.4s ease-out forwards; }
 @keyframes pop { 0% { opacity: 0; transform: scale(.6); } 14% { opacity: 1; transform: scale(1.07); } 24% { transform: scale(1); } 74% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } }
 @keyframes rise { 0% { opacity: 0; transform: translateY(10px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-40px); } }
@@ -334,24 +366,31 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
           <div class="swatches" role="radiogroup" aria-labelledby="dice-label" data-dice-picker></div>
         </div>
       </div>
-      <span class="eyebrow">Game mode</span>
-      <div class="modes" role="radiogroup" aria-label="Game mode">
+      <span class="eyebrow">Rules</span>
+      <div class="modes" role="radiogroup" aria-label="Rules">
         <label class="mode">
-          <input type="radio" name="mode" id="mode-classic" value="classic" checked>
+          <input type="radio" name="rules" id="rules-classic-pick" value="classic" checked>
           <span class="mode-card">
-            <span class="mode-name">Classic Farkle</span>
+            <span class="mode-name">Classic</span>
             <span class="mode-target">10,000</span>
-            <span class="mode-desc">The full game, with a long final round.</span>
+            <span class="mode-desc">500 to get on the board. 3 Farkles in a row: &minus;1,000.</span>
           </span>
         </label>
         <label class="mode">
-          <input type="radio" name="mode" id="mode-speed" value="speed">
+          <input type="radio" name="rules" id="rules-custom-pick" value="custom">
           <span class="mode-card">
-            <span class="mode-name">Speed Farkle</span>
-            <span class="mode-target">5,000</span>
-            <span class="mode-desc">Half the target for a quick game.</span>
+            <span class="mode-name">Custom</span>
+            <span id="custom-target" class="mode-target">10,000</span>
+            <span id="custom-desc" class="mode-desc"></span>
           </span>
         </label>
+      </div>
+      <div id="rules-summary" class="panel rule-list"></div>
+      <div id="rules-custom" class="panel rule-picks" hidden>
+        <fieldset class="pick" data-rule="target"><legend>Winning score</legend><p class="hint">Reaching it starts the final round.</p><div class="pick-row"></div></fieldset>
+        <fieldset class="pick" data-rule="open"><legend>Get on the board</legend><p class="hint">Points you must bank in one turn before your score starts counting.</p><div class="pick-row"></div></fieldset>
+        <fieldset class="pick" data-rule="pen"><legend>3 Farkles in a row</legend><p class="hint">Penalty for three Farkles back to back. The count then starts over.</p><div class="pick-row"></div></fieldset>
+        <button id="rules-reset" class="btn ghost small" type="button">Reset to Classic values</button>
       </div>
       <button id="btn-create" class="btn primary big" type="button">Create room</button>
       <div class="or">or join a friend</div>
@@ -375,6 +414,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
           <tr><td>Two triplets</td><td>2,500</td></tr>
         </table>
         <p>After every roll, keep at least one scoring die, then roll the rest or bank. A roll with nothing that scores is a Farkle: you lose the points from that turn. Keep all six and you have hot dice: roll all six again. When someone banks past the target, everyone else gets one last turn.</p>
+        <p>Classic rules add two more: your first bank must be 500 or more in one turn to get you on the board, and three Farkles in a row cost 1,000 (scores stop at 0). Custom rules let the host change both, and the target.</p>
       </details>
     </section>
 
@@ -388,6 +428,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
         <button id="btn-copy" class="btn small" type="button">Copy code</button>
       </div>
       <p id="lobby-mode" class="hint"></p>
+      <div id="lobby-rules" class="rules-card" hidden></div>
       <p id="lobby-note" class="note" hidden></p>
       <ol id="slots" class="slots" aria-label="Seats"></ol>
       <div id="lobby-dice" class="field">
@@ -493,7 +534,17 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   }
 
   /* ---------- 2. Constants ---------- */
-  const MODES = { classic: { label: "Classic Farkle", target: 10000 }, speed: { label: "Speed Farkle", target: 5000 } };
+  // Rule sets. Classic is fixed; Custom is whatever the host picked from RULE_OPTS.
+  // open: points a player must bank in one turn before their score counts (0 = off).
+  // pen: points lost for a third Farkle in a row (0 = off). Scores never drop below 0.
+  const CLASSIC = { name: "classic", target: 10000, open: 500, pen: 1000 };
+  const RULE_OPTS = { target: [5000, 10000, 15000], open: [0, 300, 500, 1000], pen: [0, 500, 1000] };
+  function cleanRules(r) {
+    if (!r || r.name !== "custom") return Object.assign({}, CLASSIC);
+    const pick = (k) => (RULE_OPTS[k].includes(+r[k]) ? +r[k] : CLASSIC[k]);
+    return { name: "custom", target: pick("target"), open: pick("open"), pen: pick("pen") };
+  }
+  const onBoard = (st, p) => !!p && (p.on || !st.rules.open);
   const MAX_PLAYERS = 4;
   const GRACE = 3500;           // ms a player may vanish from presence before we call them away
   const SUPABASE_SRC = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js";
@@ -969,9 +1020,11 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   }
   function cleanState(st) {
     if (!st || typeof st !== "object") return null;
-    if (typeof st.evN !== "number" || typeof st.host !== "string" || !MODES[st.mode]) return null;
+    if (typeof st.evN !== "number" || typeof st.host !== "string") return null;
     if (!Array.isArray(st.players) || st.players.length > MAX_PLAYERS || !Array.isArray(st.dice) || st.dice.length !== 6) return null;
-    const players = st.players.map((p) => ({ pid: String((p && p.pid) || ""), name: cleanName(p && p.name), dc: diceColor(p && p.dc), score: num(p && p.score), ready: !!(p && p.ready), gone: !!(p && p.gone), skips: num(p && p.skips) }));
+    const players = st.players.map((p) => ({ pid: String((p && p.pid) || ""), name: cleanName(p && p.name), dc: diceColor(p && p.dc), score: num(p && p.score), ready: !!(p && p.ready), gone: !!(p && p.gone), skips: num(p && p.skips),
+      on: !!(p && p.on), fk: clamp(int(p && p.fk, 0), 0, 2) }));
+    const rules = cleanRules(st.rules);
     const dice = st.dice.map((d) => ({ v: clamp(int(d && d.v, 1), 1, 6), s: clamp(int(d && d.s, 0), 0, 2) }));
     let roll = null;
     const R = st.roll;
@@ -980,7 +1033,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       if (L.every(Boolean)) roll = { seed: num(R.seed), idx: R.idx.map((k) => clamp(int(k, 0), 0, 5)), L };
     }
     return {
-      v: 1, code: String(st.code || ""), mode: st.mode, target: MODES[st.mode].target,
+      v: 1, code: String(st.code || ""), rules, target: rules.target,
       phase: ["lobby", "play", "over"].includes(st.phase) ? st.phase : "lobby",
       host: st.host, evN: st.evN, players,
       turn: clamp(int(st.turn, 0), 0, Math.max(0, players.length - 1)),
@@ -1014,7 +1067,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       if (!myTurn(st) || st.ts !== "rolled" || hostSel === S.localSel.join(",")) S.localSel = null;
     }
     if (prev && prev.phase === "over" && st.phase === "lobby") setReady(false);
-    if (!prev || prev.mode !== st.mode) S.cacheKey = "";
+    if (!prev || prev.target !== st.target) S.cacheKey = "";
     updateAbsent();
     renderAll();
   }
@@ -1043,7 +1096,12 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
         }
         break;
       case "DICE_KEPT": glideToTray(prev, st, before, false); break;
-      case "FARKLE": banner("Farkle!", "bad", animLeft()); SND.farkle(animLeft() / 1000); break;
+      case "FARKLE": {
+        const wait = animLeft();
+        banner(d.third ? "Third Farkle" : "Farkle!", "bad", wait); SND.farkle(wait / 1000);
+        if (num(d.pen) > 0) setTimeout(() => floatText("\u2212" + fmt(num(d.pen)), "bad"), wait + 300);
+        break;
+      }
       case "BANKED": {
         const pts = num(d.pts);
         glideToTray(prev, st, before, false);
@@ -1078,9 +1136,10 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   const animLeft = () => (S.anim ? Math.max(0, S.anim.sim.dur * 1000 - (performance.now() - S.anim.t0)) : 0);
 
   /* ---------- 9. Host: the only writer of game state ---------- */
-  function newPlayer(pid) { const inf = S.info.get(pid) || {}; return { pid, name: cleanName(inf.name), dc: diceColor(inf.dc), score: 0, ready: !!inf.ready, gone: false, skips: 0 }; }
-  function newState(code, mode) {
-    return { v: 1, code, mode, target: MODES[mode].target, phase: "lobby", host: S.pid, evN: 0,
+  function newPlayer(pid) { const inf = S.info.get(pid) || {}; return { pid, name: cleanName(inf.name), dc: diceColor(inf.dc), score: 0, ready: !!inf.ready, gone: false, skips: 0, on: false, fk: 0 }; }
+  function newState(code, r) {
+    const rules = cleanRules(r);
+    return { v: 1, code, rules, target: rules.target, phase: "lobby", host: S.pid, evN: 0,
       players: [newPlayer(S.pid)], turn: 0, dice: [1, 2, 3, 4, 5, 6].map((v) => ({ v, s: 0 })),
       ts: "pre", tp: 0, th: false, roll: null, fin: null, win: [], busy: false, log: [] };
   }
@@ -1114,7 +1173,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     if (i.t === "start") {
       if (i.pid !== M.host || M.phase !== "lobby" || !M.players.length || !M.players.every((p) => p.ready)) return;
       M.phase = "play"; M.turn = 0; M.fin = null; M.win = []; M.tp = 0; M.th = false; M.ts = "pre"; M.roll = null; M.busy = false;
-      M.players.forEach((p) => { p.score = 0; p.gone = false; p.skips = 0; });
+      M.players.forEach((p) => { p.score = 0; p.gone = false; p.skips = 0; p.on = false; p.fk = 0; });
       M.dice = [1, 2, 3, 4, 5, 6].map((v) => ({ v, s: 0 }));
       hostEmit("GAME_STARTED", {}, `Game on. First to ${fmt(M.target)} wins. ${M.players[0].name} rolls first.`);
       return;
@@ -1122,7 +1181,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     if (i.t === "again") {
       if (i.pid !== M.host || M.phase !== "over") return;
       M.phase = "lobby"; M.fin = null; M.win = []; M.tp = 0; M.ts = "pre"; M.roll = null; M.busy = false;
-      M.players.forEach((p) => { p.score = 0; p.ready = false; p.gone = false; p.skips = 0; });
+      M.players.forEach((p) => { p.score = 0; p.ready = false; p.gone = false; p.skips = 0; p.on = false; p.fk = 0; });
       hostEmit("LOBBY", {}, "New game. Ready up.");
       return;
     }
@@ -1169,14 +1228,22 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     if (M.phase !== "play" || M.ts !== "rolled") return;
     const p = M.players[M.turn], lost = M.tp;
     M.tp = 0; M.ts = "farkle"; M.busy = true;
-    hostEmit("FARKLE", { lost }, lost ? `Farkle! ${p.name} loses ${fmt(lost)}.` : `Farkle! Nothing for ${p.name}.`);
+    // Third Farkle in a row: pay the penalty (never below 0) and start counting again.
+    let third = false, pen = 0;
+    if (M.rules.pen) {
+      p.fk = (p.fk || 0) + 1;
+      if (p.fk >= 3) { third = true; pen = Math.min(M.rules.pen, p.score); p.score -= pen; p.fk = 0; }
+    }
+    const msg = third ? `Third Farkle in a row! ${p.name} ${pen ? "loses " + fmt(pen) : "has nothing to lose"}.` : lost ? `Farkle! ${p.name} loses ${fmt(lost)}.` : `Farkle! Nothing for ${p.name}.`;
+    hostEmit("FARKLE", { lost, third, pen }, msg);
     hostLater(2100, passTurn);
   }
   function hostBank() {
     const M = S.M, p = M.players[M.turn];
     if (M.ts !== "kept") return;                     // banking always follows a keep, so the total is already final
+    if (!onBoard(M, p) && M.tp < M.rules.open) { hostPublish([]); return; }   // not on the board yet
     const pts = M.tp;
-    p.score += pts;
+    p.score += pts; p.on = true; p.fk = 0;
     M.ts = "banked"; M.busy = true;
     let fin = false;
     if (M.fin === null && p.score >= M.target) { M.fin = M.turn; fin = true; }
@@ -1293,7 +1360,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   function setReady(v) { S.me.ready = v; if (S.net) S.net.setMe(S.me); if (S.isHost) hostPresenceTick(); renderAll(); }
 
   /* ---------- 11. Rooms: create, join, leave ---------- */
-  async function enterRoom(code, create, mode) {
+  async function enterRoom(code, create, rules) {
     if (S.inRoom || S.joining) return;
     const name = $("#name").value.trim();
     // maxlength stops typing, but a name saved before the cap (or set by script) can still be longer.
@@ -1307,7 +1374,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     try { net = await pickNet(); } catch (e) { S.joining = false; toast(e.message); openSettings(true); return; }
     Object.assign(S, { net, netKind: net.kind, code, inRoom: true, st: null, M: null, isHost: false, lastEvN: -1, anim: null, localSel: null,
       present: new Set([S.pid]), info: new Map([[S.pid, S.me]]), absent: new Map(), seenIntents: new Map(), joinedAt: Date.now(), conn: "wait", resume: null });
-    if (create) { S.isHost = true; S.M = newState(code, mode); }
+    if (create) { S.isHost = true; S.M = newState(code, rules); }
     else { const saved = load("s", "fk.host"); if (saved && saved.code === code && saved.host === S.pid) S.resume = saved; }
     renderAll();
     try { await net.join(code, S.me, HD); }
@@ -2016,6 +2083,56 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     $("#name-hint").dataset.over = n > NAME_MAX ? "1" : "0";
   }
 
+  // Rule rows for the home summary and the lobby card. `vs` marks values that differ from Classic.
+  function fillRules(box, r, vs, by) {
+    box.textContent = "";
+    box.hidden = false;
+    if (vs) {
+      const head = el("div", "rules-head"); head.appendChild(el("span", "", r.name === "custom" ? "Custom rules" : "Classic rules"));
+      if (by) head.appendChild(el("span", "tag host", "Set by " + by));
+      box.appendChild(head);
+    }
+    const off = (v, f) => (v ? f(v) : "Off");
+    const rows = [
+      ["Winning score", fmt(r.target), "Reaching it starts the final round.", "target", fmt],
+      ["Get on the board", off(r.open, fmt), r.open ? `Your first bank must be ${fmt(r.open)} or more in one turn. Until then you can't bank.` : "Any bank counts.", "open", (v) => off(v, fmt)],
+      ["3 Farkles in a row", off(r.pen, (v) => "\u2212" + fmt(v)), r.pen ? "Then the count starts over. Scores stop at 0." : "No penalty.", "pen", (v) => off(v, (x) => "\u2212" + fmt(x))],
+    ];
+    for (const [label, val, desc, key, show] of rows) {
+      const row = el("div", "rule"), top = el("div", "rule-top");
+      top.appendChild(el("span", "", label));
+      top.appendChild(el("span", "rule-val" + (key === "pen" && r.pen ? " bad" : ""), val));
+      row.appendChild(top);
+      row.appendChild(el("span", "rule-desc", desc));
+      if (vs && r[key] !== CLASSIC[key]) row.appendChild(el("span", "rule-was", "Classic: " + show(CLASSIC[key])));
+      box.appendChild(row);
+    }
+  }
+  // Home screen rule picker. The Custom values are remembered on this device.
+  const pickedRules = () => (document.querySelector('input[name="rules"]:checked').value === "custom" ? cleanRules(Object.assign({}, S.custom, { name: "custom" })) : Object.assign({}, CLASSIC));
+  function renderRulesPicker() {
+    const custom = pickedRules().name === "custom";
+    $("#rules-custom").hidden = !custom;
+    $("#rules-summary").hidden = custom;
+    if (!custom) fillRules($("#rules-summary"), CLASSIC, false);
+    const c = cleanRules(Object.assign({}, S.custom, { name: "custom" }));
+    $("#custom-target").textContent = fmt(c.target);
+    $("#custom-desc").textContent = (c.open ? `${fmt(c.open)} to get on the board.` : "No minimum to get on the board.") + " " + (c.pen ? `3 Farkles: \u2212${fmt(c.pen)}.` : "No Farkle penalty.");
+    for (const fs of document.querySelectorAll("#rules-custom .pick")) {
+      const key = fs.dataset.rule, row = fs.querySelector(".pick-row");
+      if (!row.children.length) {
+        for (const v of RULE_OPTS[key]) {
+          const lab = el("label", "pick-chip"), inp = document.createElement("input");
+          inp.type = "radio"; inp.name = "r-" + key; inp.value = String(v);
+          inp.addEventListener("change", () => { S.custom[key] = v; save("l", "fk.rules", S.custom); renderRulesPicker(); });
+          lab.appendChild(inp); lab.appendChild(el("span", "", v ? (key === "pen" ? "\u2212" : "") + fmt(v) : "Off"));
+          row.appendChild(lab);
+        }
+      }
+      for (const inp of row.querySelectorAll("input")) inp.checked = +inp.value === c[key];
+    }
+  }
+
   function renderLobby() {
     const st = S.st;
     $("#lobby-code").textContent = S.code;
@@ -2023,13 +2140,16 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     slots.textContent = "";
     if (!st) {
       $("#lobby-mode").textContent = "Looking for room " + S.code + "...";
+      $("#lobby-rules").hidden = true;
       const waited = Date.now() - S.joinedAt;
       note.hidden = waited < 6000;
       note.textContent = "No host has answered yet. Check the code with whoever created the room, or keep waiting.";
       $("#btn-ready").hidden = true; $("#btn-start").hidden = true; $("#start-hint").textContent = "";
       return;
     }
-    $("#lobby-mode").textContent = `${MODES[st.mode].label}, first to ${fmt(st.target)}. Share the code so friends can join.`;
+    $("#lobby-mode").textContent = "Share the code so friends can join.";
+    const host = st.players.find((p) => p.pid === st.host);
+    fillRules($("#lobby-rules"), st.rules, true, host ? host.name : "");
     const amPlayer = st.players.some((p) => p.pid === S.pid);
     $("#lobby-dice").hidden = !amPlayer;
     note.hidden = amPlayer;
@@ -2076,8 +2196,15 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       c.dataset.active = st.phase === "play" && st.turn === i ? "1" : "0";
       c.dataset.gone = p.gone ? "1" : "0";
       c.dataset.hot = performance.now() < FX.until && st.turn === i ? "1" : "0";
-      const top = el("div", "chip-top"); top.appendChild(el("span", "dot")); top.appendChild(el("span", "chip-name", p.name + (p.pid === S.pid ? " (you)" : ""))); c.appendChild(top);
-      c.appendChild(el("span", "chip-score", fmt(p.score)));
+      const top = el("div", "chip-top"); top.appendChild(el("span", "dot")); top.appendChild(el("span", "chip-name", p.name + (p.pid === S.pid ? " (you)" : "")));
+      if (st.rules.pen && p.fk > 0) {
+        const fk = el("span", "chip-fk"); fk.title = `${p.fk} Farkle${p.fk === 1 ? "" : "s"} in a row`;
+        for (let k = 0; k < 3; k++) fk.appendChild(el("i", k < p.fk ? "on" : ""));
+        top.appendChild(fk);
+      }
+      c.appendChild(top);
+      const on = onBoard(st, p);
+      c.appendChild(el("span", "chip-score" + (on ? "" : " off"), on ? fmt(p.score) : "Off board"));
       const bar = el("span", "chip-bar"), fill = el("i"); fill.style.width = clamp((p.score / st.target) * 100, 0, 100) + "%"; bar.appendChild(fill); c.appendChild(bar);
       // One-line cards: the glow already marks who's rolling, so only an absence needs words.
       const status = p.gone ? `Away${p.skips ? `, skipped ${p.skips}` : ""}` : "";
@@ -2104,6 +2231,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     const sel = curSel(), selV = scoreOf(sel.map((k) => st.dice[k].v)), bad = sel.length > 0 && selV === 0;
     const inPlay = st.dice.filter((d) => d.s !== 2).length, remaining = inPlay - sel.length;
     const rolling = !!S.anim;
+    const need = cur && !onBoard(st, cur) ? st.rules.open : 0, short = st.tp < need;
     $("#turn-who").textContent = st.phase === "over" ? "Game over" : mine ? "Your turn" : `${name}'s turn`;
     $("#turn-pts").textContent = st.phase === "play" ? `Turn ${fmt(st.tp)}${selV > 0 ? " + " + fmt(selV) : ""}` : "";
     let sub = "";
@@ -2113,7 +2241,8 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       else if (st.ts === "banked") sub = `${mine ? "You" : name} banked.`;
       else if (st.busy) sub = "Checking the dice...";
       else if (!mine) sub = st.ts === "pre" ? `${name} is about to roll.` : st.ts === "kept" ? `${name} is deciding: roll or bank.` : sel.length ? `${name} is keeping ${bad ? "dice" : fmt(selV)}.` : `${name} is choosing dice.`;
-      else if (st.ts === "pre") sub = "Roll all six dice to start your turn.";
+      else if (st.ts === "pre") sub = need ? `Roll all six. You need ${fmt(need)} in one turn to get on the board.` : "Roll all six dice to start your turn.";
+      else if (st.ts === "kept" && short) sub = `You need ${fmt(need)} in one turn to get on the board. ` + (remaining === 0 ? "Hot dice: roll all six again." : `Roll the other ${remaining}.`);
       else if (st.ts === "kept") sub = remaining === 0 ? `Hot dice! Roll all six again, or bank ${fmt(st.tp)}.` : `Roll the other ${remaining}, or bank ${fmt(st.tp)}.`;
       else if (!sel.length) sub = "Tap the dice that score, then Keep.";
       else if (bad) sub = "Every die you keep has to score.";
@@ -2127,8 +2256,8 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     const ok = canAct();
     rb.textContent = st.ts === "pre" ? "Roll 6 dice" : st.ts === "rolled" || st.ts === "farkle" ? "Keep" : remaining === 0 ? "Hot dice: roll 6" : `Roll ${remaining}`;
     rb.disabled = !ok || (st.ts === "rolled" && selV <= 0);
-    bb.textContent = `Bank ${fmt(st.tp)}`;
-    bb.disabled = !ok;
+    bb.textContent = short ? `Need ${fmt(need)}` : `Bank ${fmt(st.tp)}`;
+    bb.disabled = !ok || short;
   }
 
   function renderOver() {
@@ -2156,8 +2285,8 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       bannerOff = setTimeout(() => { b.className = "banner"; }, kind === "hot" ? 2500 : 1900);
     }, delay || 0);
   }
-  function floatText(text) {
-    const f = $("#float"); f.textContent = text; f.className = "float"; void f.offsetWidth; f.classList.add("show");
+  function floatText(text, kind) {
+    const f = $("#float"); f.textContent = text; f.className = "float " + (kind || ""); void f.offsetWidth; f.classList.add("show");
     clearTimeout(floatOff); floatOff = setTimeout(() => { f.className = "float"; }, 1500);
   }
 
@@ -2216,9 +2345,10 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
 
   /* ---------- 15. Wiring ---------- */
   $("#btn-create").addEventListener("click", () => {
-    const mode = document.querySelector('input[name="mode"]:checked').value;
-    enterRoom(String(rand32() % 10000).padStart(4, "0"), true, mode);
+    enterRoom(String(rand32() % 10000).padStart(4, "0"), true, pickedRules());
   });
+  for (const inp of document.querySelectorAll('input[name="rules"]')) inp.addEventListener("change", () => { save("l", "fk.ruleset", inp.value); renderRulesPicker(); });
+  $("#rules-reset").addEventListener("click", () => { S.custom = { target: CLASSIC.target, open: CLASSIC.open, pen: CLASSIC.pen }; save("l", "fk.rules", S.custom); renderRulesPicker(); });
   $("#join-code").addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
   $("#join-code").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#btn-join").click(); });
   $("#btn-join").addEventListener("click", () => {
@@ -2256,7 +2386,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   }, 700);
 
   // Local test hook (localhost only): lets a test script read state and pick dice by index.
-  if (location.hostname === "localhost") window.__farkle = { S, toggleDie, scoreOf, pickDie, canAct, SND, hotFlair, poses, proj, setDiceColor };
+  if (location.hostname === "localhost") window.__farkle = { S, act, toggleDie, scoreOf, pickDie, canAct, SND, hotFlair, poses, proj, setDiceColor };
 
   // Start-up: restore name and settings, open Settings when there's no way to connect yet,
   // and rejoin the room this tab was in before a reload.
@@ -2264,6 +2394,9 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   $("#name").addEventListener("input", renderNameHint);
   renderNameHint();
   renderDicePickers();
+  S.custom = Object.assign({ target: 5000, open: CLASSIC.open, pen: CLASSIC.pen }, load("l", "fk.rules") || {});
+  if (load("l", "fk.ruleset") === "custom") $("#rules-custom-pick").checked = true;
+  renderRulesPicker();
   // Each place offers only the networks that can work there: Artifacts block outside connections,
   // and Claude rooms exist only inside Claude. Options are removed, not hidden, since iOS Safari
   // still lists hidden options.
