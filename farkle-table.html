@@ -1530,23 +1530,21 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
         }
       }
     }
-    // Farkle: the dice go dead. A muffled thump, then a muted horn sagging down by half steps.
-    function horn(t, m, len, last) {
-      const f = mtof(m), end = t + len + 0.2;
-      const o = osc("sawtooth", f, t, end), o2 = osc("sawtooth", f * 1.006, t, end), lp = filt("lowpass", 450, 5), a = amp();
-      lp.frequency.setValueAtTime(380, t); lp.frequency.linearRampToValueAtTime(1300, t + 0.09); lp.frequency.linearRampToValueAtTime(480, t + len);   // the mute opening and closing
-      if (last) {   // the last note droops and wobbles
-        o.frequency.linearRampToValueAtTime(f * 0.94, end); o2.frequency.linearRampToValueAtTime(f * 1.006 * 0.94, end);
-        const lfo = osc("sine", 5.5, t + 0.2, end), d = A.ac.createGain(); d.gain.value = f * 0.012; lfo.connect(d); d.connect(o.frequency); d.connect(o2.frequency);
-      }
-      a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(0.07, t + 0.035);
-      a.gain.setValueAtTime(0.07, t + len * 0.75); a.gain.exponentialRampToValueAtTime(0.0001, end);
-      o.connect(lp); o2.connect(lp); lp.connect(a); out(a, 0.15, A.sfx);
+    // Farkle: the dice go dead. A muffled thump, the dealer's rake across the felt, and two damped
+    // low notes stepping down. Kept at the table on purpose: a horn read as a cartoon fanfare.
+    function dud(t, m, peak) {   // a felt mallet on a low bar, damped almost at once
+      const f = mtof(m), o = osc("sine", f, t, t + 0.6), o2 = osc("triangle", f * 2, t, t + 0.2), lp = filt("lowpass", 700), a = amp(), a2 = amp();
+      env(a.gain, t, peak, 0.006, 0.45); env(a2.gain, t, peak * 0.25, 0.004, 0.1);
+      o.connect(a); o2.connect(a2); a.connect(lp); a2.connect(lp); out(lp, 0.1, A.sfx);
     }
     function farkle(t) {
       const o = osc("sine", 95, t, t + 0.4), oa = amp(); o.frequency.exponentialRampToValueAtTime(48, t + 0.3);
       env(oa.gain, t, 0.28, 0.004, 0.32); o.connect(oa); oa.connect(A.sfx);
-      [[55, 0.12, 0.3], [54, 0.46, 0.3], [53, 0.8, 0.95]].forEach(([m, d, len], i) => horn(t + d, m, len, i === 2));
+      const tr = t + 0.15, n = noise(tr, tr + 0.5), bp = filt("bandpass", 900, 0.9), na = amp();
+      bp.frequency.setValueAtTime(900, tr); bp.frequency.exponentialRampToValueAtTime(450, tr + 0.45);
+      na.gain.setValueAtTime(0.0001, tr); na.gain.exponentialRampToValueAtTime(0.05, tr + 0.12); na.gain.exponentialRampToValueAtTime(0.0001, tr + 0.48);
+      n.connect(bp); bp.connect(na); out(na, -0.35, A.sfx);
+      dud(t + 0.2, 57, 0.13); dud(t + 0.48, 53, 0.11);
     }
     // Your turn: two soft notes up the vibes, like a call bell at the cage.
     function turn(t) { [[77, 0], [84, 0.11]].forEach(([m, d]) => vibes(t + d, m, 1.5, A.sfx)); }
