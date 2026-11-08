@@ -1648,14 +1648,19 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       a.gain.exponentialRampToValueAtTime(0.0001, t + 0.03 + rnd() * 0.025);
       n.connect(bp); bp.connect(a); a.connect(dest);
     }
+    // The swell's shape is laid out over `secs`, peaking at APPLAUSE_PEAK of the way through; the
+    // build-up then plays at APPLAUSE_RISE of that length and the fade at APPLAUSE_FALL (owner's ears).
+    const APPLAUSE_PEAK = 1 / 4.5, APPLAUSE_RISE = 0.75, APPLAUSE_FALL = 0.5;
     function applause(t, secs) {
       const hall = A.ac.createGain(); hall.gain.value = 1; hall.connect(A.sfx);
       const send = A.ac.createGain(); send.gain.value = 0.5; hall.connect(send); send.connect(A.verb);
+      const P = APPLAUSE_PEAK, R = APPLAUSE_RISE, F = APPLAUSE_FALL;
+      const real = (u) => (u <= P ? u * R : P * R + (u - P) * F), shape = (r) => (r <= P * R ? r / R : P + (r - P * R) / F);
       for (let h = 0; h < 16; h++) {
         const g = A.ac.createGain(); out(g, (rnd() - 0.5) * 1.7, hall);
-        const rate = 3.4 + rnd() * 1.5, tone = 800 + rnd() * 1500, stop = t + secs * (0.7 + rnd() * 0.3);
+        const rate = 3.4 + rnd() * 1.5, tone = 800 + rnd() * 1500, stop = t + secs * real(0.7 + rnd() * 0.3);
         for (let tt = t + rnd() * 0.3; tt < stop; tt += (0.85 + rnd() * 0.3) / rate) {
-          const u = (tt - t) / secs, swell = Math.min(1, u * 4.5) * Math.pow(Math.max(0, 1 - u), 1.4);
+          const u = shape((tt - t) / secs), swell = Math.min(1, u * 4.5) * Math.pow(Math.max(0, 1 - u), 1.4);
           clap(tt, 0.9 * swell * (0.6 + rnd() * 0.5), tone, g);
         }
       }
@@ -1710,7 +1715,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       select(on) { if (ready()) select(on, now()); },
       bank(pts) { if (ready()) bank(pts, now()); },
       hot(delay) { if (ready()) hot(now() + (delay || 0)); },
-      applause(big) { if (ready()) applause(now() + 0.55, big ? 2.1 : 1.6); },
+      applause(big) { if (ready()) applause(now() + 0.55, big ? 4.2 : 3.2); },
       farkle(delay) { if (ready()) farkle(now() + (delay || 0)); },
       turn(delay) { if (ready()) turn(now() + (delay || 0)); },
       tray(delays) { if (ready()) for (const d of delays) tray(now() + d); },
@@ -1724,7 +1729,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
         if (part === "bank") bank(600, 0.1);
         if (part === "hot") hot(0.1);
         if (part === "select") select(true, 0.1);
-        if (part === "applause") applause(0.1, 2.1);
+        if (part === "applause") applause(0.1, 4.2);
         if (part === "farkle") farkle(0.1);
         if (part === "turn") turn(0.1);
         A = saved;
