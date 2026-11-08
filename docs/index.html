@@ -356,7 +356,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
           <tr><td>Four of a kind + a pair</td><td>1,500</td></tr>
           <tr><td>Two triplets</td><td>2,500</td></tr>
         </table>
-        <p>Set aside at least one scoring die after every roll, then roll the rest or bank. A roll with nothing that scores is a Farkle: you lose the points from that turn. Set aside all six and you have hot dice: roll all six again. When someone banks past the target, everyone else gets one last turn.</p>
+        <p>After every roll, keep at least one scoring die, then roll the rest or bank. A roll with nothing that scores is a Farkle: you lose the points from that turn. Set aside all six and you have hot dice: roll all six again. When someone banks past the target, everyone else gets one last turn.</p>
       </details>
     </section>
 
@@ -423,9 +423,9 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   /* =====================================================================
      ARCHITECTURE
      - The room's creator is the HOST and the only writer of game state.
-       Everyone else sends INTENTS ("roll", "bank", "sel") to the host.
+       Everyone else sends INTENTS ("sel", "keep", "roll", "bank") to the host.
      - The host validates each intent, updates the master state, and
-       broadcasts an EVENT (DICE_ROLLED, DICE_SET_ASIDE, BANKED, FARKLE,
+       broadcasts an EVENT (DICE_ROLLED, DICE_SET_ASIDE, DICE_KEPT, BANKED, FARKLE,
        TURN_PASSED, ...) together with a full STATE snapshot. Absolute
        snapshots make late joiners and dropped messages harmless.
      - Dice rolls: the host picks the face values and a seed, derives the
@@ -487,9 +487,8 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     orange: { label: "Orange", rgb: [232, 112, 18] }, purple: { label: "Purple", rgb: [122, 52, 190] }, cyan: { label: "Cyan", rgb: [12, 160, 186] },
   };
   const diceColor = (k) => (Object.prototype.hasOwnProperty.call(DICE_COLORS, k) ? k : "red");
-  // Set-aside glide: each die takes GLIDE_MS, the next leaves GLIDE_STAGGER later, then a short
-  // pause before the throw. The host allows GLIDE_MAX (six dice) before it calls a farkle.
-  const GLIDE_MS = 380, GLIDE_STAGGER = 45, GLIDE_GAP = 90, GLIDE_MAX = GLIDE_MS + 5 * GLIDE_STAGGER + GLIDE_GAP;
+  // Keep glide: each die takes GLIDE_MS, the next leaves GLIDE_STAGGER later, then a short pause.
+  const GLIDE_MS = 380, GLIDE_STAGGER = 45, GLIDE_GAP = 90;
 
   /* ---------- 3. Scoring ---------- */
   function counts(vals) { const c = [0, 0, 0, 0, 0, 0, 0]; for (const v of vals) c[v]++; return c; }
@@ -936,7 +935,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       phase: ["lobby", "play", "over"].includes(st.phase) ? st.phase : "lobby",
       host: st.host, evN: st.evN, players,
       turn: clamp(int(st.turn, 0), 0, Math.max(0, players.length - 1)),
-      dice, ts: ["pre", "rolled", "farkle", "banked"].includes(st.ts) ? st.ts : "pre",
+      dice, ts: ["pre", "rolled", "kept", "farkle", "banked"].includes(st.ts) ? st.ts : "pre",
       tp: num(st.tp), th: !!st.th, roll, fin: st.fin == null ? null : clamp(int(st.fin, 0), 0, 3),
       win: Array.isArray(st.win) ? st.win.map(String).slice(0, 4) : [], busy: !!st.busy,
       log: Array.isArray(st.log) ? st.log.slice(-2).map((x) => String(x).slice(0, 140)) : [],
@@ -955,7 +954,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     const prev = S.st;
     const fresh = evs.filter((e) => e && typeof e.n === "number" && typeof e.t === "string" && e.n > S.lastEvN).sort((a, b) => a.n - b.n);
     // Where every die sat before this snapshot, so the dice just set aside can glide from there to the tray.
-    const before = prev && fresh.some((e) => e.t === "DICE_ROLLED" || e.t === "BANKED") ? poses(performance.now()) : null;
+    const before = prev && fresh.some((e) => e.t === "DICE_ROLLED" || e.t === "DICE_KEPT" || e.t === "BANKED") ? poses(performance.now()) : null;
     S.st = st;
     for (const ev of fresh) playEvent(ev, st, prev, before);
     S.lastEvN = Math.max(S.lastEvN, st.evN);
@@ -994,6 +993,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
           if (now !== was) SND.select(now > was);
         }
         break;
+      case "DICE_KEPT": glideToTray(prev, st, before, false); break;
       case "FARKLE": banner("Farkle!", "bad", animLeft()); SND.farkle(animLeft() / 1000); break;
       case "BANKED": {
         const pts = num(d.pts);
@@ -1083,19 +1083,26 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       if (M.ts !== "rolled") return;
       applySel(d.sel);
       hostEmit("DICE_SET_ASIDE", { sel: selIdx() }, null);
-    } else if (i.t === "roll") hostRoll(d.sel);
-    else if (i.t === "bank") hostBank(d.sel);
+    } else if (i.t === "keep") hostKeep(d.sel);
+    else if (i.t === "roll") hostRoll();
+    else if (i.t === "bank") hostBank();
   }
 
-  function hostRoll(sel) {
-    const M = S.M, p = M.players[M.turn], setAside = M.ts === "rolled";
-    if (M.ts === "rolled") {
-      applySel(sel);
-      const idx = selIdx(), val = scoreOf(idx.map((k) => M.dice[k].v));
-      if (val <= 0) { hostPublish([]); return; }      // must set aside at least one scoring die
-      idx.forEach((k) => { M.dice[k].s = 2; });
-      M.tp += val;
-    } else if (M.ts !== "pre") return;
+  // One keep per roll: everything picked is scored together, and the rest of that roll stays on the felt untouchable.
+  function hostKeep(sel) {
+    const M = S.M, p = M.players[M.turn];
+    if (M.ts !== "rolled") return;
+    applySel(sel);
+    const idx = selIdx(), val = scoreOf(idx.map((k) => M.dice[k].v));
+    if (val <= 0) { hostPublish([]); return; }      // must keep at least one scoring die, and every kept die must score
+    idx.forEach((k) => { M.dice[k].s = 2; });
+    M.tp += val;
+    M.ts = "kept";
+    hostEmit("DICE_KEPT", { pts: val, idx }, `${p.name} kept ${fmt(val)}.`);
+  }
+  function hostRoll() {
+    const M = S.M, p = M.players[M.turn];
+    if (M.ts !== "pre" && M.ts !== "kept") return;
     let free = M.dice.map((d, k) => (d.s === 0 ? k : -1)).filter((k) => k >= 0), hot = false;
     if (!free.length) { hot = true; M.th = true; M.dice.forEach((d) => { d.s = 0; }); free = [0, 1, 2, 3, 4, 5]; }
     const seed = rand32(), L = makeLaunch(seed, free.length), v = free.map(rollDie);
@@ -1105,8 +1112,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     const farkle = !hasScore(v);
     if (farkle) M.busy = true;
     hostEmit("DICE_ROLLED", { seed, idx: free, v, hot }, hot ? `Hot dice! ${p.name} rolls all six.` : `${p.name} rolled ${free.length} ${free.length === 1 ? "die" : "dice"}.`);
-    // Screens play the set-aside glide before the throw, so wait that out too before calling the farkle.
-    if (farkle) hostLater(simFor(M.roll).dur * 1000 + 350 + (setAside ? GLIDE_MAX : 0), hostFarkle);
+    if (farkle) hostLater(simFor(M.roll).dur * 1000 + 350, hostFarkle);
   }
   function hostFarkle() {
     const M = S.M;
@@ -1116,14 +1122,9 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     hostEmit("FARKLE", { lost }, lost ? `Farkle! ${p.name} loses ${fmt(lost)}.` : `Farkle! Nothing for ${p.name}.`);
     hostLater(2100, passTurn);
   }
-  function hostBank(sel) {
+  function hostBank() {
     const M = S.M, p = M.players[M.turn];
-    if (M.ts !== "rolled") return;
-    applySel(sel);
-    const idx = selIdx(), val = scoreOf(idx.map((k) => M.dice[k].v));
-    if (val <= 0) { hostPublish([]); return; }
-    idx.forEach((k) => { M.dice[k].s = 2; });
-    M.tp += val;
+    if (M.ts !== "kept") return;                     // banking always follows a keep, so the total is already final
     const pts = M.tp;
     p.score += pts;
     M.ts = "banked"; M.busy = true;
@@ -1221,7 +1222,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     if (S.localSel && myTurn(st) && st.ts === "rolled") return S.localSel.filter((k) => st.dice[k].s !== 2);
     return st.dice.map((d, k) => (d.s === 1 ? k : -1)).filter((k) => k >= 0);
   }
-  const canAct = () => myTurn(S.st) && !S.anim && !S.st.busy && S.awaitEv == null && (S.st.ts === "pre" || S.st.ts === "rolled");
+  const canAct = () => myTurn(S.st) && !S.anim && !S.st.busy && S.awaitEv == null && ["pre", "rolled", "kept"].includes(S.st.ts);
   function toggleDie(k) {
     const st = S.st;
     if (!canAct() || st.ts !== "rolled" || st.dice[k].s === 2) return;
@@ -1918,7 +1919,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       const felt = poses(performance.now()).filter((p) => p.where === "felt" && !p.hand && !p.rolling).sort((a, b) => proj(a.x, a.y, 0).x - proj(b.x, b.y, 0).x);
       const p = felt[+e.key - 1];
       if (p) { toggleDie(p.i); e.preventDefault(); }
-    } else if (e.key === "r" || e.key === "R") { if (!$("#btn-roll").disabled && !$("#btn-roll").hidden) sendTurn("roll"); }
+    } else if (/^[rk]$/i.test(e.key)) { if (!$("#btn-roll").disabled && !$("#btn-roll").hidden) sendTurn(S.st.ts === "rolled" ? "keep" : "roll"); }
     else if (e.key === "b" || e.key === "B") { if (!$("#btn-bank").disabled && !$("#btn-bank").hidden) sendTurn("bank"); }
   });
 
@@ -2084,22 +2085,23 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       else if (st.ts === "farkle") sub = `Farkle. ${mine ? "You score" : name + " scores"} nothing this turn.`;
       else if (st.ts === "banked") sub = `${mine ? "You" : name} banked.`;
       else if (st.busy) sub = "Checking the dice...";
-      else if (!mine) sub = st.ts === "pre" ? `${name} is about to roll.` : sel.length ? `${name} is setting aside ${bad ? "dice" : fmt(selV)}.` : `${name} is choosing dice.`;
+      else if (!mine) sub = st.ts === "pre" ? `${name} is about to roll.` : st.ts === "kept" ? `${name} is deciding: roll or bank.` : sel.length ? `${name} is keeping ${bad ? "dice" : fmt(selV)}.` : `${name} is choosing dice.`;
       else if (st.ts === "pre") sub = "Roll all six dice to start your turn.";
-      else if (!sel.length) sub = "Tap the dice that score to set them aside.";
-      else if (bad) sub = "Every die you set aside has to score.";
-      else if (remaining === 0) sub = `All six score. Roll them all again, or bank ${fmt(st.tp + selV)}.`;
-      else sub = `Roll the other ${remaining}, or bank ${fmt(st.tp + selV)}.`;
+      else if (st.ts === "kept") sub = remaining === 0 ? `Hot dice! Roll all six again, or bank ${fmt(st.tp)}.` : `Roll the other ${remaining}, or bank ${fmt(st.tp)}.`;
+      else if (!sel.length) sub = "Tap the dice that score, then Keep.";
+      else if (bad) sub = "Every die you keep has to score.";
+      else sub = remaining === 0 ? "All six score. Keep them for hot dice." : "Keep these, or tap more dice that score.";
     }
     $("#turn-sub").textContent = sub;
     const rb = $("#btn-roll"), bb = $("#btn-bank");
     const show = mine && st.phase === "play";
-    rb.hidden = !show; bb.hidden = !show || st.ts !== "rolled";
+    // After a roll there's one gold Keep; after a keep, Roll (gold) and Bank. The gold button is always the next step.
+    rb.hidden = !show; bb.hidden = !show || st.ts !== "kept";
     const ok = canAct();
-    rb.textContent = st.ts === "pre" ? "Roll 6 dice" : !sel.length || bad ? "Roll" : remaining === 0 ? "Hot dice: roll 6" : `Roll ${remaining}`;
-    rb.disabled = !ok || (st.ts === "rolled" && (selV <= 0));
-    bb.textContent = `Bank ${fmt(st.tp + Math.max(0, selV))}`;
-    bb.disabled = !ok || selV <= 0;
+    rb.textContent = st.ts === "pre" ? "Roll 6 dice" : st.ts === "rolled" || st.ts === "farkle" ? "Keep" : remaining === 0 ? "Hot dice: roll 6" : `Roll ${remaining}`;
+    rb.disabled = !ok || (st.ts === "rolled" && selV <= 0);
+    bb.textContent = `Bank ${fmt(st.tp)}`;
+    bb.disabled = !ok;
   }
 
   function renderOver() {
@@ -2188,7 +2190,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   $("#btn-ready").addEventListener("click", () => setReady(!S.me.ready));
   $("#btn-start").addEventListener("click", () => act("start"));
   $("#btn-again").addEventListener("click", () => act("again"));
-  $("#btn-roll").addEventListener("click", () => sendTurn("roll"));
+  $("#btn-roll").addEventListener("click", () => sendTurn(S.st && S.st.ts === "rolled" ? "keep" : "roll"));
   $("#btn-bank").addEventListener("click", () => sendTurn("bank"));
   for (const id of ["#btn-leave", "#btn-leave2", "#btn-leave3"]) $(id).addEventListener("click", leaveRoom);
   $("#btn-copy").addEventListener("click", () => {
