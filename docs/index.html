@@ -178,22 +178,26 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
 .lobby-actions:has(> .btn[hidden]) > .btn { grid-column: 1 / -1; }
 
 /* ---------- Game ---------- */
-.board { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#scr-game { gap: 10px; }
+.board { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 @media (min-width: 480px) { .board { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.chip { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 8px 10px 9px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); min-width: 0; }
+/* Four across is too narrow for name and score side by side: stack them there. */
+@media (min-width: 480px) { .chip { flex-direction: column; align-items: stretch; gap: 2px; } }
+.chip { position: relative; display: flex; align-items: center; gap: 8px; padding: 7px 10px 9px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); min-width: 0; }
 .chip[data-active="1"] { border-color: var(--pc); box-shadow: 0 0 0 1px var(--pc), 0 0 18px -4px var(--pc); }
 .chip[data-gone="1"] { opacity: .6; }
 /* The leader's crown, perched on the card's corner. */
 .crown { position: absolute; top: -11px; right: -7px; width: 26px; height: 20px; transform: rotate(16deg); filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .55)); pointer-events: none; }
 @media (prefers-reduced-motion: no-preference) { .crown.new { animation: crown-in .45s cubic-bezier(.3, 1.6, .5, 1); } }
 @keyframes crown-in { from { transform: translateY(-8px) rotate(-10deg) scale(.4); opacity: 0; } }
-.chip-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.chip-top { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
 .chip-name { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chip-score { font-family: var(--f-mono); font-size: 20px; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.chip-bar { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.chip-score { font-family: var(--f-mono); font-size: 17px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+/* Progress to the target, as a hairline along the card's bottom edge. */
+.chip-bar { position: absolute; left: 10px; right: 10px; bottom: 4px; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, .08); overflow: hidden; }
 .chip-bar i { display: block; height: 100%; background: var(--pc); border-radius: 4px; transition: width .5s ease; }
-.chip-status { font-size: 11px; color: var(--muted); min-height: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chip[data-gone="1"] .chip-status { color: var(--bad); }
+.chip-status { font-size: 11px; color: var(--bad); white-space: nowrap; }
+.chip-status:empty { display: none; }
 .table-wrap { position: relative; width: 100%; margin-inline: auto; }
 #table { display: block; width: 100%; touch-action: manipulation; cursor: pointer; border-radius: 6px; }
 .banner {
@@ -230,15 +234,15 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
 @keyframes rise { 0% { opacity: 0; transform: translateY(10px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-40px); } }
 @keyframes fade { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .banner.show, .banner.hot.show, .float.show { animation: fade 1.6s linear forwards; } .chip-bar i { transition: none; } }
-.turn { display: flex; flex-direction: column; gap: 10px; }
+.turn { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; }
 .turn-line { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .turn-who { font-weight: 700; font-size: 17px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .turn-pts { font-size: 17px; color: var(--brass-hi); white-space: nowrap; }
-.turn-sub { font-size: 14px; color: var(--muted); min-height: 20px; }
+.turn-sub { font-size: 13px; color: var(--muted); min-height: 19px; }
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .actions:has(> .btn[hidden]) > .btn { grid-column: 1 / -1; }
-.log { font-size: 13px; color: var(--muted); min-height: 19px; text-align: center; }
-.game-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.game-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
+#final-note { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .over {
   position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: rgba(5, 10, 8, .72);
   padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
@@ -388,7 +392,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
         <div id="banner" class="banner" aria-live="polite"></div>
         <div id="float" class="float" aria-hidden="true"></div>
       </div>
-      <div class="turn panel">
+      <div id="turn" class="turn panel">
         <div class="turn-line"><span id="turn-who" class="turn-who"></span><span id="turn-pts" class="turn-pts mono"></span></div>
         <p id="turn-sub" class="turn-sub"></p>
         <div class="actions">
@@ -396,8 +400,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
           <button id="btn-bank" class="btn big" type="button">Bank</button>
         </div>
       </div>
-      <p id="log" class="log" aria-live="polite"></p>
-      <div class="game-foot"><span id="final-note"></span><button id="btn-leave2" class="btn ghost small" type="button">Leave</button></div>
+      <div class="game-foot"><span id="final-note" aria-live="polite"></span><button id="btn-leave2" class="btn ghost small" type="button">Leave</button></div>
       <div id="over" class="over" hidden>
         <div class="panel" role="dialog" aria-labelledby="over-title">
           <span class="eyebrow">Game over</span>
@@ -526,7 +529,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
      World units: the felt is W x H with y growing toward the viewer and z up.
      Only + - * / and Math.sqrt are used in the step, all of which IEEE-754
      defines exactly, so every browser replays an identical trajectory. */
-  const W = 400, H = 300, HS = 17, RAD = 20, DT = 1 / 120, GRAV = 1900, MAX_STEPS = 720;
+  const W = 300, H = 340, HS = 17, RAD = 20, DT = 1 / 120, GRAV = 1900, MAX_STEPS = 720;
 
   // Launch numbers for `n` dice, derived from the host's seed and rounded so they travel compactly.
   function makeLaunch(seed, n) {
@@ -539,7 +542,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       const y = H - 32 - row * 46 + (rnd() - 0.5) * 8;
       const z = 35 + rnd() * 45;
       const vx = (W / 2 - cx) * 0.9 + (rnd() - 0.5) * 320;
-      const vy = -(520 + rnd() * 320);                  // thrown away from the viewer
+      const vy = -(170 + rnd() * 150);                  // thrown away from the viewer; most settle mid-table
       const vz = 140 + rnd() * 240;
       const w = (rnd() - 0.5) * 18;                     // spin about the vertical axis
       const ax = rnd() * Math.PI * 2;                   // tumble-axis jitter (render only)
@@ -667,12 +670,13 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   const LIGHT = (() => { const v = [-0.35, 0.45, 1], l = Math.hypot(...v); return v.map((x) => x / l); })();
 
   // Table geometry beyond the felt: side rails, a deep near rail with a tray for set-aside dice.
-  const RAIL = 26, NEAR = 78, RZ = 16, TX0 = 34, TX1 = W - 34, TY0 = H + 16, TY1 = H + 60, TZ = 5;
+  const RAIL = 10, NEAR = 78, RZ = 16, TX0 = 12, TX1 = W - 12, TY0 = H + 16, TY1 = H + 60, TZ = 5;
   const TRAY_Y = (TY0 + TY1) / 2;
 
-  // Pinhole camera above the near rail, looking down the table at roughly 45 degrees.
+  // Pinhole camera high above the near rail, looking down at about 75 degrees: steep enough that the far
+  // dice stay nearly as big as the near ones on a phone, with enough tilt to keep the rails in view.
   const CAM = (() => {
-    const E = [W / 2, H + 250, 640], T = [W / 2, H * 0.52, 0];
+    const E = [W / 2, H + 70, 900], T = [W / 2, H * 0.5, 0];
     const norm = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); };
     const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
     const f = norm([T[0] - E[0], T[1] - E[1], T[2] - E[2]]);
@@ -686,11 +690,10 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     return [(dx * CAM.r[0] + dy * CAM.r[1] + dz * CAM.r[2]) / zc, -(dx * CAM.u[0] + dy * CAM.u[1] + dz * CAM.u[2]) / zc];
   }
   const BOUNDS = (() => {
-    const pts = [[-RAIL, -RAIL, RZ], [W + RAIL, -RAIL, RZ], [W + RAIL, H + NEAR, RZ], [-RAIL, H + NEAR, RZ], [-RAIL, H + NEAR, -14], [W + RAIL, H + NEAR, -14]].map((p) => projRaw(...p));
+    const pts = [[-6, -6, RZ], [W + 6, -6, RZ], [W + 6, H + NEAR, RZ], [-6, H + NEAR, RZ], [-6, H + NEAR, -14], [W + 6, H + NEAR, -14]].map((p) => projRaw(...p));
     const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
-    return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys) - 0.03, y1: Math.max(...ys) };
+    return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys) - 0.03, y1: Math.max(...ys) };   // frames the felt; the outer rails run off the sides
   })();
-  const ASPECT = (BOUNDS.y1 - BOUNDS.y0) / (BOUNDS.x1 - BOUNDS.x0);
   let K = 1, OX = 0, OY = 0, cssW = 0, cssH = 0, dpr = 1;
   function proj(x, y, z) { const p = projRaw(x, y, z); return { x: OX + K * p[0], y: OY + K * p[1] }; }
 
@@ -1641,12 +1644,21 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     const w = Math.round(wrap.clientWidth);
     if (!w) return;
     const newDpr = Math.min(2, window.devicePixelRatio || 1);
-    if (w === cssW && newDpr === dpr && cv.width) return;
-    cssW = w; dpr = newDpr; cssH = Math.round(w * ASPECT * 1.04);
+    // The table takes the height left on screen below the scores, after the turn panel and footer,
+    // but never more than its full-width size and never so little that the dice are hard to tap.
+    // On short phones (table under 320 px) the footer, last action and Leave, may sit just below the fold instead;
+    // Roll and Bank never do.
+    const scr = $("#scr-game"), app = getComputedStyle($("#app")), gap = parseFloat(getComputedStyle(scr).rowGap) || 0;
+    const foot = $(".game-foot").offsetHeight + gap;
+    const room = window.innerHeight - (wrap.getBoundingClientRect().top + window.scrollY) - $("#turn").offsetHeight - gap - (parseFloat(app.paddingBottom) || 0);
+    const m = 4, bw = BOUNDS.x1 - BOUNDS.x0, bh = BOUNDS.y1 - BOUNDS.y0, full = (w - 2 * m) / bw * bh + 2 * m;
+    const fit = room - foot >= 320 ? room - foot : room;
+    const h = Math.round(Math.max(260, Math.min(fit, full)));
+    if (w === cssW && h === cssH && newDpr === dpr && cv.width) return;
+    cssW = w; cssH = h; dpr = newDpr;
     cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
     cv.style.height = cssH + "px";
-    const m = 6;
-    K = (cssW - 2 * m) / (BOUNDS.x1 - BOUNDS.x0);
+    K = Math.min((cssW - 2 * m) / bw, (cssH - 2 * m) / bh);
     OX = cssW / 2 - K * (BOUNDS.x0 + BOUNDS.x1) / 2;
     OY = cssH / 2 - K * (BOUNDS.y0 + BOUNDS.y1) / 2;
     S.cacheKey = "";
@@ -1687,11 +1699,12 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     // Printed table markings, laid in the felt plane.
     planeXf(g, W / 2, H * 0.47, 0);
     g.strokeStyle = "rgba(241, 212, 143, .22)"; g.lineWidth = 1.6;
-    g.beginPath(); g.ellipse(0, 0, 150, 92, 0, 0, Math.PI * 2); g.stroke();
-    g.beginPath(); g.ellipse(0, 0, 143, 85, 0, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.ellipse(0, 0, 118, 128, 0, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.ellipse(0, 0, 111, 121, 0, 0, Math.PI * 2); g.stroke();
     g.fillStyle = "rgba(241, 212, 143, .2)"; g.textAlign = "center"; g.textBaseline = "middle";
-    g.font = "46px Limelight, Georgia, serif"; g.fillText("FARKLE", 0, -8);
-    g.font = "600 13px Figtree, system-ui, sans-serif"; g.fillText("FIRST TO " + fmt(target) + "  ·  HOT DICE ROLL AGAIN", 0, 30);
+    g.font = "42px Limelight, Georgia, serif"; g.fillText("FARKLE", 0, -10);
+    g.font = "600 13px Figtree, system-ui, sans-serif"; g.fillText("FIRST TO " + fmt(target), 0, 24);
+    g.font = "600 10px Figtree, system-ui, sans-serif"; g.fillText("HOT DICE ROLL AGAIN", 0, 42);
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     // Brass inlay along the cushion tops.
     g.strokeStyle = "rgba(241, 212, 143, .75)"; g.lineWidth = 1.2;
@@ -1733,7 +1746,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     const G = S.glide && now < S.glide.until ? S.glide : (S.glide = null);
     const waiting = !!S.anim && now < S.anim.t0;   // the throw starts once the glide is done
     for (let i = 0; i < 6; i++) {
-      const d = st.dice[i], v = d.v, tx = W / 2 + (i - 2.5) * 52;
+      const d = st.dice[i], v = d.v, tx = W / 2 + (i - 2.5) * 46;
       let k;
       if (G && G.lag.has(i)) {
         // Lifted off the felt, carried in a low arc and set down in the tray, straightening as it goes.
@@ -2037,7 +2050,8 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       const top = el("div", "chip-top"); top.appendChild(el("span", "dot")); top.appendChild(el("span", "chip-name", p.name + (p.pid === S.pid ? " (you)" : ""))); c.appendChild(top);
       c.appendChild(el("span", "chip-score", fmt(p.score)));
       const bar = el("span", "chip-bar"), fill = el("i"); fill.style.width = clamp((p.score / st.target) * 100, 0, 100) + "%"; bar.appendChild(fill); c.appendChild(bar);
-      const status = p.gone ? `Away${p.skips ? `, skipped ${p.skips}` : ""}` : st.phase === "play" && st.turn === i ? "Rolling now" : p.pid === st.host ? "Host" : "";
+      // One-line cards: the glow already marks who's rolling, so only an absence needs words.
+      const status = p.gone ? `Away${p.skips ? `, skipped ${p.skips}` : ""}` : "";
       c.appendChild(el("span", "chip-status", status));
       if (p.pid === leader) {
         const cr = crownEl(); if (crownNew) cr.classList.add("new");
@@ -2046,10 +2060,11 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       board.appendChild(c);
     });
     renderTurn();
-    $("#log").textContent = st.log.length ? st.log[st.log.length - 1] : "";
     const watching = [...S.present].filter((pid) => !st.players.some((p) => p.pid === pid)).length;
     const fin = st.fin != null && st.players[st.fin];
-    $("#final-note").textContent = (fin && st.phase === "play" ? `Final round: beat ${fin.name}'s ${fmt(fin.score)}.` : `First to ${fmt(st.target)}.`) + (watching ? ` ${watching} watching.` : "");
+    // The target is printed on the felt, so the footer shows the latest action unless it's the final round.
+    const last = st.log.length ? st.log[st.log.length - 1] : "";
+    $("#final-note").textContent = (fin && st.phase === "play" ? `Final round: beat ${fin.name}'s ${fmt(fin.score)}.` : last) + (watching ? ` ${watching} watching.` : "");
     renderOver();
   }
 
@@ -2182,7 +2197,11 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   });
   function selectCode() { const r = document.createRange(); r.selectNodeContents($("#lobby-code")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Code selected. Copy it from here."); }
   window.addEventListener("pagehide", () => { try { if (S.net) S.net.leave(); } catch (e) { /* closing */ } });
-  new ResizeObserver(() => { if (!$("#scr-game").hidden) { resize(); S.dirty = true; } }).observe($("#table-wrap"));
+  // The table's height depends on the window and on the panels around it, so watch all of them.
+  const refit = () => { if (!$("#scr-game").hidden) { resize(); S.dirty = true; } };
+  const ro = new ResizeObserver(refit);
+  for (const sel of ["#table-wrap", "#board", "#turn", ".game-foot"]) ro.observe($(sel));
+  window.addEventListener("resize", refit);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { S.cacheKey = ""; S.dirty = true; });
 
   // Slow housekeeping tick: away detection, host migration, unanswered taps.
@@ -2195,7 +2214,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   }, 700);
 
   // Local test hook (localhost only): lets a test script read state and pick dice by index.
-  if (location.hostname === "localhost") window.__farkle = { S, toggleDie, scoreOf, pickDie, canAct, SND, hotFlair, poses, setDiceColor };
+  if (location.hostname === "localhost") window.__farkle = { S, toggleDie, scoreOf, pickDie, canAct, SND, hotFlair, poses, proj, setDiceColor };
 
   // Start-up: restore name and settings, open Settings when there's no way to connect yet,
   // and rejoin the room this tab was in before a reload.
