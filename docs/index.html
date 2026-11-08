@@ -1648,14 +1648,19 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       a.gain.exponentialRampToValueAtTime(0.0001, t + 0.03 + rnd() * 0.025);
       n.connect(bp); bp.connect(a); a.connect(dest);
     }
+    // The swell peaks at APPLAUSE_PEAK of the way through; everything after it runs at
+    // APPLAUSE_TRAIL speed, so the crowd settles quicker without a shorter build-up.
+    const APPLAUSE_PEAK = 0.22, APPLAUSE_TRAIL = 2;
     function applause(t, secs) {
       const hall = A.ac.createGain(); hall.gain.value = 1; hall.connect(A.sfx);
       const send = A.ac.createGain(); send.gain.value = 0.5; hall.connect(send); send.connect(A.verb);
+      const P = APPLAUSE_PEAK, K = APPLAUSE_TRAIL, warp = r => r <= P ? r : P + (r - P) * K;
       for (let h = 0; h < 16; h++) {
         const g = A.ac.createGain(); out(g, (rnd() - 0.5) * 1.7, hall);
-        const rate = 3.4 + rnd() * 1.5, tone = 800 + rnd() * 1500, stop = t + secs * (0.7 + rnd() * 0.3);
+        const rate = 3.4 + rnd() * 1.5, tone = 800 + rnd() * 1500, quit = 0.7 + rnd() * 0.3;
+        const stop = t + secs * (quit <= P ? quit : P + (quit - P) / K);
         for (let tt = t + rnd() * 0.3; tt < stop; tt += (0.85 + rnd() * 0.3) / rate) {
-          const u = (tt - t) / secs, swell = Math.min(1, u * 4.5) * Math.pow(Math.max(0, 1 - u), 1.4);
+          const u = warp((tt - t) / secs), swell = Math.min(1, u * 4.5) * Math.pow(Math.max(0, 1 - u), 1.4);
           clap(tt, 0.9 * swell * (0.6 + rnd() * 0.5), tone, g);
         }
       }
