@@ -118,6 +118,16 @@ input:focus-visible, select:focus-visible, button:focus-visible, canvas:focus-vi
 .settings { display: flex; flex-direction: column; gap: 12px; }
 .settings h2 { font-size: 15px; font-weight: 600; }
 .settings .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.test-box { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: 15px; cursor: pointer; }
+.switch small { display: block; font-size: 13px; color: var(--muted); }
+.switch input {
+  appearance: none; flex: none; position: relative; width: 46px; height: 28px; margin: 0; border-radius: 14px;
+  background: var(--ink); border: 1px solid var(--line-strong); cursor: pointer; transition: background .15s;
+}
+.switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--muted); transition: transform .15s, background .15s; }
+.switch input:checked { background: var(--brass); border-color: var(--brass); }
+.switch input:checked::after { transform: translateX(18px); background: var(--brass-ink); }
 
 /* ---------- Start screen ---------- */
 .screen { display: flex; flex-direction: column; gap: 14px; }
@@ -207,7 +217,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
 }
 .banner.bad { color: var(--bad); }
 .banner.show { animation: pop 1.8s ease-out forwards; }
-/* Hot dice: a neon sign that sputters on, over a scorched, shaking table. */
+/* Hot dice: a neon sign that sputters on. */
 .banner.hot {
   color: #fff1cf; font-size: clamp(44px, 13vw, 68px); letter-spacing: .03em;
   text-shadow: 0 0 3px #fff6dc, 0 0 10px #ffc361, 0 0 22px #ff8a1f, 0 0 44px #ff5400, 0 3px 0 rgba(0, 0, 0, .5);
@@ -218,12 +228,6 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
 }
 .banner.hot.show { animation: pop 2.4s ease-out forwards, neon 1s linear 1; }
 @keyframes neon { 0% { filter: brightness(.3); } 7% { filter: brightness(1.4); } 11% { filter: brightness(.4); } 16% { filter: brightness(1.3); } 22% { filter: brightness(.6); } 28%, 100% { filter: brightness(1); } }
-.table-wrap.scorch { animation: scorch 1.5s ease-out; }
-@keyframes scorch {
-  0% { transform: translate(0, 0); filter: saturate(1.7) brightness(1.2); }
-  5% { transform: translate(-4px, 1px); } 10% { transform: translate(4px, -1px); } 15% { transform: translate(-3px, 1px); }
-  20% { transform: translate(2px, 0); } 26% { transform: none; } 100% { transform: none; filter: none; }
-}
 .chip[data-hot="1"] { border-color: #ff9a3c; box-shadow: 0 0 0 1px #ff9a3c, 0 0 24px -2px #ff6a00, inset 0 -18px 24px -18px rgba(255, 110, 20, .55); }
 .float {
   position: absolute; left: 0; right: 0; top: 52%; text-align: center; pointer-events: none; opacity: 0;
@@ -300,6 +304,13 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     </div>
     <div class="row">
       <button id="settings-save" class="btn primary" type="button">Save</button>
+    </div>
+    <!-- Test tools for the Claude Artifact (the testing ground). The GitHub Pages build never shows them. -->
+    <div id="test-box" class="test-box" hidden>
+      <label class="switch"><span>Test mode<small>Tools for trying things out. Applies right away.</small></span><input id="test-mode" type="checkbox" role="switch"></label>
+      <div id="test-opts" class="settings" hidden>
+        <label class="switch"><span>Force hot dice<small>Every roll you make comes up hot dice.</small></span><input id="test-hot" type="checkbox" role="switch"></label>
+      </div>
     </div>
   </section>
 
@@ -719,6 +730,11 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   const HOSTED = window.FARKLE_HOSTED && typeof window.FARKLE_HOSTED === "object" ? window.FARKLE_HOSTED : {};
   if (!CFG.url && !CFG.key && typeof HOSTED.url === "string" && typeof HOSTED.key === "string") { CFG.url = HOSTED.url; CFG.key = HOSTED.key; }
   const inClaude = () => !!(window.claude && typeof window.claude.use === "function");
+  // Test tools exist only outside the GitHub Pages build (which sets FARKLE_HOSTED), so live players
+  // can't force rolls. The host checks this too, not just the switch.
+  const TEST_OK = !window.FARKLE_HOSTED;
+  const TEST = Object.assign({ on: false, hot: false }, (TEST_OK && load("l", "fk.test")) || {});
+  const testHot = () => TEST_OK && TEST.on && TEST.hot;
 
   /* ---------- 7. Transports ----------
      Common interface:
@@ -1084,7 +1100,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       applySel(d.sel);
       hostEmit("DICE_SET_ASIDE", { sel: selIdx() }, null);
     } else if (i.t === "keep") hostKeep(d.sel);
-    else if (i.t === "roll") hostRoll();
+    else if (i.t === "roll") hostRoll(TEST_OK && d.hot === true);
     else if (i.t === "bank") hostBank();
   }
 
@@ -1100,9 +1116,10 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     M.ts = "kept";
     hostEmit("DICE_KEPT", { pts: val, idx }, `${p.name} kept ${fmt(val)}.`);
   }
-  function hostRoll() {
+  function hostRoll(forceHot) {
     const M = S.M, p = M.players[M.turn];
     if (M.ts !== "pre" && M.ts !== "kept") return;
+    if (forceHot) M.dice.forEach((d) => { d.s = 2; });   // test mode: treat every die as kept, so all six come back hot
     let free = M.dice.map((d, k) => (d.s === 0 ? k : -1)).filter((k) => k >= 0), hot = false;
     if (!free.length) { hot = true; M.th = true; M.dice.forEach((d) => { d.s = 0; }); free = [0, 1, 2, 3, 4, 5]; }
     const seed = rand32(), L = makeLaunch(seed, free.length), v = free.map(rollDie);
@@ -1237,7 +1254,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   function sendTurn(t) {
     if (!canAct()) return;
     S.awaitEv = S.st.evN; S.awaitAt = Date.now();   // block double taps until the host answers
-    act(t, { sel: curSel() });
+    act(t, t === "roll" && testHot() ? { sel: curSel(), hot: true } : { sel: curSel() });
     renderTurn();
   }
   function setReady(v) { S.me.ready = v; if (S.net) S.net.setMe(S.me); if (S.isHost) hostPresenceTick(); renderAll(); }
@@ -1823,47 +1840,13 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     ctx.lineWidth = 7; ctx.strokeStyle = "rgba(241, 212, 143, .28)"; ctx.beginPath(); ctx.arc(0, 0, HS * 1.62 + pulse, 0, Math.PI * 2); ctx.stroke();
     ctx.lineWidth = 2.2; ctx.strokeStyle = "#f1d48f"; ctx.beginPath(); ctx.arc(0, 0, HS * 1.62 + pulse, 0, Math.PI * 2); ctx.stroke();
   }
-  // Hot dice flair: a heat flash across the felt and embers drifting up off it, plus (in CSS)
-  // a neon banner, a short scorched shake of the table and the roller's chip catching fire.
-  const FX = { embers: [], start: 0, until: 0 };
+  // Hot dice flair: the dice glow as they tumble (anim.hot) and, in CSS, the neon banner and the
+  // roller's chip catching fire. FX.until times the chip.
+  const FX = { until: 0 };
   function hotFlair() {
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const t = performance.now();
-    FX.start = t; FX.until = t + 2600; FX.embers = [];
-    for (let i = 0; i < (reduce ? 24 : 110); i++) {
-      FX.embers.push({ wx: 20 + Math.random() * (W - 40), wy: 20 + Math.random() * (H - 10), vx: (Math.random() - 0.5) * 26, vy: -(50 + Math.random() * 110),
-        max: 0.8 + Math.random() * 1.4, r: 0.8 + Math.random() * 2, delay: Math.random() * 900, ph: Math.random() * 6.283 });
-    }
-    const wrap = $("#table-wrap");
-    wrap.classList.remove("scorch"); void wrap.offsetWidth;
-    if (!reduce) wrap.classList.add("scorch");
+    FX.until = performance.now() + 2600;
     setTimeout(() => { if (S.st && S.st.phase !== "lobby" && performance.now() >= FX.until) renderGame(); }, 2700);
     S.dirty = true;
-  }
-  // Ember positions are a function of age, so a dropped frame never bunches them up.
-  function drawFx(now) {
-    if (now >= FX.until) { FX.embers = []; return; }
-    const age = (now - FX.start) / 1000, sc = cssW / 360;
-    ctx.save();
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // Normal blending throughout: additive light turns orange to lime on green felt.
-    const glow = Math.max(0, 1 - age / 1.6);
-    if (glow > 0) {
-      const c = proj(W / 2, H * 0.5, 0), g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, cssW * 0.6);
-      g.addColorStop(0, `rgba(255, 110, 25, ${0.3 * glow})`); g.addColorStop(1, "rgba(200, 40, 0, 0)");
-      ctx.fillStyle = g; poly(ctx, [[0, 0, 0], [W, 0, 0], [W, H, 0], [0, H, 0]]); ctx.fill();
-    }
-    for (const e of FX.embers) {
-      const a = (now - FX.start - e.delay) / 1000;
-      if (a < 0 || a > e.max) continue;
-      const p = proj(e.wx, e.wy, 0), life = 1 - a / e.max, hue = 14 + life * 28;
-      const x = p.x + (e.vx * a + Math.sin(a * 5 + e.ph) * 5) * sc, y = p.y + e.vy * a * sc;
-      ctx.fillStyle = `hsla(${hue - 6}, 100%, 48%, ${0.38 * life})`;
-      ctx.beginPath(); ctx.arc(x, y, e.r * 2.2 * sc, 0, 6.283); ctx.fill();
-      ctx.fillStyle = `hsla(${hue + 6}, 100%, ${55 + life * 18}%, ${life})`;
-      ctx.beginPath(); ctx.arc(x, y, e.r * sc * (0.5 + life * 0.5), 0, 6.283); ctx.fill();
-    }
-    ctx.restore();
   }
   function draw(now) {
     buildCaches();
@@ -1882,14 +1865,13 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     for (const p of ps.filter((q) => q.where === "tray")) drawDie(p);
     for (const p of ps.filter((q) => q.where === "glide")) drawDie(p);   // in the air above the near rail
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    drawFx(now);
   }
   // Redraw only while something moves; idle tables cost nothing.
   function loop(now) {
     requestAnimationFrame(loop);
     if ($("#scr-game").hidden || !S.st) return;
     const pulsing = S.st.dice.some((d) => d.s === 1) || (S.localSel && S.localSel.length);
-    if (S.dirty || S.anim || S.glide || pulsing || now < FX.until + 50) { S.dirty = false; draw(now); }
+    if (S.dirty || S.anim || S.glide || pulsing) { S.dirty = false; draw(now); }
   }
   requestAnimationFrame(loop);
 
@@ -2147,7 +2129,17 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     else hint = "Open this page in two tabs of the same browser to try a game on your own.";
     $("#net-hint").textContent = hint;
     $("#supa-fields").hidden = !(mode === "supabase" || (mode === "auto" && !claude));
+    renderTest();
   }
+  function renderTest() {
+    $("#test-box").hidden = !TEST_OK;
+    $("#test-mode").checked = TEST.on;
+    $("#test-hot").checked = TEST.hot;
+    $("#test-opts").hidden = !TEST.on;
+  }
+  function setTest(k, v) { TEST[k] = v; save("l", "fk.test", TEST.on || TEST.hot ? TEST : null); renderTest(); }
+  $("#test-mode").addEventListener("change", (e) => setTest("on", e.target.checked));
+  $("#test-hot").addEventListener("change", (e) => setTest("hot", e.target.checked));
   $("#gear").addEventListener("click", () => openSettings($("#settings").hidden));
   function renderSnd() { const b = $("#snd"); b.setAttribute("aria-pressed", String(!SND.muted)); b.title = SND.muted ? "Sound off" : "Sound on"; }
   $("#snd").addEventListener("click", () => { SND.setMuted(!SND.muted); renderSnd(); });
