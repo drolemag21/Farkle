@@ -1327,7 +1327,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     }
 
     /* --- The trio: Rhodes, upright bass, brushes and ride, plus a little vibraphone --- */
-    function rhodes(t, m, dur, vel) {
+    function rhodes(t, m, dur, vel, dest) {   // dest: another bus (the farkle chord plays on the table's)
       const f = mtof(m), end = t + dur + 0.8;
       const car = osc("sine", f, t, end), mod = osc("sine", f, t, end), mg = A.ac.createGain();
       mg.gain.setValueAtTime(f * 1.4 * vel, t); mg.gain.exponentialRampToValueAtTime(f * 0.08, t + 0.5);   // FM bark that mellows
@@ -1336,14 +1336,14 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       const a = amp();
       a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(0.07 * vel, t + 0.008);
       a.gain.exponentialRampToValueAtTime(0.025 * vel, t + dur); a.gain.exponentialRampToValueAtTime(0.0001, end);
-      car.connect(a); out(a, (m - 62) / 30, A.rhodes); out(tg, 0, A.rhodes);
+      car.connect(a); out(a, (m - 62) / 30, dest || A.rhodes); out(tg, 0, dest || A.rhodes);
     }
-    function bassNote(t, m, dur) {
+    function bassNote(t, m, dur, dest) {
       const f = mtof(m), end = t + dur + 0.3;
       const o1 = osc("triangle", f, t, end), o2 = osc("sine", f, t, end), lp = filt("lowpass", 520, 0.7), a = amp();
       a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(0.32, t + 0.012);
       a.gain.exponentialRampToValueAtTime(0.12, t + 0.18); a.gain.exponentialRampToValueAtTime(0.0001, end);
-      o1.connect(lp); o2.connect(lp); lp.connect(a); a.connect(A.music);
+      o1.connect(lp); o2.connect(lp); lp.connect(a); a.connect(dest || A.music);
     }
     function brush(t, peak, len) {
       const n = noise(t, t + len + 0.05), bp = filt("bandpass", 5200, 0.7), a = amp();
@@ -1530,23 +1530,20 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
         }
       }
     }
-    // Farkle: the dice go dead. A muffled thump, then a muted horn sagging down by half steps.
-    function horn(t, m, len, last) {
-      const f = mtof(m), end = t + len + 0.2;
-      const o = osc("sawtooth", f, t, end), o2 = osc("sawtooth", f * 1.006, t, end), lp = filt("lowpass", 450, 5), a = amp();
-      lp.frequency.setValueAtTime(380, t); lp.frequency.linearRampToValueAtTime(1300, t + 0.09); lp.frequency.linearRampToValueAtTime(480, t + len);   // the mute opening and closing
-      if (last) {   // the last note droops and wobbles
-        o.frequency.linearRampToValueAtTime(f * 0.94, end); o2.frequency.linearRampToValueAtTime(f * 1.006 * 0.94, end);
-        const lfo = osc("sine", 5.5, t + 0.2, end), d = A.ac.createGain(); d.gain.value = f * 0.012; lfo.connect(d); d.connect(o.frequency); d.connect(o2.frequency);
-      }
-      a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(0.07, t + 0.035);
-      a.gain.setValueAtTime(0.07, t + len * 0.75); a.gain.exponentialRampToValueAtTime(0.0001, end);
-      o.connect(lp); o2.connect(lp); lp.connect(a); out(a, 0.15, A.sfx);
-    }
+    // Farkle: the dice go dead and the trio answers with one moody chord (D half-diminished on the
+    // Rhodes, the bass's low D, a cymbal grabbed short). Played on the table bus so it's heard with the
+    // music off. The muted "sad trombone" it replaced read as a cartoon.
+    const FARKLE_BAND = 0.3;   // the trio voices are built for the quieter music bus
     function farkle(t) {
       const o = osc("sine", 95, t, t + 0.4), oa = amp(); o.frequency.exponentialRampToValueAtTime(48, t + 0.3);
       env(oa.gain, t, 0.28, 0.004, 0.32); o.connect(oa); oa.connect(A.sfx);
-      [[55, 0.12, 0.3], [54, 0.46, 0.3], [53, 0.8, 0.95]].forEach(([m, d, len], i) => horn(t + d, m, len, i === 2));
+      const th = t + 0.12, band = A.ac.createGain(); band.gain.value = FARKLE_BAND; band.connect(A.sfx);
+      bassNote(th, 38, 1.4, band);
+      [50, 53, 56, 60].forEach((m, i) => rhodes(th + i * 0.012, m, 1.6, 1, band));
+      const n = noise(th, th + 0.5), hp = filt("highpass", 6000), na = amp();
+      na.gain.setValueAtTime(0.0001, th); na.gain.exponentialRampToValueAtTime(0.06, th + 0.003);
+      na.gain.exponentialRampToValueAtTime(0.02, th + 0.25); na.gain.exponentialRampToValueAtTime(0.0001, th + 0.32);
+      n.connect(hp); hp.connect(na); out(na, -0.3, A.sfx);
     }
     // Your turn: two soft notes up the vibes, like a call bell at the cage.
     function turn(t) { [[77, 0], [84, 0.11]].forEach(([m, d]) => vibes(t + d, m, 1.5, A.sfx)); }
