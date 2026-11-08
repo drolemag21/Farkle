@@ -1318,7 +1318,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       const comp = ac.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 3; comp.connect(ac.destination);
       const master = g(muted ? 0 : 0.9); master.connect(comp);
       const verb = ac.createConvolver(); verb.buffer = impulse(ac, 1.6);
-      const verbOut = g(0.15); verb.connect(verbOut); verbOut.connect(master);
+      const verbOut = g(0.075); verb.connect(verbOut); verbOut.connect(master);
       const lounge = g(0); lounge.connect(master);
       const loungeSend = g(0.35); lounge.connect(loungeSend); loungeSend.connect(verb);
       const warm = ac.createBiquadFilter(); warm.type = "lowpass"; warm.frequency.value = 5200; warm.connect(lounge);
