@@ -1283,7 +1283,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
      Everything is synthesized with Web Audio, so there are no files to load. Signal flow:
        lounge bus (jazz trio + room tone) --> master     faded out while a game is in play
        sfx bus (dice, chips, hot dice)    --> master
-       both send into one long convolution reverb: the big, smoky casino floor.
+       both send into one convolution reverb: a close, smoky room.
      Browsers only allow audio after a tap or key press, so nothing plays until then. */
   const SND = (() => {
     let A = null;      // graph in use: the live one, or an offline one while measure() renders
@@ -1306,8 +1306,8 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       const g = (v) => { const n = ac.createGain(); n.gain.value = v; return n; };
       const comp = ac.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 3; comp.connect(ac.destination);
       const master = g(muted ? 0 : 0.9); master.connect(comp);
-      const verb = ac.createConvolver(); verb.buffer = impulse(ac, 2.8);
-      const verbOut = g(0.3); verb.connect(verbOut); verbOut.connect(master);
+      const verb = ac.createConvolver(); verb.buffer = impulse(ac, 0.8);
+      const verbOut = g(0.075); verb.connect(verbOut); verbOut.connect(master);
       const lounge = g(0); lounge.connect(master);
       const loungeSend = g(0.35); lounge.connect(loungeSend); loungeSend.connect(verb);
       const warm = ac.createBiquadFilter(); warm.type = "lowpass"; warm.frequency.value = 5200; warm.connect(lounge);
@@ -1443,7 +1443,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     }
 
     /* --- Table sounds --- */
-    function click(t, k) {   // die against die: a bright, hard click
+    function click(t, k) {   // a bright, hard click (a die set down in the tray)
       const o = osc("sine", 1900 + rnd() * 1300, t, t + 0.06), a = amp(); env(a.gain, t, 0.09 * k + 0.01, 0.001, 0.045); o.connect(a); a.connect(A.sfx);
       const n = noise(t, t + 0.02), bp = filt("bandpass", 3800, 3), na = amp(); env(na.gain, t, 0.12 * k + 0.01, 0.001, 0.012); n.connect(bp); bp.connect(na); na.connect(A.sfx);
     }
@@ -1457,34 +1457,31 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       env(a.gain, t, 0.16 * k + 0.01, 0.002, 0.08); o.connect(a); a.connect(A.sfx);
       const n = noise(t, t + 0.04), bp = filt("bandpass", 1500, 1.2), na = amp(); env(na.gain, t, 0.08 * k, 0.001, 0.03); n.connect(bp); bp.connect(na); na.connect(A.sfx);
     }
+    function clack(t, k) {   // die against die: a dry, unpitched clack, so it can't be mistaken for the tray click of a keep
+      const n = noise(t, t + 0.03), bp = filt("bandpass", 2200 + rnd() * 700, 1.6), na = amp(); env(na.gain, t, 0.13 * k + 0.008, 0.0008, 0.018); n.connect(bp); bp.connect(na); na.connect(A.sfx);
+      const o = osc("triangle", 1100 + rnd() * 400, t, t + 0.04), a = amp(); env(a.gain, t, 0.035 * k + 0.004, 0.0008, 0.016); o.connect(a); a.connect(A.sfx);
+    }
+    function whoosh(t, land) {   // the throw: air past the dice, swelling and fading out as the first die lands
+      const end = t + Math.max(0.2, land), n = noise(t, end + 0.05), bp = filt("bandpass", 450, 0.9), a = amp();
+      bp.frequency.setValueAtTime(450, t); bp.frequency.exponentialRampToValueAtTime(1600, t + 0.14); bp.frequency.exponentialRampToValueAtTime(700, end);
+      a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(0.07, t + 0.1); a.gain.exponentialRampToValueAtTime(0.0001, end);
+      n.connect(bp); bp.connect(a); a.connect(A.sfx);
+    }
     // The impacts come from the physics step, so every screen hears each hit as the die lands there.
     function roll(sim, t0) {
-      for (let i = 0; i < 4; i++) click(t0 + i * 0.022 + rnd() * 0.01, 0.35);   // dice leaving the hand
       const last = [-1, -1, -1];
       let count = 0;
+      // The handful leaves the hand packed tight and the dice graze each other in the air; those bumps
+      // stay silent until the first die meets the felt.
+      const land = (sim.hits.find((h) => h[1] === 0) || [sim.steps])[0];
+      whoosh(t0, land * DT);
       for (const [s, kind, v] of sim.hits) {
-        if (v < 45 || count > 48) continue;
+        if (v < 45 || count > 48 || (kind === 2 && s < land)) continue;
         const t = t0 + s * DT;
         if (t - last[kind] < 0.018) continue;
         last[kind] = t; count++;
         const k = Math.min(1, v / 700);
-        if (kind === 0) thud(t, k); else if (kind === 1) knock(t, k); else click(t, k);
-      }
-      // Sliding across the felt: a soft hiss that follows how fast the dice are moving.
-      const n = sim.n, every = 3, vals = [];
-      for (let s = every; s < sim.steps; s += every) {
-        let sp = 0;
-        for (let i = 0; i < n; i++) {
-          const o = (s * n + i) * 4, p = ((s - every) * n + i) * 4;
-          if (sim.fr[o + 2] > 0.5) continue;
-          sp += Math.hypot(sim.fr[o] - sim.fr[p], sim.fr[o + 1] - sim.fr[p + 1]) / (every * DT);
-        }
-        vals.push(Math.min(0.06, 0.0001 + sp / 30000));
-      }
-      if (vals.length > 2) {
-        const nz = noise(t0, t0 + sim.dur + 0.1), bp = filt("bandpass", 1100, 0.6), a = amp();
-        a.gain.setValueCurveAtTime(Float32Array.from(vals), t0, sim.dur);
-        nz.connect(bp); bp.connect(a); a.connect(A.sfx);
+        if (kind === 0) thud(t, k); else if (kind === 1) knock(t, k); else clack(t, k);
       }
     }
     function select(on, t) {   // a soft tick, up for set aside and down for put back
