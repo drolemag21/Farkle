@@ -531,6 +531,10 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
      defines exactly, so every browser replays an identical trajectory. */
   const W = 300, H = 340, HS = 17, RAD = 20, DT = 1 / 120, GRAV = 1900, MAX_STEPS = 720;
 
+  // Throw strength: scales launch speed and spin. 1 was the original soft toss that settled mid-table.
+  // Changing it changes every roll, so ship it as an "everyone reload" release.
+  const THROW = 2.2;
+
   // Launch numbers for `n` dice, derived from the host's seed and rounded so they travel compactly.
   function makeLaunch(seed, n) {
     const rnd = mulberry32(seed);
@@ -541,10 +545,10 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       const x = cx + (col - 1) * 46 + (rnd() - 0.5) * 8;
       const y = H - 32 - row * 46 + (rnd() - 0.5) * 8;
       const z = 35 + rnd() * 45;
-      const vx = (W / 2 - cx) * 0.9 + (rnd() - 0.5) * 320;
-      const vy = -(170 + rnd() * 150);                  // thrown away from the viewer; most settle mid-table
-      const vz = 140 + rnd() * 240;
-      const w = (rnd() - 0.5) * 18;                     // spin about the vertical axis
+      const vx = ((W / 2 - cx) * 0.9 + (rnd() - 0.5) * 320) * THROW;
+      const vy = -(170 + rnd() * 150) * THROW;          // thrown away from the viewer
+      const vz = (140 + rnd() * 240) * (0.5 + THROW / 2);   // a harder throw also flies higher, but less so
+      const w = (rnd() - 0.5) * 18 * THROW;             // spin about the vertical axis
       const ax = rnd() * Math.PI * 2;                   // tumble-axis jitter (render only)
       const tum = 0.75 + rnd() * 0.5;                   // tumble rate (render only)
       L.push([x, y, z, vx, vy, vz, w, ax, tum].map(r1));
