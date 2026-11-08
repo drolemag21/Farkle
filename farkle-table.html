@@ -345,7 +345,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
           <tr><td>Four of a kind + a pair</td><td>1,500</td></tr>
           <tr><td>Two triplets</td><td>2,500</td></tr>
         </table>
-        <p>After every roll, keep at least one scoring die, then roll the rest or bank. A roll with nothing that scores is a Farkle: you lose the points from that turn. Set aside all six and you have hot dice: roll all six again. When someone banks past the target, everyone else gets one last turn.</p>
+        <p>After every roll, keep at least one scoring die, then roll the rest or bank. A roll with nothing that scores is a Farkle: you lose the points from that turn. Keep all six and you have hot dice: roll all six again. When someone banks past the target, everyone else gets one last turn.</p>
       </details>
     </section>
 
@@ -377,7 +377,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     <section id="scr-game" class="screen" hidden>
       <div id="board" class="board" aria-label="Scores"></div>
       <div id="table-wrap" class="table-wrap">
-        <canvas id="table" tabindex="0" aria-label="Dice table. On your turn, tap dice to set them aside, or press 1 to 6."></canvas>
+        <canvas id="table" tabindex="0" aria-label="Dice table. On your turn, tap the dice you want to keep, or press 1 to 6."></canvas>
         <div id="banner" class="banner" aria-live="polite"></div>
         <div id="float" class="float" aria-hidden="true"></div>
       </div>
@@ -942,7 +942,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     }
     const prev = S.st;
     const fresh = evs.filter((e) => e && typeof e.n === "number" && typeof e.t === "string" && e.n > S.lastEvN).sort((a, b) => a.n - b.n);
-    // Where every die sat before this snapshot, so the dice just set aside can glide from there to the tray.
+    // Where every die sat before this snapshot, so the dice just kept can glide from there to the tray.
     const before = prev && fresh.some((e) => e.t === "DICE_ROLLED" || e.t === "DICE_KEPT" || e.t === "BANKED") ? poses(performance.now()) : null;
     S.st = st;
     for (const ev of fresh) playEvent(ev, st, prev, before);
@@ -998,7 +998,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     }
     S.dirty = true;
   }
-  // Glide the dice that were just set aside from the felt into the tray, one after another.
+  // Glide the dice that were just kept from the felt into the tray, one after another.
   // Returns how long (ms) the throw should wait for them.
   function glideToTray(prev, st, before, hot) {
     if (!prev || !before || prev.phase !== "play") return 0;
@@ -1723,7 +1723,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     g.strokeStyle = "rgba(241, 212, 143, .35)";
     poly(g, [[TX0, TY0, RZ], [TX1, TY0, RZ], [TX1, TY1, RZ], [TX0, TY1, RZ]]); g.stroke();
     g.fillStyle = "rgba(241, 212, 143, .5)"; g.font = "600 9px Figtree, system-ui, sans-serif"; g.textAlign = "center";
-    q = proj(W / 2, H + NEAR - 6, RZ); g.fillText("SET ASIDE", q.x, q.y);
+    q = proj(W / 2, H + NEAR - 6, RZ); g.fillText("KEPT", q.x, q.y);
   }
 
   // Where every die is right now: in the tray, tumbling, at rest on the felt, or waiting in hand.
