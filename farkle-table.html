@@ -1483,22 +1483,6 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
         const k = Math.min(1, v / 700);
         if (kind === 0) thud(t, k); else if (kind === 1) knock(t, k); else clack(t, k);
       }
-      // Sliding across the felt: a soft hiss that follows how fast the dice are moving.
-      const n = sim.n, every = 3, vals = [];
-      for (let s = every; s < sim.steps; s += every) {
-        let sp = 0;
-        for (let i = 0; i < n; i++) {
-          const o = (s * n + i) * 4, p = ((s - every) * n + i) * 4;
-          if (sim.fr[o + 2] > 0.5) continue;
-          sp += Math.hypot(sim.fr[o] - sim.fr[p], sim.fr[o + 1] - sim.fr[p + 1]) / (every * DT);
-        }
-        vals.push(Math.min(0.06, 0.0001 + sp / 30000));
-      }
-      if (vals.length > 2) {
-        const nz = noise(t0, t0 + sim.dur + 0.1), bp = filt("bandpass", 1100, 0.6), a = amp();
-        a.gain.setValueCurveAtTime(Float32Array.from(vals), t0, sim.dur);
-        nz.connect(bp); bp.connect(a); a.connect(A.sfx);
-      }
     }
     function select(on, t) {   // a soft tick, up for set aside and down for put back
       const o = osc("sine", on ? 1320 : 990, t, t + 0.1), a = amp(); o.frequency.exponentialRampToValueAtTime(on ? 1560 : 820, t + 0.06);
