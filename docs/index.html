@@ -148,6 +148,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, canvas:focus-vi
 .join-row input { flex: 1; min-width: 0; font-family: var(--f-mono); font-size: 20px; letter-spacing: .3em; text-align: center; }
 .or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+details.custom-server summary { cursor: pointer; font-size: 14px; min-height: 32px; display: flex; align-items: center; color: var(--muted); }
+details.custom-server[open] summary { margin-bottom: 8px; }
 details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; display: flex; align-items: center; }
 .score-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
 .score-table td { padding: 6px 0; border-top: 1px solid var(--line); }
@@ -287,21 +289,26 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     <label class="field" for="net-mode">Network
       <select id="net-mode">
         <option value="auto">Automatic</option>
-        <option value="room">Claude room (inside a Claude Artifact)</option>
-        <option value="supabase">Supabase Realtime</option>
-        <option value="tabs">This device only (test in two tabs)</option>
+        <option value="room">Claude room</option>
+        <option value="supabase">Online</option>
+        <option value="tabs">This device only</option>
       </select>
     </label>
     <p id="net-hint" class="hint"></p>
-    <div id="supa-fields" class="settings">
-      <label class="field" for="supa-url">Supabase URL
-        <input id="supa-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://your-project.supabase.co">
-      </label>
-      <label class="field" for="supa-key">Supabase publishable key
-        <input id="supa-key" type="password" autocomplete="off" spellcheck="false" placeholder="sb_publishable_...">
-      </label>
-      <p class="hint">Saved in this browser only. Use the publishable key, never a secret key. Game state travels over Realtime Broadcast and Presence; nothing is written to your tables.</p>
-    </div>
+    <!-- Server fields for the raw file opened outside Claude. The GitHub Pages build has its server
+         built in and never shows them. -->
+    <details id="supa-fields" class="custom-server">
+      <summary>Custom server</summary>
+      <div class="settings">
+        <label class="field" for="supa-url">Server URL
+          <input id="supa-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://...">
+        </label>
+        <label class="field" for="supa-key">Publishable key
+          <input id="supa-key" type="password" autocomplete="off" spellcheck="false">
+        </label>
+        <p class="hint">Saved in this browser only. Use the publishable key, never a secret key.</p>
+      </div>
+    </details>
     <div class="row">
       <button id="settings-save" class="btn primary" type="button">Save</button>
     </div>
@@ -481,7 +488,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 4200); }
   const scriptLoads = {};
   function loadScript(src) {
-    if (!scriptLoads[src]) scriptLoads[src] = new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => { delete scriptLoads[src]; rej(new Error("Couldn't load the Supabase library.")); }; document.head.appendChild(s); });
+    if (!scriptLoads[src]) scriptLoads[src] = new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => { delete scriptLoads[src]; rej(new Error("Couldn't load the connection library.")); }; document.head.appendChild(s); });
     return scriptLoads[src];
   }
 
@@ -799,7 +806,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   function SupaNet(url, key) { this.kind = "supabase"; this.url = url; this.key = key; }
   SupaNet.prototype.join = async function (code, me, hd) {
     await loadScript(SUPABASE_SRC);
-    if (!window.supabase || typeof window.supabase.createClient !== "function") throw new Error("The Supabase library didn't load.");
+    if (!window.supabase || typeof window.supabase.createClient !== "function") throw new Error("The connection library didn't load.");
     this.hd = hd; this.me = me;
     this.client = window.supabase.createClient(this.url, this.key, { auth: { persistSession: false, autoRefreshToken: false }, realtime: { params: { eventsPerSecond: 20 } } });
     const ch = this.ch = this.client.channel("farkle-" + code, { config: { broadcast: { self: false, ack: false }, presence: { key: me.pid } } });
@@ -871,20 +878,20 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     let mode = CFG.net;
     if (mode === "auto") mode = inClaude() ? "room" : CFG.url && CFG.key ? "supabase" : "";
     if (mode === "room") {
-      if (!inClaude()) throw new Error("Claude rooms only work when this page is open as a Claude Artifact. Pick another network in Settings.");
+      if (!inClaude()) throw new Error("Claude rooms only work inside Claude. Pick another option in Settings.");
       const room = await window.claude.use("room");
       if (!room) throw new Error("Multiplayer here needs you signed in to claude.ai with access to this page.");
       return new RoomNet(room);
     }
     if (mode === "supabase") {
-      if (!CFG.url || !CFG.key) throw new Error("Add your Supabase URL and publishable key in Settings.");
+      if (!CFG.url || !CFG.key) throw new Error(HOSTED.url ? "Couldn't connect. Try reloading the page." : "Add a server under Settings → Custom server.");
       return new SupaNet(CFG.url, CFG.key);
     }
     if (mode === "tabs") {
-      if (typeof BroadcastChannel !== "function") throw new Error("This browser can't link tabs. Use Supabase instead.");
+      if (typeof BroadcastChannel !== "function") throw new Error("This browser can't link tabs. Pick Online in Settings.");
       return new TabsNet();
     }
-    throw new Error("Add your Supabase URL and publishable key in Settings, or pick \"This device only\" to try the game in two tabs.");
+    throw new Error("No online server is set up. Add one under Settings → Custom server, or pick \"This device only\" to try the game in two tabs.");
   }
 
   /* ---------- 8. Messages arriving from the network ---------- */
@@ -1280,7 +1287,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     try { await net.join(code, S.me, HD); }
     catch (e) {
       S.joining = false; leaveRoom();
-      toast(net.kind === "supabase" ? "Couldn't reach Supabase Realtime. Check the URL and publishable key in Settings, that the project isn't paused, and that Realtime allows public access." : "Couldn't open the room: " + (e && e.message ? e.message : "unknown error"));
+      toast(net.kind === "supabase" ? "Couldn't connect. Check your connection and try again." + (window.FARKLE_HOSTED ? "" : " If you use a custom server, check its URL and key in Settings.") : "Couldn't open the room: " + (e && e.message ? e.message : "unknown error"));
       return;
     }
     S.joining = false;
@@ -1919,7 +1926,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     const c = $("#conn");
     const state = S.inRoom ? S.conn : "off";
     c.dataset.state = state;
-    const label = { room: "Claude room", supabase: "Supabase", tabs: "This device" }[S.netKind] || "Online";
+    const label = { room: "Claude room", supabase: "Online", tabs: "This device" }[S.netKind] || "Online";
     $("#conn-text").textContent = c.title = state === "on" ? label : state === "wait" ? "Connecting" : state === "lost" ? "Reconnecting" : "Offline";
   }
   function seatColor(i) { return SEAT_COLORS[i] || "#a3b3a9"; }
@@ -2123,12 +2130,14 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     const mode = $("#net-mode").value;
     const claude = inClaude();
     let hint;
-    if (mode === "auto") hint = claude ? "Inside Claude: rooms use the Artifact's built-in channel, no keys needed. Anyone joining must be signed in and have access to this page." : "Outside Claude: rooms use your Supabase project below.";
-    else if (mode === "room") hint = claude ? "Uses the Artifact's built-in channel. Players need claude.ai access to this page." : "Only works when this page is open as a Claude Artifact.";
-    else if (mode === "supabase") hint = claude ? "Claude Artifacts block outside connections, so Supabase can't connect from here. Host this file elsewhere to use it." : "Uses Supabase Realtime Broadcast and Presence.";
-    else hint = "Open this page in two tabs of the same browser to try a game on your own.";
+    if (mode === "auto") hint = claude ? "Inside Claude: players join through Claude. Everyone needs a claude.ai account with access to this page." : "Anyone with the link can join.";
+    else if (mode === "room") hint = "Players join through Claude. Everyone needs a claude.ai account with access to this page.";
+    else if (mode === "supabase") hint = "Anyone with the link can join.";
+    else hint = "For testing: open the page in two tabs of this browser.";
     $("#net-hint").textContent = hint;
-    $("#supa-fields").hidden = !(mode === "supabase" || (mode === "auto" && !claude));
+    const box = $("#supa-fields");
+    box.hidden = !!window.FARKLE_HOSTED || claude || mode === "tabs";
+    if (!box.hidden && !(CFG.url && CFG.key)) box.open = true;
     renderTest();
   }
   function renderTest() {
@@ -2156,9 +2165,9 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     CFG.net = $("#net-mode").value;
     CFG.url = $("#supa-url").value.trim().replace(/\/+$/, "");
     CFG.key = $("#supa-key").value.trim();
-    if (CFG.url && !/^https?:\/\//i.test(CFG.url)) { toast("The Supabase URL starts with https://"); return; }
+    if (CFG.url && !/^https?:\/\//i.test(CFG.url)) { toast("The server URL starts with https://"); return; }
     // Secret keys bypass every security rule and must never sit in a browser.
-    if (/^sb_secret_/i.test(CFG.key)) { CFG.key = ""; $("#supa-key").value = ""; toast("That's a secret key. Use the publishable key (sb_publishable_...)."); return; }
+    if (/^sb_secret_/i.test(CFG.key)) { CFG.key = ""; $("#supa-key").value = ""; toast("That's a secret key. Use the publishable key."); return; }
     save("l", "fk.cfg", CFG);
     openSettings(false);
     toast(S.inRoom ? "Saved. New settings apply the next time you join a room." : "Saved.");
@@ -2214,6 +2223,11 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   $("#name").addEventListener("input", renderNameHint);
   renderNameHint();
   renderDicePickers();
+  // Each place offers only the networks that can work there: Artifacts block outside connections,
+  // and Claude rooms exist only inside Claude. Options are removed, not hidden, since iOS Safari
+  // still lists hidden options.
+  $("#net-mode").querySelector(inClaude() ? 'option[value="supabase"]' : 'option[value="room"]').remove();
+  if (!$("#net-mode").querySelector('option[value="' + CFG.net + '"]')) CFG.net = "auto";
   $("#net-mode").value = CFG.net;
   $("#supa-url").value = CFG.url;
   $("#supa-key").value = CFG.key;
