@@ -1294,7 +1294,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
      Everything is synthesized with Web Audio, so there are no files to load. Signal flow:
        lounge bus (jazz trio + room tone) --> master     faded out while a game is in play
        sfx bus (dice, chips, hot dice)    --> master
-       both send into one long convolution reverb: the big, smoky casino floor.
+       both send into one convolution reverb: a close, smoky room.
      Browsers only allow audio after a tap or key press, so nothing plays until then. */
   const SND = (() => {
     let A = null;      // graph in use: the live one, or an offline one while measure() renders
@@ -1317,8 +1317,8 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
       const g = (v) => { const n = ac.createGain(); n.gain.value = v; return n; };
       const comp = ac.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 3; comp.connect(ac.destination);
       const master = g(muted ? 0 : 0.9); master.connect(comp);
-      const verb = ac.createConvolver(); verb.buffer = impulse(ac, 2.8);
-      const verbOut = g(0.3); verb.connect(verbOut); verbOut.connect(master);
+      const verb = ac.createConvolver(); verb.buffer = impulse(ac, 1.6);
+      const verbOut = g(0.15); verb.connect(verbOut); verbOut.connect(master);
       const lounge = g(0); lounge.connect(master);
       const loungeSend = g(0.35); lounge.connect(loungeSend); loungeSend.connect(verb);
       const warm = ac.createBiquadFilter(); warm.type = "lowpass"; warm.frequency.value = 5200; warm.connect(lounge);
