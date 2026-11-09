@@ -52,7 +52,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* Full height, so the lobby can pin its action bar to the bottom of the screen. */
+  min-height: 100vh;
+  min-height: 100dvh;
 }
+main { flex: 1; display: flex; flex-direction: column; }
 .mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
 h1, h2, h3 { text-wrap: balance; margin: 0; }
 p { margin: 0; }
@@ -120,17 +124,18 @@ input:focus-visible, select:focus-visible, button:focus-visible, canvas:focus-vi
 
 /* ---------- Start screen ---------- */
 .screen { display: flex; flex-direction: column; gap: 14px; }
-.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .mode { position: relative; cursor: pointer; }
 .mode input { position: absolute; opacity: 0; pointer-events: none; }
 .mode-card {
-  display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 14px; border-radius: 14px;
+  display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 10px 12px; border-radius: 14px;
   border: 1px solid var(--line); background: radial-gradient(130% 120% at 30% 0%, var(--felt) 0%, var(--felt-deep) 100%);
   box-shadow: inset 0 0 0 4px rgba(0, 0, 0, .15);
 }
+.mode-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; column-gap: 6px; }
 .mode-name { font-weight: 700; font-size: 15px; }
-.mode-target { font-family: var(--f-display); font-size: 30px; color: var(--brass-hi); line-height: 1.1; }
-.mode-desc { font-size: 13px; color: #cfe0d5; }
+.mode-target { font-family: var(--f-display); font-size: 20px; color: var(--brass-hi); line-height: 1.2; }
+.mode-desc { display: flex; flex-direction: column; font-size: 12px; line-height: 1.35; color: #cfe0d5; }
 .mode input:checked + .mode-card { border-color: var(--brass); box-shadow: inset 0 0 0 2px var(--brass), 0 6px 18px rgba(0, 0, 0, .35); }
 .mode input:focus-visible + .mode-card { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
 /* Rules: a list of rule rows (home summary and lobby card), and the Custom pickers. */
@@ -165,14 +170,38 @@ input:focus-visible, select:focus-visible, button:focus-visible, canvas:focus-vi
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 details.custom-server summary { cursor: pointer; font-size: 14px; min-height: 32px; display: flex; align-items: center; color: var(--muted); }
 details.custom-server[open] summary { margin-bottom: 8px; }
-details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+.link-btn { align-self: center; min-height: 44px; padding: 0 12px; border: 0; background: none; color: var(--muted); font: 14px var(--f-body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+/* Bottom sheets (Custom rules, scoring help). */
+.sheet { position: fixed; inset: 0; z-index: 25; display: flex; align-items: flex-end; justify-content: center; background: rgba(5, 10, 8, .72); padding-top: max(24px, env(safe-area-inset-top, 0px)); }
+.sheet[hidden] { display: none; }
+.sheet-panel {
+  width: min(560px, 100%); max-height: 100%; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px;
+  border-radius: 16px 16px 0 0; border-color: var(--line-strong); border-bottom: 0;
+  padding: 14px max(16px, env(safe-area-inset-right, 0px)) max(18px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sheet-head h2 { font-size: 17px; }
+.sheet-panel .score-table { margin-top: 0; }
+.sheet-panel.rules p { margin-top: 0; }
+@media (prefers-reduced-motion: no-preference) { .sheet:not([hidden]) .sheet-panel { animation: sheet-up .22s ease-out; } }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } }
 .score-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
 .score-table td { padding: 6px 0; border-top: 1px solid var(--line); }
 .score-table td:last-child { text-align: right; font-family: var(--f-mono); color: var(--brass-hi); font-variant-numeric: tabular-nums; }
 .rules p { margin-top: 10px; font-size: 13px; color: var(--muted); }
 
-.name-hint { display: flex; justify-content: space-between; gap: 10px; margin-top: -4px; font-size: 12px; }
-.name-hint[data-over="1"] #name-count { color: var(--bad); }
+.who { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+.name-line { display: flex; justify-content: space-between; gap: 10px; }
+#name-count { font-size: 12px; }
+.name-line[data-over="1"] #name-count { color: var(--bad); }
+.dice-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+.dice-line .swatches { gap: 2px; justify-content: flex-end; flex-wrap: nowrap; }
+/* Under 360 px six 44 px dice don't fit beside the label: the label goes above them. */
+@media (max-width: 359px) {
+  .who { padding: 10px; }
+  .dice-line { flex-direction: column; align-items: stretch; gap: 2px; }
+  .dice-line .swatches { gap: 0; justify-content: space-between; }
+}
 /* Dice colour picker: a row of little dice, one per colour. */
 .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
 .swatch { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border-radius: 12px; border: 1px solid transparent; background: transparent; cursor: pointer; touch-action: manipulation; }
@@ -187,22 +216,51 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
 .die-sw { width: 12px; height: 12px; flex: none; border-radius: 3px; background: var(--dc); box-shadow: 0 0 0 1px rgba(0, 0, 0, .35); margin-left: auto; }
 
 /* ---------- Lobby ---------- */
-.lobby-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.code { font-family: var(--f-mono); font-size: 44px; letter-spacing: .18em; color: var(--brass-hi); line-height: 1.1; font-variant-numeric: tabular-nums; }
-.slots { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.slot { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); min-height: 92px; min-width: 0; }
-.slot.empty { border-style: dashed; background: transparent; color: #66766d; justify-content: center; align-items: center; }
-.slot-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#scr-lobby { flex: 1; }
+.lobby-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 14px; }
+.code { font-family: var(--f-mono); font-size: 34px; letter-spacing: .18em; color: var(--brass-hi); line-height: 1.15; font-variant-numeric: tabular-nums; }
+#btn-invite svg { width: 18px; height: 18px; }
+.seats { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); overflow: hidden; }
+.seats > li + li { border-top: 1px solid var(--line); }
+.seat { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 6px 4px 12px; }
 .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--pc, var(--muted)); box-shadow: 0 0 0 3px rgba(0, 0, 0, .3); }
-.slot-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tags { display: flex; gap: 6px; flex-wrap: wrap; }
-.tag { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); }
+.seat-name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seat-name small { font-size: 15px; font-weight: 400; color: var(--muted); }
+.seats .die-sw { width: 18px; height: 18px; border-radius: 5px; margin: 0; box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .28), 0 0 0 1px rgba(0, 0, 0, .35); }
+.seat-sw { width: 54px; flex: none; display: grid; place-items: center; }
+.seat-dice { width: 54px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 0; border-radius: 11px; border: 1px solid var(--line-strong); background: var(--panel-2); color: var(--brass-hi); cursor: pointer; touch-action: manipulation; }
+.seat-dice svg { width: 14px; height: 14px; transition: transform .15s; }
+.seat-dice[aria-expanded="true"] svg { transform: rotate(180deg); }
+.seat-open { color: #7f8f86; font-size: 14px; }
+.seat-open .dot { background: transparent; box-shadow: none; border: 1px dashed #7f8f86; }
+.seat-picker { padding: 2px 6px; background: #0f1814; }
+.seat-picker .swatches { flex-wrap: nowrap; justify-content: space-between; gap: 0; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.tag { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
 .tag.ready { border-color: rgba(111, 211, 155, .5); color: var(--good); }
 .tag.wait { border-color: var(--line); }
 .tag.host { color: var(--brass-hi); }
 .tag.away { border-color: rgba(239, 106, 82, .5); color: var(--bad); }
-.lobby-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.lobby-actions:has(> .btn[hidden]) > .btn { grid-column: 1 / -1; }
+/* Rules folded to one line; the full card opens under it. */
+.rules-line {
+  display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line);
+  background: radial-gradient(130% 120% at 30% 0%, var(--felt) 0%, var(--felt-deep) 100%); color: var(--cream); font: 15px var(--f-body); text-align: left; cursor: pointer;
+}
+.rl-name { font-weight: 700; font-size: 14px; white-space: nowrap; }
+.rl-vals { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--brass-hi); font-variant-numeric: tabular-nums; }
+.rl-vals .bad { color: var(--bad); }
+.rules-line svg { width: 16px; height: 16px; flex: none; color: #cfe0d5; transition: transform .15s; }
+.rules-line[aria-expanded="true"] svg { transform: rotate(180deg); }
+.lobby-bar {
+  margin-top: auto; position: sticky; bottom: 0; z-index: 5; display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 0 env(safe-area-inset-bottom, 0px); background: var(--ink); border-top: 1px solid var(--line);
+}
+#start-hint { text-align: center; }
+#start-hint:empty { display: none; }
+.lobby-actions { display: flex; gap: 10px; }
+.lobby-actions .big { flex: 1; }
+.lobby-actions .leave { width: 54px; min-height: 54px; padding: 0; flex: none; }
+.lobby-actions .leave svg { width: 20px; height: 20px; }
 
 /* ---------- Game ---------- */
 #scr-game { gap: 10px; }
@@ -345,41 +403,31 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   <main>
     <!-- 1. Name, game mode, create or join -->
     <section id="scr-start" class="screen">
-      <div class="panel settings">
-        <label class="field" for="name">Your name at the table
-          <input id="name" type="text" maxlength="12" autocomplete="nickname" placeholder="e.g. Ana" aria-describedby="name-hint" title="12 characters at most, so it fits on phone score cards">
-        </label>
-        <p id="name-hint" class="hint name-hint"><span>12 characters max.</span><span id="name-count" class="mono">0/12</span></p>
+      <div class="panel who">
         <div class="field">
-          <span id="dice-label">Your dice</span>
+          <label id="name-hint" class="name-line" for="name"><span>Your name at the table</span><span id="name-count" class="mono">0/12</span></label>
+          <input id="name" type="text" maxlength="12" autocomplete="nickname" placeholder="e.g. Ana" aria-describedby="name-count" title="12 characters at most, so it fits on phone score cards">
+        </div>
+        <div class="dice-line">
+          <span id="dice-label">Dice</span>
           <div class="swatches" role="radiogroup" aria-labelledby="dice-label" data-dice-picker></div>
         </div>
       </div>
-      <span class="eyebrow">Rules</span>
       <div class="modes" role="radiogroup" aria-label="Rules">
         <label class="mode">
           <input type="radio" name="rules" id="rules-classic-pick" value="classic" checked>
           <span class="mode-card">
-            <span class="mode-name">Classic</span>
-            <span class="mode-target">10,000</span>
-            <span class="mode-desc">500 to get on the board. 3 Farkles in a row: &minus;1,000.</span>
+            <span class="mode-top"><span class="mode-name">Classic</span><span class="mode-target">10,000</span></span>
+            <span class="mode-desc"><span>500 to get on</span><span>3 Farkles &minus;1,000</span></span>
           </span>
         </label>
-        <label class="mode">
+        <label class="mode" id="rules-custom-card">
           <input type="radio" name="rules" id="rules-custom-pick" value="custom">
           <span class="mode-card">
-            <span class="mode-name">Custom</span>
-            <span id="custom-target" class="mode-target">10,000</span>
+            <span class="mode-top"><span class="mode-name">Custom</span><span id="custom-target" class="mode-target">10,000</span></span>
             <span id="custom-desc" class="mode-desc"></span>
           </span>
         </label>
-      </div>
-      <div id="rules-summary" class="panel rule-list"></div>
-      <div id="rules-custom" class="panel rule-picks" hidden>
-        <fieldset class="pick" data-rule="target"><legend>Winning score</legend><p class="hint">Reaching it starts the final round.</p><div class="pick-row"></div></fieldset>
-        <fieldset class="pick" data-rule="open"><legend>Get on the board</legend><p class="hint">Points you must bank in one turn before your score starts counting.</p><div class="pick-row"></div></fieldset>
-        <fieldset class="pick" data-rule="pen"><legend>3 Farkles in a row</legend><p class="hint">Penalty for three Farkles back to back. The count then starts over.</p><div class="pick-row"></div></fieldset>
-        <button id="rules-reset" class="btn ghost small" type="button">Reset to Classic values</button>
       </div>
       <button id="btn-create" class="btn primary big" type="button">Create room</button>
       <div class="or">or join a friend</div>
@@ -387,24 +435,39 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
         <input id="join-code" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000" aria-label="4-digit room code">
         <button id="btn-join" class="btn big" type="button">Join room</button>
       </div>
-      <details class="rules panel">
-        <summary>How scoring works</summary>
-        <table class="score-table">
-          <tr><td>Each 1</td><td>100</td></tr>
-          <tr><td>Each 5</td><td>50</td></tr>
-          <tr><td>Three 1s</td><td>1,000</td></tr>
-          <tr><td>Three of a kind (2 to 6)</td><td>face &times; 100</td></tr>
-          <tr><td>Four of a kind</td><td>1,000</td></tr>
-          <tr><td>Five of a kind</td><td>2,000</td></tr>
-          <tr><td>Six of a kind</td><td>3,000</td></tr>
-          <tr><td>Straight 1-2-3-4-5-6</td><td>1,500</td></tr>
-          <tr><td>Three pairs</td><td>1,500</td></tr>
-          <tr><td>Four of a kind + a pair</td><td>1,500</td></tr>
-          <tr><td>Two triplets</td><td>2,500</td></tr>
-        </table>
-        <p>After every roll, keep at least one scoring die, then roll the rest or bank. A roll with nothing that scores is a Farkle: you lose the points from that turn. Keep all six and you have hot dice: roll all six again. When someone banks past the target, everyone else gets one last turn.</p>
-        <p>Classic rules add two more: your first bank must be 500 or more in one turn to get you on the board, and three Farkles in a row cost 1,000 (scores stop at 0). Custom rules let the host change both, and the target.</p>
-      </details>
+      <button id="btn-scoring" class="link-btn" type="button" aria-haspopup="dialog">How scoring works</button>
+      <!-- Sheets: slide up over the home screen so the screen itself fits on a phone. -->
+      <div id="sheet-rules" class="sheet" hidden>
+        <div class="sheet-panel panel" role="dialog" aria-modal="true" aria-labelledby="sheet-rules-title">
+          <div class="sheet-head"><h2 id="sheet-rules-title">Custom rules</h2><button class="btn primary small" type="button" data-close>Done</button></div>
+          <div id="rules-custom" class="rule-picks">
+            <fieldset class="pick" data-rule="target"><legend>Winning score</legend><p class="hint">Reaching it starts the final round.</p><div class="pick-row"></div></fieldset>
+            <fieldset class="pick" data-rule="open"><legend>Get on the board</legend><p class="hint">Points you must bank in one turn before your score starts counting.</p><div class="pick-row"></div></fieldset>
+            <fieldset class="pick" data-rule="pen"><legend>3 Farkles in a row</legend><p class="hint">Penalty for three Farkles back to back. The count then starts over.</p><div class="pick-row"></div></fieldset>
+            <button id="rules-reset" class="btn ghost small" type="button">Reset to Classic values</button>
+          </div>
+        </div>
+      </div>
+      <div id="sheet-scoring" class="sheet" hidden>
+        <div class="sheet-panel panel rules" role="dialog" aria-modal="true" aria-labelledby="sheet-scoring-title">
+          <div class="sheet-head"><h2 id="sheet-scoring-title">How scoring works</h2><button class="btn small" type="button" data-close>Close</button></div>
+          <table class="score-table">
+            <tr><td>Each 1</td><td>100</td></tr>
+            <tr><td>Each 5</td><td>50</td></tr>
+            <tr><td>Three 1s</td><td>1,000</td></tr>
+            <tr><td>Three of a kind (2 to 6)</td><td>face &times; 100</td></tr>
+            <tr><td>Four of a kind</td><td>1,000</td></tr>
+            <tr><td>Five of a kind</td><td>2,000</td></tr>
+            <tr><td>Six of a kind</td><td>3,000</td></tr>
+            <tr><td>Straight 1-2-3-4-5-6</td><td>1,500</td></tr>
+            <tr><td>Three pairs</td><td>1,500</td></tr>
+            <tr><td>Four of a kind + a pair</td><td>1,500</td></tr>
+            <tr><td>Two triplets</td><td>2,500</td></tr>
+          </table>
+          <p>After every roll, keep at least one scoring die, then roll the rest or bank. A roll with nothing that scores is a Farkle: you lose the points from that turn. Keep all six and you have hot dice: roll all six again. When someone banks past the target, everyone else gets one last turn.</p>
+          <p>Classic rules add two more: your first bank must be 500 or more in one turn to get you on the board, and three Farkles in a row cost 1,000 (scores stop at 0). Custom rules let the host change both, and the target.</p>
+        </div>
+      </div>
     </section>
 
     <!-- 2. Lobby -->
@@ -414,22 +477,31 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
           <span class="eyebrow">Room code</span>
           <div id="lobby-code" class="code">0000</div>
         </div>
-        <button id="btn-copy" class="btn small" type="button">Copy code</button>
+        <button id="btn-invite" class="btn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Invite
+        </button>
       </div>
-      <p id="lobby-mode" class="hint"></p>
-      <div id="lobby-rules" class="rules-card" hidden></div>
+      <p id="lobby-mode" class="hint" hidden></p>
       <p id="lobby-note" class="note" hidden></p>
-      <ol id="slots" class="slots" aria-label="Seats"></ol>
-      <div id="lobby-dice" class="field">
-        <span id="lobby-dice-label">Your dice</span>
-        <div class="swatches" role="radiogroup" aria-labelledby="lobby-dice-label" data-dice-picker></div>
+      <!-- Seats as a list. My own row carries my dice colour; tapping it opens the picker row under it. -->
+      <ol id="slots" class="seats" aria-label="Seats"></ol>
+      <div id="lobby-dice" class="swatches" role="radiogroup" aria-label="Your dice colour" data-dice-picker></div>
+      <button id="rules-line" class="rules-line" type="button" aria-expanded="false" aria-controls="lobby-rules" hidden>
+        <span id="rules-line-name" class="rl-name">Classic</span><span id="rules-line-vals" class="rl-vals"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div id="lobby-rules" class="rules-card" hidden></div>
+      <!-- The main action stays at the bottom, under the thumb. -->
+      <div class="lobby-bar">
+        <p id="start-hint" class="hint"></p>
+        <div class="lobby-actions">
+          <button id="btn-leave" class="btn ghost leave" type="button" aria-label="Leave room" title="Leave room">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg>
+          </button>
+          <button id="btn-ready" class="btn primary big" type="button" aria-pressed="false">I'm ready</button>
+          <button id="btn-start" class="btn primary big" type="button" hidden>Start game</button>
+        </div>
       </div>
-      <div class="lobby-actions">
-        <button id="btn-ready" class="btn big" type="button" aria-pressed="false">I'm ready</button>
-        <button id="btn-start" class="btn primary big" type="button" hidden>Start game</button>
-      </div>
-      <p id="start-hint" class="hint"></p>
-      <button id="btn-leave" class="btn ghost small" type="button">Leave room</button>
     </section>
 
     <!-- 3. Game -->
@@ -1160,7 +1232,7 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     const M = S.M, d = i.d && typeof i.d === "object" ? i.d : {};
     if (i.t === "sync") { hostPublish([]); return; }
     if (i.t === "start") {
-      if (i.pid !== M.host || M.phase !== "lobby" || !M.players.length || !M.players.every((p) => p.ready)) return;
+      if (i.pid !== M.host || M.phase !== "lobby" || !M.players.length || !M.players.every((p) => p.ready || p.pid === M.host)) return;
       M.phase = "play"; M.turn = 0; M.fin = null; M.win = []; M.tp = 0; M.th = false; M.ts = "pre"; M.roll = null; M.busy = false;
       M.players.forEach((p) => { p.score = 0; p.gone = false; p.skips = 0; p.on = false; p.fk = 0; });
       M.dice = [1, 2, 3, 4, 5, 6].map((v) => ({ v, s: 0 }));
@@ -2105,13 +2177,11 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   // Home screen rule picker. The Custom values are remembered on this device.
   const pickedRules = () => (document.querySelector('input[name="rules"]:checked').value === "custom" ? cleanRules(Object.assign({}, S.custom, { name: "custom" })) : Object.assign({}, CLASSIC));
   function renderRulesPicker() {
-    const custom = pickedRules().name === "custom";
-    $("#rules-custom").hidden = !custom;
-    $("#rules-summary").hidden = custom;
-    if (!custom) fillRules($("#rules-summary"), CLASSIC, false);
     const c = cleanRules(Object.assign({}, S.custom, { name: "custom" }));
     $("#custom-target").textContent = fmt(c.target);
-    $("#custom-desc").textContent = (c.open ? `${fmt(c.open)} to get on the board.` : "No minimum to get on the board.") + " " + (c.pen ? `3 Farkles: \u2212${fmt(c.pen)}.` : "No Farkle penalty.");
+    const cd = $("#custom-desc"); cd.textContent = "";
+    cd.appendChild(el("span", "", c.open ? `${fmt(c.open)} to get on` : "No minimum"));
+    cd.appendChild(el("span", "", c.pen ? `3 Farkles \u2212${fmt(c.pen)}` : "No Farkle penalty"));
     for (const fs of document.querySelectorAll("#rules-custom .pick")) {
       const key = fs.dataset.rule, row = fs.querySelector(".pick-row");
       if (!row.children.length) {
@@ -2127,52 +2197,101 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     }
   }
 
+  // Bottom sheets on the home screen. Focus goes into the sheet and back to the button that opened it.
+  let sheetOpener = null;
+  function openSheet(id) {
+    sheetOpener = document.activeElement;
+    const sh = $(id); sh.hidden = false;
+    document.body.style.overflow = "hidden";
+    sh.querySelector("[data-close]").focus();
+  }
+  function closeSheets() {
+    let was = false;
+    for (const sh of document.querySelectorAll(".sheet")) { if (!sh.hidden) was = true; sh.hidden = true; }
+    document.body.style.overflow = "";
+    if (was && sheetOpener && sheetOpener.focus) sheetOpener.focus();
+    sheetOpener = null;
+  }
+
+  // Lobby. My dice picker is one element that moves into a row under my seat while it's open.
+  let lobbyDiceOpen = false, rulesOpen = false;
   function renderLobby() {
     const st = S.st;
     $("#lobby-code").textContent = S.code;
-    const note = $("#lobby-note"), slots = $("#slots");
+    const note = $("#lobby-note"), slots = $("#slots"), picker = $("#lobby-dice");
+    slots.after(picker); picker.hidden = true;   // park it before the list is rebuilt
     slots.textContent = "";
     if (!st) {
+      $("#lobby-mode").hidden = false;
       $("#lobby-mode").textContent = "Looking for room " + S.code + "...";
-      $("#lobby-rules").hidden = true;
+      $("#lobby-rules").hidden = true; $("#rules-line").hidden = true;
       const waited = Date.now() - S.joinedAt;
       note.hidden = waited < 6000;
       note.textContent = "No host has answered yet. Check the code with whoever created the room, or keep waiting.";
       $("#btn-ready").hidden = true; $("#btn-start").hidden = true; $("#start-hint").textContent = "";
       return;
     }
-    $("#lobby-mode").textContent = "Share the code so friends can join.";
+    $("#lobby-mode").hidden = true;
     const host = st.players.find((p) => p.pid === st.host);
-    fillRules($("#lobby-rules"), st.rules, true, host ? host.name : "");
+    const r = st.rules;
+    $("#rules-line").hidden = false;
+    $("#rules-line").setAttribute("aria-expanded", String(rulesOpen));
+    $("#rules-line-name").textContent = r.name === "custom" ? "Custom" : "Classic";
+    const vals = $("#rules-line-vals"); vals.textContent = fmt(r.target) + " \u00b7 " + (r.open ? fmt(r.open) + " to get on" : "No minimum") + " \u00b7 ";
+    vals.appendChild(el("span", r.pen ? "bad" : "", r.pen ? "\u2212" + fmt(r.pen) : "No penalty"));
+    fillRules($("#lobby-rules"), r, true, host ? host.name : "");
+    $("#lobby-rules").hidden = !rulesOpen;
     const amPlayer = st.players.some((p) => p.pid === S.pid);
-    $("#lobby-dice").hidden = !amPlayer;
+    if (!amPlayer) lobbyDiceOpen = false;
     note.hidden = amPlayer;
     note.textContent = "This table is full. You're watching.";
-    for (let i = 0; i < MAX_PLAYERS; i++) {
-      const p = st.players[i];
-      const li = el("li", "slot" + (p ? "" : " empty"));
-      if (!p) { li.textContent = "Open seat"; slots.appendChild(li); continue; }
+    st.players.forEach((p, i) => {
+      const li = el("li", "seat"), me = p.pid === S.pid;
       li.style.setProperty("--pc", seatColor(i));
-      const top = el("div", "slot-top"); top.appendChild(el("span", "dot")); top.appendChild(el("span", "slot-name", p.name));
-      const sw = el("span", "die-sw"); sw.style.setProperty("--dc", rgbCss(p.dc)); sw.title = DICE_COLORS[p.dc].label + " dice"; top.appendChild(sw);
-      li.appendChild(top);
-      const tags = el("div", "tags");
+      li.appendChild(el("span", "dot"));
+      const nm = el("span", "seat-name", p.name);
+      if (me) nm.appendChild(el("small", "", " (you)"));
+      li.appendChild(nm);
+      const tags = el("span", "tags");
       if (p.pid === st.host) tags.appendChild(el("span", "tag host", "Host"));
-      if (p.pid === S.pid) tags.appendChild(el("span", "tag", "You"));
-      tags.appendChild(el("span", "tag " + (p.ready ? "ready" : "wait"), p.ready ? "Ready" : "Not ready"));
+      else tags.appendChild(el("span", "tag " + (p.ready ? "ready" : "wait"), p.ready ? "Ready" : "Not ready"));
       li.appendChild(tags);
+      const sw = el("span", "die-sw"); sw.style.setProperty("--dc", rgbCss(p.dc));
+      if (me) {
+        const b = el("button", "seat-dice"); b.type = "button";
+        b.setAttribute("aria-label", "Dice colour: " + DICE_COLORS[p.dc].label); b.title = "Change dice colour";
+        b.setAttribute("aria-expanded", String(lobbyDiceOpen)); b.setAttribute("aria-controls", "lobby-dice");
+        b.appendChild(sw);
+        b.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
+        b.addEventListener("click", () => { lobbyDiceOpen = !lobbyDiceOpen; renderLobby(); const n = $(".seat-dice"); if (n) n.focus(); });
+        li.appendChild(b);
+      } else {
+        sw.title = DICE_COLORS[p.dc].label + " dice";
+        const w = el("span", "seat-sw"); w.appendChild(sw); li.appendChild(w);
+      }
+      slots.appendChild(li);
+      if (me && lobbyDiceOpen) { const row = el("li", "seat-picker"); row.appendChild(picker); picker.hidden = false; slots.appendChild(row); }
+    });
+    const open = MAX_PLAYERS - st.players.length;
+    if (open > 0) {
+      const li = el("li", "seat seat-open"); li.appendChild(el("span", "dot"));
+      li.appendChild(el("span", "", open === 1 ? "1 open seat \u00b7 share the code to fill it" : open + " open seats \u00b7 share the code to fill them"));
       slots.appendChild(li);
     }
+    renderDicePickers();
+    // The host has no ready button: pressing Start is their ready.
     const rb = $("#btn-ready");
-    rb.hidden = !amPlayer;
+    rb.hidden = !amPlayer || S.isHost;
     rb.textContent = S.me.ready ? "Not ready" : "I'm ready";
+    rb.classList.toggle("primary", !S.me.ready);
     rb.setAttribute("aria-pressed", String(S.me.ready));
     const sb = $("#btn-start");
     sb.hidden = !S.isHost;
-    const waiting = st.players.filter((p) => !p.ready).map((p) => p.name);
+    const waiting = st.players.filter((p) => !p.ready && p.pid !== st.host).map((p) => p.name);
     sb.disabled = !st.players.length || waiting.length > 0;
+    const others = st.players.length - (host ? 1 : 0);
     $("#start-hint").textContent = S.isHost
-      ? waiting.length ? `Waiting for ${waiting.join(", ")} to ready up.` : st.players.length === 1 ? "Everyone's ready. Starting alone gives you a practice game." : "Everyone's ready."
+      ? waiting.length ? `Waiting for ${waiting.join(", ")} to ready up.` : others === 0 ? "Nobody else yet. Starting alone gives you a practice game." : "Everyone's ready. Start whenever you like."
       : waiting.length ? "The host starts the game once everyone is ready." : "Everyone's ready. Waiting for the host to start.";
   }
 
@@ -2356,11 +2475,31 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
   $("#btn-roll").addEventListener("click", () => sendTurn(S.st && S.st.ts === "rolled" ? "keep" : "roll"));
   $("#btn-bank").addEventListener("click", () => sendTurn("bank"));
   for (const id of ["#btn-leave", "#btn-leave2", "#btn-leave3"]) $(id).addEventListener("click", leaveRoom);
-  $("#btn-copy").addEventListener("click", () => {
-    const code = S.code;
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(() => toast("Code copied."), () => selectCode());
-    else selectCode();
+  // Invite: the phone's share sheet where there is one, else copy. Outside Claude the invite carries
+  // a link that fills in the code (?room=1234); inside Claude the page address can't be shared.
+  $("#btn-invite").addEventListener("click", () => {
+    const code = S.code, url = inClaude() ? "" : location.origin + location.pathname + "?room=" + code;
+    const text = "Join my Farkle table. Room code: " + code;
+    const copy = () => {
+      const v = url ? text + "\n" + url : code;
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(() => toast(url ? "Invite copied." : "Code copied."), () => selectCode());
+      else selectCode();
+    };
+    if (navigator.share) navigator.share(url ? { title: "Farkle", text, url } : { title: "Farkle", text }).catch((e) => { if (!e || e.name !== "AbortError") copy(); });
+    else copy();
   });
+  $("#rules-line").addEventListener("click", () => { rulesOpen = !rulesOpen; renderLobby(); });
+  $("#lobby-dice").addEventListener("click", (e) => {
+    if (!e.target.closest(".swatch")) return;
+    lobbyDiceOpen = false; renderLobby(); const n = $(".seat-dice"); if (n) n.focus();
+  });
+  // Choosing Custom (or tapping it again) opens its pickers.
+  $("#rules-custom-pick").addEventListener("click", () => openSheet("#sheet-rules"));
+  $("#btn-scoring").addEventListener("click", () => openSheet("#sheet-scoring"));
+  for (const sh of document.querySelectorAll(".sheet")) {
+    sh.addEventListener("click", (e) => { if (e.target === sh || e.target.closest("[data-close]")) closeSheets(); });
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheets(); });
   function selectCode() { const r = document.createRange(); r.selectNodeContents($("#lobby-code")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Code selected. Copy it from here."); }
   window.addEventListener("pagehide", () => { try { if (S.net) S.net.leave(); } catch (e) { /* closing */ } });
   // The table's height depends on the window and on the panels around it, so watch all of them.
@@ -2404,6 +2543,11 @@ details.rules summary { cursor: pointer; font-weight: 600; min-height: 32px; dis
     const needsKeys = !inClaude() && (CFG.net === "auto" || CFG.net === "supabase") && !(CFG.url && CFG.key);
     if (needsKeys) openSettings(true);
     const sess = load("s", "fk.sess");
+    const linked = new URLSearchParams(location.search).get("room");
+    if (!(sess && sess.code) && /^\d{4}$/.test(linked || "")) {
+      $("#join-code").value = linked;
+      toast("Room " + linked + " is filled in. Add your name, then Join room.");
+    }
     if (sess && /^\d{4}$/.test(sess.code)) { if (sess.name) { $("#name").value = cleanName(sess.name); renderNameHint(); } enterRoom(sess.code, false); }
   }, 500);
 })();
