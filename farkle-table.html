@@ -658,7 +658,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
      World units: the felt is W x H with y growing toward the viewer and z up.
      Only + - * / and Math.sqrt are used in the step, all of which IEEE-754
      defines exactly, so every browser replays an identical trajectory. */
-  const W = 300, H = 340, HS = 22, RAD = 26, DT = 1 / 120, GRAV = 1900, MAX_STEPS = 720;
+  const W = 300, H = 340, HS = 21.25, RAD = 25, DT = 1 / 120, GRAV = 1900, MAX_STEPS = 720;
 
   // Throw strength: scales launch speed and spin. 1 was the original soft toss that settled mid-table.
   // Changing it changes every roll, so ship it as an "everyone reload" release.
@@ -671,8 +671,8 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     const L = [];
     for (let k = 0; k < n; k++) {
       const col = k % 3, row = (k / 3) | 0;           // a loose 3x2 handful, no overlaps at release
-      const x = cx + (col - 1) * 58 + (rnd() - 0.5) * 8;
-      const y = H - 36 - row * 56 + (rnd() - 0.5) * 8;
+      const x = cx + (col - 1) * 56 + (rnd() - 0.5) * 8;
+      const y = H - 35 - row * 54 + (rnd() - 0.5) * 8;
       const z = 35 + rnd() * 45;
       const vx = ((W / 2 - cx) * 0.9 + (rnd() - 0.5) * 320) * THROW;
       const vy = -(170 + rnd() * 150) * THROW;          // thrown away from the viewer
