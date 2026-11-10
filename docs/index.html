@@ -2330,11 +2330,9 @@ details.custom-server[open] summary { margin-bottom: 8px; }
   const woodAcross = (a, b) => { const p = proj(TCX, -RAIL, RZ), q = proj(TCX, H + NEAR, RZ), g = ctx.createLinearGradient(p.x, p.y, q.x, q.y); g.addColorStop(0, a); g.addColorStop(1, b); return g; };
   function drawTableBody() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const x0 = -RAIL, x1 = W + RAIL, y0 = -RAIL, y1 = H + NEAR, E = CAM.E;
+    const x0 = -RAIL, x1 = W + RAIL, y0 = -RAIL, y1 = H + NEAR;
     ctx.save(); ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 40; ctx.shadowOffsetY = 18;
     poly(ctx, [[x0, y0, APRON], [x1, y0, APRON], [x1, y1, APRON], [x0, y1, APRON]]); ctx.fillStyle = "#1c0c05"; ctx.fill(); ctx.restore();
-    const faces = [[E[1] > y1, [x0, y1], [x1, y1], "#2d1409"], [E[1] < y0, [x1, y0], [x0, y0], "#26110a"], [E[0] < x0, [x0, y0], [x0, y1], "#2a1309"], [E[0] > x1, [x1, y1], [x1, y0], "#2a1309"]];
-    for (const [on, a, b, c] of faces) if (on) { poly(ctx, [[a[0], a[1], RZ], [b[0], b[1], RZ], [b[0], b[1], APRON], [a[0], a[1], APRON]]); ctx.fillStyle = c; ctx.fill(); }
     // Felt with its printed markings.
     poly(ctx, [[0, 0, 0], [W, 0, 0], [W, H, 0], [0, H, 0]]);
     const c0 = proj(W / 2, H * 0.48, 0), l = proj(0, H * 0.48, 0), r = proj(W, H * 0.48, 0);
@@ -2351,6 +2349,14 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     ctx.font = "600 13px Figtree, system-ui, sans-serif"; ctx.fillText("FIRST TO " + fmt(CLASSIC.target), 0, 24);
     ctx.font = "600 10px Figtree, system-ui, sans-serif"; ctx.fillText("HOT DICE ROLL AGAIN", 0, 42);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  // The table's outer sides face the camera from the outside of the whole box, so nothing on the table
+  // can be in front of them: drawn last, after the dice and near rails, so the felt can't show through.
+  function drawOuterSides() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const x0 = -RAIL, x1 = W + RAIL, y0 = -RAIL, y1 = H + NEAR, E = CAM.E;
+    const faces = [[E[1] > y1, [x0, y1], [x1, y1], "#2d1409"], [E[1] < y0, [x1, y0], [x0, y0], "#26110a"], [E[0] < x0, [x0, y0], [x0, y1], "#2a1309"], [E[0] > x1, [x1, y1], [x1, y0], "#2a1309"]];
+    for (const [on, a, b, c] of faces) if (on) { poly(ctx, [[a[0], a[1], RZ], [b[0], b[1], RZ], [b[0], b[1], APRON], [a[0], a[1], APRON]]); ctx.fillStyle = c; ctx.fill(); }
   }
   function drawSide(R) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -2416,6 +2422,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     for (const p of ds) drawShadow(p);
     for (const p of ds) { BODY = p.col; drawDie(p); }
     for (const R of SIDES) if (R.near(CAM.E)) drawSide(R);
+    drawOuterSides();
   }
   // Runs only while the splash or home screen shows; the lobby and game get the plain background.
   function sceneLoop(now) {
