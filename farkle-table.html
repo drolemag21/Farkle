@@ -2575,7 +2575,8 @@ html.xmas .brand-word::after {
   const introOn = () => !splash.hidden && !splash.classList.contains("leaving");
   function sceneThrow(t0) {
     const L = makeLaunch((Math.random() * 2 ** 31) | 0, 6), flip = SC.n % 2 === 1;
-    const cycle = pickableDice(), dc = DICE_COLORS[introOn() ? cycle[SC.n % cycle.length] : diceColor(S.me.dc)];
+    // The splash cycles the Christmas colours while the holiday look is on, the usual six otherwise.
+    const cycle = Object.keys(DICE_COLORS).filter((k) => !DICE_COLORS[k].xmas === !XMAS.on), dc = DICE_COLORS[introOn() ? cycle[SC.n % cycle.length] : diceColor(S.me.dc)];
     SC.n++;
     return { t0, L, sim: simulate(L), flip, color: dc.rgb, pip: dc.pip || IVORY, v: L.map(() => 1 + ((Math.random() * 6) | 0)) };
   }
