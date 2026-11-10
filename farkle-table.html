@@ -360,7 +360,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 }
 
 /* ---------- Title scene and splash ----------
-   The home screen sits over the table seen from a circling camera (#scene). On arrival a splash shows
+   The home screen and lobby sit over the table seen from a circling camera (#scene). On arrival a splash shows
    the title over it; its tap is also the gesture browsers want before playing music. */
 #app { position: relative; z-index: 1; }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
@@ -376,7 +376,8 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
 .veil { position: fixed; inset: 0; z-index: 0; pointer-events: none; transition: background-color .8s ease;
   background-color: rgba(6, 10, 8, .5); background-image: radial-gradient(120% 80% at 50% 55%, rgba(12, 19, 16, 0) 40%, rgba(6, 10, 8, .85) 100%); }
 .veil.intro { background-color: rgba(6, 10, 8, 0); }
-#scr-start .panel { background: rgba(20, 30, 25, .78); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+#scr-start .panel, #scr-lobby .panel, #scr-lobby .seats { background: rgba(20, 30, 25, .78); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+#scr-lobby .lobby-bar { background: rgba(12, 19, 16, .72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 #scr-start .mode-card { box-shadow: inset 0 0 0 4px rgba(0, 0, 0, .15), 0 8px 22px rgba(0, 0, 0, .35); }
 #splash {
   position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; cursor: pointer;
@@ -2453,7 +2454,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   }
   requestAnimationFrame(loop);
 
-  /* ---------- 12b. Title scene: the table from a circling camera, behind the splash and home screen ----------
+  /* ---------- 12b. Title scene: the table from a circling camera, behind the splash, home screen and lobby ----------
      Display only. Throws use the real launch and physics, so they look like play. The game's cached
      layers assume the view from the near rail, so the table is drawn here from any side; its colours
      follow buildCaches, so change both together. */
@@ -2620,10 +2621,10 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     for (const R of SIDES) if (R.near(CAM.E)) drawSide(R);
     drawOuterSides();
   }
-  // Runs only while the splash or home screen shows; the lobby and game get the plain background.
+  // Runs while the splash, home screen or lobby shows, so the orbit carries on into the room; the game gets the plain background.
   function sceneLoop(now) {
     requestAnimationFrame(sceneLoop);
-    const on = !splash.hidden || !$("#scr-start").hidden;
+    const on = !splash.hidden || !$("#scr-start").hidden || !$("#scr-lobby").hidden;
     if (sceneCv.hidden === on) { sceneCv.hidden = !on; $("#veil").hidden = !on; }
     if (!on) return;
     sceneResize();
