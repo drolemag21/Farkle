@@ -255,6 +255,11 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 .tag.ready { border-color: rgba(111, 211, 155, .5); color: var(--good); }
 .tag.wait { border-color: var(--line); }
 .tag.host { color: var(--brass-hi); }
+.tag.bot { border-color: rgba(91, 155, 234, .5); color: #9cc3f5; }
+.seat-open .seat-name { font-weight: 400; white-space: normal; }
+.seat-add { flex: none; min-height: 44px; padding: 0 14px; font-size: 14px; }
+.seat-x { width: 44px; min-height: 44px; padding: 0; flex: none; margin-left: -6px; }
+.seat-x svg { width: 16px; height: 16px; }
 .tag.away { border-color: rgba(239, 106, 82, .5); color: var(--bad); }
 /* Rules folded to one line; the full card opens under it. */
 .rules-line {
@@ -699,6 +704,10 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   }
   const onBoard = (st, p) => !!p && (p.on || !st.rules.open);
   const MAX_PLAYERS = 4;
+  // Bots are seats the host plays. Their pid marks them, so the snapshot format doesn't change and any
+  // host (after a takeover too) knows which seats to play. They have no presence, so they never go away.
+  const isBot = (pid) => typeof pid === "string" && pid.startsWith("bot:");
+  const BOT_NAMES = ["Lucky Lou", "Dicey Dee", "Boxcar Bo", "Snake Eyes", "Lady Luck", "High Roller"];
   const GRACE = 3500;           // ms a player may vanish from presence before we call them away
   const SUPABASE_SRC = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js";
   const SEAT_COLORS = ["#e5664f", "#5b9bea", "#e9bf55", "#ad85ea"];
@@ -966,7 +975,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     me: { pid: PID, sid: randId(8), name: "", ready: false, dc: diceColor(load("l", "fk.dice")) },
     net: null, netKind: "", code: "", inRoom: false, joining: false, conn: "off",
     st: null,             // latest state snapshot seen (everyone)
-    isHost: false, M: null, hostTimer: 0, seenIntents: new Map(),
+    isHost: false, M: null, hostTimer: 0, botTimer: 0, botEv: -1, seenIntents: new Map(),
     present: new Set([PID]), info: new Map(), absent: new Map(),
     lastEvN: -1, anim: null, glide: null, localSel: null, myN: 0, awaitEv: null, awaitAt: 0,
     joinedAt: 0, resume: null, dirty: true,
@@ -1169,7 +1178,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
       else if (!S.absent.has(pid)) S.absent.set(pid, now);
     }
   }
-  const absentFor = (pid) => (S.present.has(pid) ? 0 : S.absent.has(pid) ? Date.now() - S.absent.get(pid) : 0);
+  const absentFor = (pid) => (S.present.has(pid) || isBot(pid) ? 0 : S.absent.has(pid) ? Date.now() - S.absent.get(pid) : 0);
 
   // Which snapshot wins: more events, then the lower host id (breaks a tie between two hosts).
   const ahead = (a, b) => a.evN > b.evN || (a.evN === b.evN && a.host < b.host);
@@ -1306,6 +1315,13 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
 
   /* ---------- 9. Host: the only writer of game state ---------- */
   function newPlayer(pid) { const inf = S.info.get(pid) || {}; return { pid, name: cleanName(inf.name), dc: diceColor(inf.dc), score: 0, ready: !!inf.ready, gone: false, skips: 0, on: false, fk: 0 }; }
+  // A bot takes the first free name and a dice colour nobody at the table is using.
+  function newBot(M) {
+    const names = new Set(M.players.map((p) => p.name)), dcs = new Set(M.players.map((p) => p.dc));
+    const name = BOT_NAMES.find((n) => !names.has(n)) || "Bot " + (M.players.length + 1);
+    const dc = Object.keys(DICE_COLORS).find((k) => !DICE_COLORS[k].xmas && !dcs.has(k)) || "red";
+    return { pid: "bot:" + randId(6), name, dc, score: 0, ready: true, gone: false, skips: 0, on: false, fk: 0 };
+  }
   function newState(code, r) {
     const rules = cleanRules(r);
     return { v: 1, code, rules, target: rules.target, phase: "lobby", host: S.pid, evN: 0,
@@ -1318,6 +1334,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     if (S.net) S.net.publish(evs, snap);
     save("s", "fk.host", snap);   // lets the host survive a page reload
     applyHost(evs, snap, S.pid, true);
+    botSchedule();
   }
   function hostEmit(type, d, msg) {
     const M = S.M;
@@ -1350,8 +1367,20 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     if (i.t === "again") {
       if (i.pid !== M.host || M.phase !== "over") return;
       M.phase = "lobby"; M.fin = null; M.win = []; M.tp = 0; M.ts = "pre"; M.roll = null; M.busy = false;
-      M.players.forEach((p) => { p.score = 0; p.ready = false; p.gone = false; p.skips = 0; p.on = false; p.fk = 0; });
+      M.players.forEach((p) => { p.score = 0; p.ready = isBot(p.pid); p.gone = false; p.skips = 0; p.on = false; p.fk = 0; });
       hostEmit("LOBBY", {}, "New game. Ready up.");
+      return;
+    }
+    if (i.t === "addbot") {
+      if (i.pid !== M.host || M.phase !== "lobby" || M.players.length >= MAX_PLAYERS) return;
+      M.players.push(newBot(M));
+      hostEmit("LOBBY", {}, null);
+      return;
+    }
+    if (i.t === "dropbot") {
+      if (i.pid !== M.host || M.phase !== "lobby" || !isBot(d.pid)) return;
+      M.players = M.players.filter((p) => p.pid !== d.pid);
+      hostEmit("LOBBY", {}, null);
       return;
     }
     // Turn actions: only the player whose turn it is, and never mid-farkle or mid-bank.
@@ -1449,6 +1478,56 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     hostEmit("GAME_OVER", { win: M.win }, winners.length > 1 ? `Tie at ${fmt(top)}: ${winners.map((p) => p.name).join(" and ")}.` : `${winners[0].name} wins with ${fmt(top)}.`);
   }
 
+  /* Bots. On a bot's turn the host takes one step per event, after a pause long enough for everyone to
+     watch the last one: roll, show the dice it picks, keep them, then roll on or bank. Each step is the
+     same host call a player's intent makes, so bots play by exactly the same rules. */
+  // What having n dice to throw next is worth, roughly: it lets a keep of fewer dice beat a greedy one.
+  const BOT_POT = [0, 25, 50, 90, 150, 250, 400];
+  // Bank once the turn is worth this much with n dice left to throw (6 = hot dice: always roll on).
+  const BOT_BANK = [0, 300, 300, 400, 650, 2000, Infinity];
+  function botKeep(M) {
+    const free = M.dice.map((d, k) => (d.s !== 2 ? k : -1)).filter((k) => k >= 0);
+    let pick = null, top = -Infinity;
+    for (let mask = 1; mask < 1 << free.length; mask++) {
+      const idx = free.filter((_, j) => mask & (1 << j)), sc = scoreOf(idx.map((k) => M.dice[k].v));
+      if (sc <= 0) continue;
+      const v = sc + BOT_POT[free.length - idx.length || 6];
+      if (v > top) { top = v; pick = idx; }
+    }
+    return pick;
+  }
+  function botBanks(M) {
+    const p = M.players[M.turn], left = M.dice.filter((d) => d.s !== 2).length || 6;
+    if (!onBoard(M, p) && M.tp < M.rules.open) return false;
+    const after = p.score + M.tp, best = Math.max(0, ...M.players.filter((q) => q !== p).map((q) => q.score));
+    if (M.fin !== null) return after > best;     // final round: only stop once ahead of everyone
+    if (after >= M.target) return true;
+    return M.tp >= BOT_BANK[left];
+  }
+  function botSchedule() {
+    const M = S.M;
+    const cur = M && M.phase === "play" && !M.busy && M.players[M.turn];
+    if (!S.isHost || !cur || !isBot(cur.pid) || !["pre", "rolled", "kept"].includes(M.ts)) { clearTimeout(S.botTimer); S.botEv = -1; return; }
+    if (S.botEv === M.evN) return;               // already planned for this snapshot (a re-publish isn't news)
+    S.botEv = M.evN;
+    const picked = M.dice.some((d) => d.s === 1);
+    const ms = M.ts === "pre" ? 1100 : M.ts === "kept" ? 1300 : picked ? 750 : simFor(M.roll).dur * 1000 + 800;
+    clearTimeout(S.botTimer);
+    S.botTimer = setTimeout(() => botStep(M.evN), ms);
+  }
+  function botStep(ev) {
+    const M = S.M;
+    if (!S.isHost || !M || M.evN !== ev || M.phase !== "play" || M.busy || !isBot(M.players[M.turn].pid)) return;
+    if (M.ts === "pre") hostRoll(false);
+    else if (M.ts === "kept") { if (botBanks(M)) hostBank(); else hostRoll(false); }
+    else if (M.ts === "rolled") {
+      const pick = botKeep(M);
+      if (!pick) return;                         // can't happen: a roll with nothing to keep is a Farkle
+      if (selIdx().join(",") === pick.join(",")) hostKeep(pick);
+      else { applySel(pick); hostEmit("DICE_SET_ASIDE", { sel: selIdx() }, null); }
+    }
+  }
+
   // Presence-driven housekeeping, run on every presence change and on a slow tick.
   function hostPresenceTick() {
     const M = S.M;
@@ -1494,7 +1573,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     }
     hostPresenceTick();
   }
-  function stepDown() { clearTimeout(S.hostTimer); S.isHost = false; S.M = null; save("s", "fk.host", null); if (S.net && S.net.clearHost) S.net.clearHost(); }
+  function stepDown() { clearTimeout(S.hostTimer); clearTimeout(S.botTimer); S.botEv = -1; S.isHost = false; S.M = null; save("s", "fk.host", null); if (S.net && S.net.clearHost) S.net.clearHost(); }
 
   /* ---------- 10. Player actions ---------- */
   const myTurn = (st) => !!st && st.phase === "play" && !!st.players[st.turn] && st.players[st.turn].pid === S.pid;
@@ -1570,7 +1649,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   }
   function leaveRoom() {
     try { if (S.net) S.net.leave(); } catch (e) { /* ignore */ }
-    clearTimeout(S.hostTimer);
+    clearTimeout(S.hostTimer); clearTimeout(S.botTimer); S.botEv = -1;
     Object.assign(S, { net: null, inRoom: false, st: null, M: null, isHost: false, anim: null, localSel: null, conn: "off", code: "" });
     save("s", "fk.sess", null); save("s", "fk.host", null);
     renderAll();
@@ -2869,6 +2948,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
       li.appendChild(nm);
       const tags = el("span", "tags");
       if (p.pid === st.host) tags.appendChild(el("span", "tag host", "Host"));
+      else if (isBot(p.pid)) tags.appendChild(el("span", "tag bot", "Bot"));
       else tags.appendChild(el("span", "tag " + (p.ready ? "ready" : "wait"), p.ready ? "Ready" : "Not ready"));
       li.appendChild(tags);
       const sw = el("span", "die-sw"); sw.style.setProperty("--dc", rgbCss(p.dc));
@@ -2884,13 +2964,26 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
         sw.title = DICE_COLORS[p.dc].label + " dice";
         const w = el("span", "seat-sw"); w.appendChild(sw); li.appendChild(w);
       }
+      if (S.isHost && isBot(p.pid)) {
+        const x = el("button", "btn ghost seat-x"); x.type = "button";
+        x.setAttribute("aria-label", "Remove " + p.name); x.title = "Remove bot";
+        x.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+        x.addEventListener("click", () => act("dropbot", { pid: p.pid }));
+        li.appendChild(x);
+      }
       slots.appendChild(li);
       if (me && lobbyDiceOpen) { const row = el("li", "seat-picker"); row.appendChild(picker); picker.hidden = false; slots.appendChild(row); }
     });
     const open = MAX_PLAYERS - st.players.length;
     if (open > 0) {
       const li = el("li", "seat seat-open"); li.appendChild(el("span", "dot"));
-      li.appendChild(el("span", "", open === 1 ? "1 open seat \u00b7 share the code to fill it" : open + " open seats \u00b7 share the code to fill them"));
+      li.appendChild(el("span", "seat-name", open === 1 ? "1 open seat \u00b7 share the code to fill it" : open + " open seats \u00b7 share the code to fill them"));
+      // The host can fill a seat with a bot.
+      if (S.isHost) {
+        const b = el("button", "btn seat-add", "+ Bot"); b.type = "button"; b.title = "Add a bot player";
+        b.addEventListener("click", () => act("addbot"));
+        li.appendChild(b);
+      }
       slots.appendChild(li);
     }
     renderDicePickers();
@@ -2906,7 +2999,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     sb.disabled = !st.players.length || waiting.length > 0;
     const others = st.players.length - (host ? 1 : 0);
     $("#start-hint").textContent = S.isHost
-      ? waiting.length ? `Waiting for ${waiting.join(", ")} to ready up.` : others === 0 ? "Nobody else yet. Starting alone gives you a practice game." : "Everyone's ready. Start whenever you like."
+      ? waiting.length ? `Waiting for ${waiting.join(", ")} to ready up.` : others === 0 ? "Nobody else yet. Add a bot, or start alone for a practice game." : "Everyone's ready. Start whenever you like."
       : waiting.length ? "The host starts the game once everyone is ready." : "Everyone's ready. Waiting for the host to start.";
   }
 
@@ -3184,7 +3277,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   }, 700);
 
   // Local test hook (localhost only): lets a test script read state and pick dice by index.
-  if (location.hostname === "localhost") window.__farkle = { S, act, toggleDie, scoreOf, pickDie, canAct, SND, hotFlair, poses, proj, setDiceColor, FIRE, fireHeat, enterHome, SV };
+  if (location.hostname === "localhost") window.__farkle = { S, act, botKeep, toggleDie, scoreOf, pickDie, canAct, SND, hotFlair, poses, proj, setDiceColor, FIRE, fireHeat, enterHome, SV };
 
   // Start-up: restore name and settings, open Settings when there's no way to connect yet,
   // and rejoin the room this tab was in before a reload.
