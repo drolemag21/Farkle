@@ -275,11 +275,12 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 
 /* ---------- Game ---------- */
 #scr-game { gap: 10px; }
-.board { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.board { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 6px; }
 @media (min-width: 480px) { .board { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-/* Four across is too narrow for name and score side by side: stack them there. */
-@media (min-width: 480px) { .chip { flex-direction: column; align-items: stretch; gap: 2px; } }
 .chip { position: relative; display: flex; align-items: center; gap: 8px; padding: 7px 10px 9px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); min-width: 0; }
+/* Four across is too narrow for name and score side by side: stack them there. After the base rule,
+   or its align-items wins and the name row grows past the card. */
+@media (min-width: 480px) { .chip { flex-direction: column; align-items: stretch; gap: 2px; } }
 .chip[data-active="1"] { border-color: var(--pc); box-shadow: 0 0 0 1px var(--pc), 0 0 18px -4px var(--pc); }
 .chip[data-gone="1"] { opacity: .6; }
 /* The leader's crown, perched on the card's corner. */
@@ -294,9 +295,13 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 .chip-bar i { display: block; height: 100%; background: var(--pc); border-radius: 4px; transition: width .5s ease; }
 .chip-status { font-size: 11px; color: var(--bad); white-space: nowrap; }
 .chip-score.off { font: 600 10px var(--f-body); letter-spacing: .04em; flex: none; text-transform: uppercase; color: var(--muted); white-space: nowrap; line-height: 19px; }
-/* Farkles in a row toward the penalty: filled dots out of three. */
-.chip-fk { display: flex; gap: 3px; flex: none; }
-.chip-fk i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--line-strong); }
+/* Farkles in a row toward the penalty: filled dots out of three, in a tab on the card's top-left
+   corner (the crown has the other) so they never take width from the name. The board's row gap clears it. */
+.chip-fk {
+  position: absolute; top: -7px; left: 9px; display: flex; gap: 3px; padding: 3px 5px; border-radius: 999px;
+  background: var(--panel); border: 1px solid rgba(239, 106, 82, .55); box-shadow: 0 2px 4px rgba(0, 0, 0, .5);
+}
+.chip-fk i { width: 5px; height: 5px; border-radius: 50%; border: 1px solid rgba(239, 106, 82, .45); }
 .chip-fk i.on { background: var(--bad); border-color: var(--bad); }
 .chip-status:empty { display: none; }
 .table-wrap { position: relative; width: 100%; margin-inline: auto; }
@@ -2711,7 +2716,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
       if (st.rules.pen && p.fk > 0) {
         const fk = el("span", "chip-fk"); fk.title = `${p.fk} Farkle${p.fk === 1 ? "" : "s"} in a row`;
         for (let k = 0; k < 3; k++) fk.appendChild(el("i", k < p.fk ? "on" : ""));
-        top.appendChild(fk);
+        c.appendChild(fk);
       }
       c.appendChild(top);
       const on = onBoard(st, p);
