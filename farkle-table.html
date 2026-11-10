@@ -209,10 +209,14 @@ details.custom-server[open] summary { margin-bottom: 8px; }
   position: relative; width: 28px; height: 28px; border-radius: 7px; background: var(--dc);
   box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .28), inset 0 2px 0 rgba(255, 255, 255, .22), 0 2px 4px rgba(0, 0, 0, .4);
 }
-.swatch i::before, .swatch i::after { content: ""; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fcf6ea; }
+.swatch i::before, .swatch i::after { content: ""; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--pc, #fcf6ea); }
 .swatch i::before { left: 5px; top: 5px; }
 .swatch i::after { right: 5px; bottom: 5px; }
 .swatch[aria-checked="true"] { border-color: var(--brass); background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--brass); }
+/* Holiday look: the Christmas dice add a second row of six under the usual ones. */
+.swatches.two-rows { display: grid; grid-template-columns: repeat(6, 44px); gap: 2px; }
+.seat-picker .swatches.two-rows { grid-template-columns: repeat(6, 1fr); justify-items: center; gap: 0; }
+@media (max-width: 359px) { .dice-line .swatches.two-rows { grid-template-columns: repeat(6, 1fr); justify-items: center; gap: 0; } }
 .die-sw { width: 12px; height: 12px; flex: none; border-radius: 3px; background: var(--dc); box-shadow: 0 0 0 1px rgba(0, 0, 0, .35); margin-left: auto; }
 
 /* ---------- Lobby ---------- */
@@ -360,6 +364,15 @@ details.custom-server[open] summary { margin-bottom: 8px; }
    the title over it; its tap is also the gesture browsers want before playing music. */
 #app { position: relative; z-index: 1; }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+/* Holiday snow: behind the page (and over the title scene), never over the game's table or panels. */
+#snow { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
+/* Holiday look: a Santa hat on the corner of the F, on the logo and the splash title. Sized in em so it
+   sits the same on both, and rides along when the title flies into the logo. */
+html.xmas .brand-word, html.xmas .s-title { position: relative; }
+html.xmas .brand-word::after, html.xmas .s-title::after {
+  content: ""; position: absolute; left: -.33em; top: -.4em; width: .73em; height: .57em; transform: rotate(-22deg); pointer-events: none;
+  background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 20'%3E%3Cpath d='M3 16 C 5 8, 11 2, 19 3 C 22 3.5, 24 6, 24 9 C 21 7, 17 7, 15 9 L 21 16 Z' fill='%23d42433' stroke='%236e0c14' stroke-width='1'/%3E%3Ccircle cx='24' cy='9.5' r='2.6' fill='%23fff' stroke='%23c9d4e0' stroke-width='.6'/%3E%3Crect x='1.5' y='14.2' width='21' height='4.6' rx='2.3' fill='%23fff' stroke='%23c9d4e0' stroke-width='.6'/%3E%3C/svg%3E");
+}
 .veil { position: fixed; inset: 0; z-index: 0; pointer-events: none; transition: background-color .8s ease;
   background-color: rgba(6, 10, 8, .5); background-image: radial-gradient(120% 80% at 50% 55%, rgba(12, 19, 16, 0) 40%, rgba(6, 10, 8, .85) 100%); }
 .veil.intro { background-color: rgba(6, 10, 8, 0); }
@@ -404,6 +417,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 
 <canvas id="scene" aria-hidden="true"></canvas>
 <div id="veil" class="veil intro"></div>
+<canvas id="snow" aria-hidden="true" hidden></canvas>
 <div id="splash" role="button" tabindex="0" aria-label="Tap to start">
   <div><h1 class="s-title">Farkle</h1><p class="s-tag">Dice for 2&ndash;4 players</p></div>
   <p class="s-tap">Tap to start</p>
@@ -461,6 +475,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
       <label class="switch"><span>Test mode<small>Tools for trying things out. Applies right away.</small></span><input id="test-mode" type="checkbox" role="switch"></label>
       <div id="test-opts" class="settings" hidden>
         <label class="switch"><span>Force hot dice<small>Every roll you make comes up hot dice.</small></span><input id="test-hot" type="checkbox" role="switch"></label>
+        <label class="switch"><span>Christmas mode<small>The holiday look now, without waiting for Dec 1. Only on this device.</small></span><input id="test-xmas" type="checkbox" role="switch"></label>
       </div>
     </div>
   </section>
@@ -675,12 +690,22 @@ details.custom-server[open] summary { margin-bottom: 8px; }
   const GRACE = 3500;           // ms a player may vanish from presence before we call them away
   const SUPABASE_SRC = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js";
   const SEAT_COLORS = ["#e5664f", "#5b9bea", "#e9bf55", "#ad85ea"];
-  // Dice body colours a player can pick (RGB). Pips stay ivory on all of them. Green leans
-  // lime so it stands off the felt.
+  // Dice body colours a player can pick (RGB). Pips are ivory unless a colour names its own. Green
+  // leans lime so it stands off the felt. The `xmas` ones are offered only while the holiday look is on,
+  // but every copy can draw them, so a player who picked one keeps it whatever the others' dates say.
   const DICE_COLORS = {
     red: { label: "Red", rgb: [196, 26, 42] }, green: { label: "Green", rgb: [112, 196, 44] }, blue: { label: "Blue", rgb: [34, 92, 210] },
     orange: { label: "Orange", rgb: [232, 112, 18] }, purple: { label: "Purple", rgb: [122, 52, 190] }, cyan: { label: "Cyan", rgb: [12, 160, 186] },
+    candy: { label: "Candy cane", rgb: [246, 242, 236], pip: [200, 28, 40], xmas: 1 }, ginger: { label: "Gingerbread", rgb: [156, 86, 40], pip: [255, 252, 246], xmas: 1 },
+    ornament: { label: "Gold ornament", rgb: [222, 172, 58], pip: [140, 18, 30], xmas: 1 }, frost: { label: "Frost", rgb: [196, 226, 246], pip: [28, 62, 128], xmas: 1 },
+    holly: { label: "Holly", rgb: [14, 66, 34], pip: [236, 52, 58], xmas: 1 }, poinsettia: { label: "Poinsettia", rgb: [196, 26, 42], pip: [96, 214, 112], xmas: 1 },
   };
+  // Holiday look: on by itself from Dec 1 to Jan 6 by this device's clock (players get no switch); test
+  // mode can force it on. Looks and sound only and decided per device, so none of it goes over the network.
+  // `on` is set by applyHoliday at start-up, before anything is drawn.
+  const XMAS = { on: false };
+  const xmasSeason = (d) => d.getMonth() === 11 || (d.getMonth() === 0 && d.getDate() <= 6);
+  const pickableDice = () => Object.keys(DICE_COLORS).filter((k) => XMAS.on || !DICE_COLORS[k].xmas);
   const diceColor = (k) => (Object.prototype.hasOwnProperty.call(DICE_COLORS, k) ? k : "red");
   // Keep glide: each die takes GLIDE_MS, the next leaves GLIDE_STAGGER later, then a short pause.
   const GLIDE_MS = 380, GLIDE_STAGGER = 45, GLIDE_GAP = 90;
@@ -943,7 +968,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
   // Test tools exist only outside the GitHub Pages build (which sets FARKLE_HOSTED), so live players
   // can't force rolls. The host checks this too, not just the switch.
   const TEST_OK = !window.FARKLE_HOSTED;
-  const TEST = Object.assign({ on: false, hot: false }, (TEST_OK && load("l", "fk.test")) || {});
+  const TEST = Object.assign({ on: false, hot: false, xmas: false }, (TEST_OK && load("l", "fk.test")) || {});
   const testHot = () => TEST_OK && TEST.on && TEST.hot;
 
   /* ---------- 7. Transports ----------
@@ -1576,9 +1601,11 @@ details.custom-server[open] summary { margin-bottom: 8px; }
       const rhodes = g(0.78); rhodes.connect(music);
       const lfo = ac.createOscillator(), depth = g(0.22); lfo.frequency.value = 4.2; lfo.connect(depth); depth.connect(rhodes.gain); lfo.start();
       const amb = g(0.5); amb.connect(lounge);
+      // Holiday celesta and sleigh bells skip the warm lowpass: their shimmer lives above it.
+      const bells = g(1.8); bells.connect(lounge);
       const sfx = g(1); sfx.connect(master);
       const sfxSend = g(0.12); sfx.connect(sfxSend); sfxSend.connect(verb);
-      return { ac, master, lounge, music, rhodes, amb, sfx, verb, white: noiseBuffer(ac, 2, false) };
+      return { ac, master, lounge, music, rhodes, amb, bells, sfx, verb, white: noiseBuffer(ac, 2, false) };
     }
 
     // Small building blocks. Every node is scheduled to stop, so nothing leaks.
@@ -1654,6 +1681,75 @@ details.custom-server[open] summary { margin-bottom: 8px; }
       }
     }
 
+    /* --- Holiday tune: "Snowfall at the Table", an original jazz waltz in Bb, 3/4 at 138 bpm (owner picked
+           it from mockups, 2026-11-10). Same trio, plus a celesta for the melody and sleigh bells on 2 and 3.
+           Chorus 1: the celesta plays the melody. Chorus 2: the vibes take a solo. --- */
+    function celesta(t, m, vel, len) {   // a struck bar: bright partials die fast over a ringing sine
+      const f = mtof(m);
+      [[1, 0.06, len], [2, 0.014, len * 0.4], [3.01, 0.01, 0.18], [4.02, 0.008, 0.09]].forEach(([h, pk, d]) => {
+        const o = osc("sine", f * h, t, t + d + 0.1), a = amp(); env(a.gain, t, pk * vel, 0.002, d); o.connect(a); out(a, -0.15, A.bells);
+      });
+    }
+    function sleigh(t, vel, spread) {    // a handful of tiny inharmonic jingles scattered over a few ms, plus a hiss
+      const n = 5 + Math.floor(rnd() * 4), w = spread || 0.05;
+      for (let i = 0; i < n; i++) {
+        const tt = t + rnd() * w, f = 2600 + rnd() * 2800, a = amp();
+        env(a.gain, tt, 0.0035 * vel, 0.001, 0.05 + rnd() * 0.07);
+        for (const h of [1, 2.31, 3.86]) osc("sine", f * h, tt, tt + 0.2).connect(a);
+        out(a, 0.45 + (rnd() - 0.5) * 0.3, A.bells);
+      }
+      const nz = noise(t, t + w + 0.1), hp = filt("highpass", 8000), na = amp(); env(na.gain, t, 0.007 * vel, 0.004, w + 0.05); nz.connect(hp); hp.connect(na); out(na, 0.45, A.bells);
+    }
+    // b: bass root, f: fifth, v: rootless voicing. Melody notes: [bar, beat, midi, beats].
+    const WALTZ = [
+      { b: 46, f: 53, v: [57, 60, 62, 65] },   // Bbmaj9
+      { b: 43, f: 50, v: [58, 62, 65, 69] },   // Gm9
+      { b: 36, f: 43, v: [58, 62, 63, 67] },   // Cm9
+      { b: 41, f: 48, v: [57, 62, 63, 67] },   // F13
+      { b: 38, f: 45, v: [53, 57, 60, 64] },   // Dm9
+      { b: 43, f: 50, v: [59, 62, 65, 68] },   // G7b9
+      { b: 36, f: 43, v: [58, 62, 63, 67] },   // Cm9
+      { b: 41, f: 48, v: [58, 63, 67, 69] },   // F7sus
+      { b: 39, f: 46, v: [55, 58, 62, 65] },   // Ebmaj9
+      { b: 40, f: 46, v: [55, 58, 61, 64] },   // Edim7
+      { b: 38, f: 45, v: [57, 60, 62, 65] },   // Bbmaj9/D
+      { b: 43, f: 50, v: [53, 59, 64, 69] },   // G13
+      { b: 36, f: 43, v: [58, 62, 63, 67] },   // Cm9
+      { b: 41, f: 48, v: [57, 62, 63, 67] },   // F13
+      { b: 46, f: 53, v: [55, 60, 62, 65] },   // Bb6/9
+      { b: 41, f: 48, v: [57, 63, 68] },       // F7#9, the turnaround
+    ];
+    const MEL = [
+      [0, 0, 74, 1], [0, 1, 77, 1], [0, 2, 81, 1], [1, 0, 79, 2], [1, 2, 77, 1], [2, 0, 75, 1], [2, 1, 79, 1], [2, 2, 82, 1],
+      [3, 0, 81, 2], [3, 2, 75, 1], [4, 0, 74, 1], [4, 1, 77, 1], [4, 2, 81, 1], [5, 0, 80, 2], [5, 2, 79, 1],
+      [6, 0, 84, 1], [6, 1, 82, 1], [6, 2, 79, 1], [7, 0, 77, 3], [8, 0, 79, 1], [8, 1, 82, 1], [8, 2, 86, 1],
+      [9, 0, 85, 2], [9, 2, 82, 1], [10, 0, 81, 1], [10, 1, 77, 1], [10, 2, 74, 1], [11, 0, 83, 2], [11, 2, 79, 1],
+      [12, 0, 84, 1], [12, 1, 82, 1], [12, 2, 79, 1], [13, 0, 81, 1], [13, 1, 84, 1], [13, 2, 87, 1], [14, 0, 86, 3],
+      [15, 1, 77, 1], [15, 2, 72, 1],
+    ];
+    const WBEAT = 60 / 138;
+    function waltzBar(t, i) {
+      const k = i % 16, ch = WALTZ[k], nx = WALTZ[(k + 1) % 16], solo = Math.floor(i / 16) % 2 === 1;
+      const comp = i % 2 ? [[1, 0.7, 0.75], [2 + SW, 1.0, 0.6]] : [[0, 1.2, 0.85], [1 + SW, 1.0, 0.6]];
+      for (const [b, d, v] of comp) ch.v.forEach((m, j) => rhodes(t + b * WBEAT + j * 0.012, m, d * WBEAT, v * (0.85 + rnd() * 0.3)));
+      bassNote(t, ch.b, WBEAT * 1.9);
+      bassNote(t + 2 * WBEAT, i % 2 ? nx.b + (nx.b > ch.b ? -1 : 1) : ch.f, WBEAT * 0.9);   // the fifth, or a half step into the next root
+      brush(t, 0.022, WBEAT * 2.8);
+      for (const b of [1, 2]) brush(t + b * WBEAT, 0.03, WBEAT * 0.6);
+      for (const b of [0, 1, 2, 2 + SW]) ride(t + b * WBEAT, b % 1 ? 0.006 : 0.009);
+      for (const b of [1, 2]) sleigh(t + b * WBEAT, solo ? 0.55 : 0.8);
+      if (k === 15) sleigh(t + 2 * WBEAT, 1.4, 0.35);
+      if (!solo) { for (const [bar, beat, m, d] of MEL) if (bar === k) celesta(t + beat * WBEAT, m, 0.95, Math.max(1.2, d * WBEAT * 1.6)); return; }
+      const tones = ch.v.map((m) => m + 12);
+      let j = Math.floor(rnd() * tones.length);
+      for (const b of [0, 1, 1 + SW, 2, 2 + SW].filter(() => rnd() < 0.55).slice(0, 3)) {
+        vibes(t + b * WBEAT, tones[j], 0.6 + rnd() * 0.4); j = clamp(j + (rnd() < 0.5 ? -1 : 1), 0, tones.length - 1);
+      }
+      if (k === 14) celesta(t, 86, 0.8, 2.5);
+    }
+    const SONGS = { trio: { bar: (t, i) => scheduleBar(t, i), len: 4 * BEAT }, waltz: { bar: waltzBar, len: 3 * WBEAT } };
+    let song = SONGS.trio;
+
     /* --- Room tone: now and then chips, glasses, a slot machine across the floor. (The steady
            crowd murmur was cut: as filtered noise it read as wind and sat over the music.) --- */
     function chipClack(t, peak, dest, f) {
@@ -1679,7 +1775,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 
     // Lookahead scheduler: keep 1.5 s of music and room tone queued on the audio clock.
     function pump(horizon) {
-      while (nextBar < horizon) { scheduleBar(nextBar, bar++); nextBar += 4 * BEAT; }
+      while (nextBar < horizon) { song.bar(nextBar, bar++); nextBar += song.len; }
       while (nextAmb < horizon) { ambEvent(nextAmb); nextAmb += 2 + rnd() * 5; }
     }
     function startLounge() {
@@ -1754,6 +1850,11 @@ details.custom-server[open] summary { margin-bottom: 8px; }
       let tt = t;
       for (let i = 0; i < n; i++) { chipClack(tt, 0.06, A.sfx, 2300 + i * 90 + rnd() * 200); tt += 0.05 + rnd() * 0.02; }
       const tb = tt + 0.05;
+      if (song === SONGS.waltz) {   // holiday: sleigh bells and a celesta run in place of the house bell
+        sleigh(tb, 1.6, 0.3); sleigh(tb + 0.28, 1.1, 0.25);
+        [82, 86, 89, 94].forEach((m, i) => celesta(tb + i * 0.07, m, 0.45, 1.4));
+        return;
+      }
       [[84, 0], [91, 0.11]].forEach(([m, d]) => {
         const o = osc("sine", mtof(m), tb + d, tb + d + 1.6), o2 = osc("sine", mtof(m) * 2.76, tb + d, tb + d + 0.5), a = amp(), a2 = amp();
         env(a.gain, tb + d, 0.06, 0.004, 1.4); env(a2.gain, tb + d, 0.015, 0.002, 0.35);
@@ -1855,6 +1956,8 @@ details.custom-server[open] summary { margin-bottom: 8px; }
         sync();
       },
       lounge(lvl) { if (want !== lvl) { want = lvl; sync(); } },
+      // Holiday tune on or off: the change lands at the next bar line, from the top of the new tune.
+      holiday(on) { const s = on ? SONGS.waltz : SONGS.trio; if (s !== song) { song = s; bar = 0; } },
       get muted() { return muted; },
       setMuted(m) {
         muted = m; save("l", "fk.mute", m ? 1 : null);
@@ -1879,6 +1982,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
         const sr = 44100, secs = 10, off = new OfflineAudioContext(2, sr * secs, sr), saved = A;
         A = build(off); A.master.gain.value = 0.9; A.lounge.gain.value = 1;
         if (part === "music") for (let i = 0; i < 3; i++) scheduleBar(0.1 + i * 4 * BEAT, i);
+        if (part === "waltz") for (let i = 0; i < 7; i++) waltzBar(0.1 + i * 3 * WBEAT, i);
         if (part === "room") [1, 3.5, 6, 8].forEach(ambEvent);
         if (part === "roll") roll(simulate(makeLaunch(12345, 6)), 0.1);
         if (part === "bank") bank(600, 0.1);
@@ -1953,9 +2057,88 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     S.dirty = true;
   }
   // Static layers, rebuilt only on resize or mode change: everything behind the dice (bg) and the near rail in front (fg).
+  /* Holiday decorations (owner picked "Deck the table" from mockups, 2026-11-10, without the wreath).
+     Garland on the rail tops, a string of bulbs on the far rail and a holly sprig printed at the top of
+     the felt ring. Built once in world space from a fixed seed, so every redraw (and the circling title
+     scene, from any side) shows the same garland; sizes scale with the projection at each rail. */
+  const DECO = (() => {
+    const r = mulberry32(2512), GREENS = ["#0f3a1e", "#16502a", "#1e6434", "#2a7a40", "#123f22"];
+    const garland = (n) => ({
+      needles: Array.from({ length: n }, () => ({ t: r(), a: r() * 6.283, l: 0.5 + r() * 0.7, c: (r() * 5) | 0 })),
+      tips: Array.from({ length: n * 0.6 }, () => ({ t: r(), a: r() * 6.283 })),
+      berries: Array.from({ length: n / 10 }, () => ({ t: r(), ox: r() - 0.5, oy: r() - 0.5 })),
+    });
+    return {
+      GREENS,
+      far: { path: (t) => [-RAIL + t * (W + 2 * RAIL), -RAIL * 0.55, RZ], g: garland(260), bows: [0.02, 0.98], lights: true },
+      left: { path: (t) => [-RAIL * 0.5, -RAIL * 0.4 + t * (H + RAIL * 0.3), RZ], g: garland(260) },
+      right: { path: (t) => [W + RAIL * 0.5, -RAIL * 0.4 + t * (H + RAIL * 0.3), RZ], g: garland(260) },
+      near: { path: (t) => [-RAIL + t * (W + 2 * RAIL), H + 2, RZ], g: garland(260), bows: [0.5] },
+    };
+  })();
+  const BULBS = ["#ff4a3d", "#4fe08a", "#ffd25a", "#bfe3ff"];
+  // Screen pixels per world unit around a point, for sizing needles and bulbs.
+  function pxPer(x, y, z) { const a = proj(x, y, z), b = proj(x + 1, y, z), c = proj(x, y + 1, z); return Math.max(Math.hypot(b.x - a.x, b.y - a.y), Math.hypot(c.x - a.x, c.y - a.y)); }
+  function drawBow(g, x, y, s) {
+    g.save(); g.translate(x, y); g.scale(s, s);
+    g.fillStyle = "#c81e2b"; g.strokeStyle = "#7d0d16"; g.lineWidth = 0.8;
+    for (const d of [-1, 1]) { g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(d * 9, -8, d * 13, -2, d * 10, 3); g.closePath(); g.fill(); g.stroke(); }
+    for (const d of [-1, 1]) { g.beginPath(); g.moveTo(0, 1); g.lineTo(d * 6, 11); g.lineTo(d * 3, 11); g.lineTo(0, 3); g.closePath(); g.fill(); g.stroke(); }
+    g.beginPath(); g.arc(0, 0.5, 2.6, 0, 6.283); g.fillStyle = "#e23442"; g.fill(); g.stroke();
+    g.restore();
+  }
+  // One rail's garland (and bulbs on the far rail). Needles are batched by colour: a few strokes, not hundreds.
+  function drawGarland(g, side) {
+    const D = DECO[side], P = D.path, m = P(0.5), s = pxPer(m[0], m[1], m[2]), th = 10.5 * s;
+    const pts = D.g.needles.map((n) => proj(...P(n.t)));
+    g.lineWidth = Math.max(0.8, 1.6 * s / 0.92);
+    DECO.GREENS.forEach((c, ci) => {
+      g.strokeStyle = c; g.beginPath();
+      D.g.needles.forEach((n, i) => { if (n.c !== ci) return; const p = pts[i], l = th * n.l; g.moveTo(p.x, p.y); g.lineTo(p.x + Math.cos(n.a) * l, p.y + Math.sin(n.a) * l * 0.8); });
+      g.stroke();
+    });
+    g.strokeStyle = "rgba(90, 160, 90, .55)"; g.lineWidth = Math.max(0.5, 0.8 * s); g.beginPath();
+    for (const n of D.g.tips) { const p = proj(...P(n.t)), l = th * 0.6; g.moveTo(p.x, p.y); g.lineTo(p.x + Math.cos(n.a) * l, p.y + Math.sin(n.a) * l * 0.8); }
+    g.stroke();
+    const br = 2 * s;
+    g.fillStyle = "#c2202c"; g.beginPath();
+    for (const b of D.g.berries) { const p = proj(...P(b.t)), x = p.x + b.ox * th, y = p.y + b.oy * th * 0.6; g.moveTo(x + br, y); g.arc(x, y, br, 0, 6.283); }
+    g.fill();
+    if (D.lights) drawLights(g, P, s);
+    for (const t of D.bows || []) { const p = proj(...P(t)); drawBow(g, p.x, p.y, s / 0.92); }
+  }
+  // Six scallops of wire along the far rail with a bulb at each low point and each hook.
+  function drawLights(g, P, s) {
+    const n = 6, sag = 4, sz = 2.3 * s, at = (t) => { const w = P(0.02 + t * 0.96); return proj(w[0], w[1] + Math.abs(Math.sin(t * n * Math.PI)) * sag, w[2]); };
+    g.strokeStyle = "rgba(20, 30, 18, .9)"; g.lineWidth = 1; g.beginPath();
+    for (let i = 0; i <= 96; i++) { const p = at(i / 96); if (i) g.lineTo(p.x, p.y); else g.moveTo(p.x, p.y); }
+    g.stroke();
+    for (let i = 0; i < n * 2; i++) {
+      const p = at((i + 0.5) / (n * 2)), c = BULBS[i % 4];
+      const gr = g.createRadialGradient(p.x, p.y + 2, 0, p.x, p.y + 2, sz * 4.5); gr.addColorStop(0, c + "88"); gr.addColorStop(1, c + "00");
+      g.fillStyle = gr; g.beginPath(); g.arc(p.x, p.y + 2, sz * 4.5, 0, 6.283); g.fill();
+      g.fillStyle = "#2a2a22"; g.fillRect(p.x - sz * 0.45, p.y - sz * 0.4, sz * 0.9, sz * 0.7);
+      g.fillStyle = c; g.beginPath(); g.ellipse(p.x, p.y + sz * 0.9, sz * 0.62, sz, 0, 0, 6.283); g.fill();
+      g.fillStyle = "rgba(255, 255, 255, .75)"; g.beginPath(); g.ellipse(p.x - sz * 0.2, p.y + sz * 0.55, sz * 0.16, sz * 0.3, 0, 0, 6.283); g.fill();
+    }
+  }
+  // Holly sprig printed in the felt's gold ink at the top of the ring. Call inside planeXf for the ring's centre.
+  function drawHolly(g) {
+    g.save(); g.translate(0, -124);
+    g.fillStyle = "rgba(241, 212, 143, .34)";
+    for (const rot of [-0.35, Math.PI + 0.35]) {
+      g.save(); g.rotate(rot); g.beginPath(); g.moveTo(0, 0);
+      g.bezierCurveTo(6, -3, 9, -1, 12, -4); g.lineTo(13, -1); g.bezierCurveTo(16, 0, 19, -2, 22, 0);
+      g.bezierCurveTo(19, 2, 16, 1, 13, 4); g.lineTo(12, 5); g.bezierCurveTo(9, 2, 6, 4, 0, 0); g.fill(); g.restore();
+    }
+    g.fillStyle = "rgba(196, 48, 52, 1)"; g.beginPath();
+    for (const [x, y] of [[-2.6, 2.4], [2.6, 2.4], [0, -1.6]]) { g.moveTo(x + 2.6, y); g.arc(x, y, 2.6, 0, 6.283); }
+    g.fill(); g.restore();
+  }
+  const feltLine = () => (XMAS.on ? "MERRY & BRIGHT" : "HOT DICE ROLL AGAIN");
   function buildCaches() {
     const target = S.st ? S.st.target : 10000;
-    const key = cssW + "x" + dpr + ":" + target;
+    const key = cssW + "x" + dpr + ":" + target + (XMAS.on ? ":xmas" : "");
     if (S.cacheKey === key) return;
     S.cacheKey = key;
     for (const c of [bgC, fgC]) { c.width = cv.width; c.height = cv.height; }
@@ -1987,13 +2170,15 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     g.fillStyle = "rgba(241, 212, 143, .2)"; g.textAlign = "center"; g.textBaseline = "middle";
     g.font = "42px Limelight, Georgia, serif"; g.fillText("FARKLE", 0, -10);
     g.font = "600 13px Figtree, system-ui, sans-serif"; g.fillText("FIRST TO " + fmt(target), 0, 24);
-    g.font = "600 10px Figtree, system-ui, sans-serif"; g.fillText("HOT DICE ROLL AGAIN", 0, 42);
+    g.font = "600 10px Figtree, system-ui, sans-serif"; g.fillText(feltLine(), 0, 42);
+    if (XMAS.on) drawHolly(g);
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     // Brass inlay along the cushion tops.
     g.strokeStyle = "rgba(241, 212, 143, .75)"; g.lineWidth = 1.2;
     g.beginPath(); [[0, H, RZ], [0, 0, RZ], [W, 0, RZ], [W, H, RZ]].forEach((p, i) => { const q = proj(...p); if (i) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); }); g.stroke();
     g.strokeStyle = "rgba(241, 212, 143, .25)";
     poly(g, [[-RAIL + 5, -RAIL + 5, RZ], [W + RAIL - 5, -RAIL + 5, RZ], [W + RAIL - 5, H, RZ], [-RAIL + 5, H, RZ]]); g.stroke();
+    if (XMAS.on) for (const side of ["left", "right", "far"]) drawGarland(g, side);
 
     // Near rail (drawn over the dice) with the tray for set-aside dice.
     g = fgC.getContext("2d");
@@ -2016,6 +2201,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     poly(g, [[TX0, TY0, RZ], [TX1, TY0, RZ], [TX1, TY1, RZ], [TX0, TY1, RZ]]); g.stroke();
     g.fillStyle = "rgba(241, 212, 143, .5)"; g.font = "600 9px Figtree, system-ui, sans-serif"; g.textAlign = "center";
     q = proj(W / 2, H + NEAR - 6, RZ); g.fillText("KEPT", q.x, q.y);
+    if (XMAS.on) drawGarland(g, "near");
   }
 
   // Where every die is right now: in the tray, tumbling, at rest on the felt, or waiting in hand.
@@ -2064,7 +2250,8 @@ details.custom-server[open] summary { margin-bottom: 8px; }
   }
 
   function shade(rgb, l) { return `rgb(${Math.min(255, Math.round(rgb[0] * l))},${Math.min(255, Math.round(rgb[1] * l))},${Math.min(255, Math.round(rgb[2] * l))})`; }
-  const PIP = [252, 246, 234];
+  const IVORY = [252, 246, 234];
+  let PIP = IVORY;   // set with BODY: most colours keep ivory pips, the Christmas ones bring their own
   let BODY = DICE_COLORS.red.rgb;   // set per frame to the colour of the roller's dice
   const EMBER = [255, 150, 56];
   function drawDie(p) {
@@ -2241,7 +2428,8 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.drawImage(bgC, 0, 0);
     const roller = S.st && S.st.players[S.st.turn];
-    BODY = DICE_COLORS[diceColor(roller && roller.dc)].rgb;
+    const dcol = DICE_COLORS[diceColor(roller && roller.dc)];
+    BODY = dcol.rgb; PIP = dcol.pip || IVORY;
     const ps = poses(now), heat = fireHeat(now);
     if (heat) for (const p of ps) if (!p.hand) p.heat = heat;
     const felt = ps.filter((p) => p.where === "felt").sort((a, b) => a.y - b.y || a.z - b.z);
@@ -2273,9 +2461,9 @@ details.custom-server[open] summary { margin-bottom: 8px; }
   const SV = { ctx: sceneCv.getContext("2d"), cam: { E: [0, 0, 1], f: [0, 0, -1], r: [1, 0, 0], u: [0, 1, 0] }, K: 1, OX: 0, OY: 0, w: 0, h: 0, dpr: 1 };
   // drawDie and friends read the game's camera and canvas; the scene borrows them for one frame.
   function inView(v, fn) {
-    const was = { E: CAM.E, f: CAM.f, r: CAM.r, u: CAM.u, K, OX, OY, dpr, ctx, BODY };
+    const was = { E: CAM.E, f: CAM.f, r: CAM.r, u: CAM.u, K, OX, OY, dpr, ctx, BODY, PIP };
     Object.assign(CAM, v.cam); K = v.K; OX = v.OX; OY = v.OY; dpr = v.dpr; ctx = v.ctx;
-    try { fn(); } finally { CAM.E = was.E; CAM.f = was.f; CAM.r = was.r; CAM.u = was.u; K = was.K; OX = was.OX; OY = was.OY; dpr = was.dpr; ctx = was.ctx; BODY = was.BODY; }
+    try { fn(); } finally { CAM.E = was.E; CAM.f = was.f; CAM.r = was.r; CAM.u = was.u; K = was.K; OX = was.OX; OY = was.OY; dpr = was.dpr; ctx = was.ctx; BODY = was.BODY; PIP = was.PIP; }
   }
   const TCX = W / 2, TCY = (H + NEAR) / 2 - 10;   // middle of the whole table, near rail included
   function sceneAim(t) {
@@ -2316,10 +2504,10 @@ details.custom-server[open] summary { margin-bottom: 8px; }
   // the dice, the others (with their cushion faces) before.
   const APRON = -34;   // underside of the table
   const SIDES = [
-    { top: [[-RAIL, -RAIL], [W + RAIL, -RAIL], [W + RAIL, 0], [-RAIL, 0]], wall: [[0, 0], [W, 0]], near: (E) => E[1] < 0, tone: "#24100a" },
-    { top: [[-RAIL, 0], [0, 0], [0, H], [-RAIL, H]], wall: [[0, H], [0, 0]], near: (E) => E[0] < 0, tone: "#2e150b" },
-    { top: [[W, 0], [W + RAIL, 0], [W + RAIL, H], [W, H]], wall: [[W, 0], [W, H]], near: (E) => E[0] > W, tone: "#2a1309" },
-    { top: [[-RAIL, H], [W + RAIL, H], [W + RAIL, H + NEAR], [-RAIL, H + NEAR]], wall: [[W, H], [0, H]], near: (E) => E[1] > H, tone: "#2a1209", tray: true },
+    { top: [[-RAIL, -RAIL], [W + RAIL, -RAIL], [W + RAIL, 0], [-RAIL, 0]], wall: [[0, 0], [W, 0]], near: (E) => E[1] < 0, tone: "#24100a", deco: "far" },
+    { top: [[-RAIL, 0], [0, 0], [0, H], [-RAIL, H]], wall: [[0, H], [0, 0]], near: (E) => E[0] < 0, tone: "#2e150b", deco: "left" },
+    { top: [[W, 0], [W + RAIL, 0], [W + RAIL, H], [W, H]], wall: [[W, 0], [W, H]], near: (E) => E[0] > W, tone: "#2a1309", deco: "right" },
+    { top: [[-RAIL, H], [W + RAIL, H], [W + RAIL, H + NEAR], [-RAIL, H + NEAR]], wall: [[W, H], [0, H]], near: (E) => E[1] > H, tone: "#2a1209", tray: true, deco: "near" },
   ];
   const woodAcross = (a, b) => { const p = proj(TCX, -RAIL, RZ), q = proj(TCX, H + NEAR, RZ), g = ctx.createLinearGradient(p.x, p.y, q.x, q.y); g.addColorStop(0, a); g.addColorStop(1, b); return g; };
   function drawTableBody() {
@@ -2352,7 +2540,8 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     ctx.fillStyle = "rgba(241, 212, 143, .2)"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.font = "42px Limelight, Georgia, serif"; ctx.fillText("FARKLE", 0, -10);
     ctx.font = "600 13px Figtree, system-ui, sans-serif"; ctx.fillText("FIRST TO " + fmt(CLASSIC.target), 0, 24);
-    ctx.font = "600 10px Figtree, system-ui, sans-serif"; ctx.fillText("HOT DICE ROLL AGAIN", 0, 42);
+    ctx.font = "600 10px Figtree, system-ui, sans-serif"; ctx.fillText(feltLine(), 0, 42);
+    if (XMAS.on) drawHolly(ctx);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   // The table's outer sides face the camera from the outside of the whole box, so nothing on the table
@@ -2378,17 +2567,19 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     }
     const p = proj(a[0], a[1], RZ), q = proj(b[0], b[1], RZ);   // brass inlay along the cushion
     ctx.strokeStyle = "rgba(241, 212, 143, .75)"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+    if (XMAS.on) drawGarland(ctx, R.deco);
   }
   // Throws alternate ends of the table. After a rest the dice are scooped to where the next throw
   // leaves the hand, so none pop in or out. During the splash they cycle the colours; at home they're yours.
-  const SCENE_COLORS = Object.keys(DICE_COLORS), SCENE_REST = 3200, SCENE_SCOOP = 650;
+  const SCENE_REST = 3200, SCENE_SCOOP = 650;
   const SC = { n: 0, cur: null, prev: null };
   const introOn = () => !splash.hidden && !splash.classList.contains("leaving");
   function sceneThrow(t0) {
     const L = makeLaunch((Math.random() * 2 ** 31) | 0, 6), flip = SC.n % 2 === 1;
-    const color = DICE_COLORS[introOn() ? SCENE_COLORS[SC.n % SCENE_COLORS.length] : diceColor(S.me.dc)].rgb;
+    // The splash cycles the Christmas colours while the holiday look is on, the usual six otherwise.
+    const cycle = Object.keys(DICE_COLORS).filter((k) => !DICE_COLORS[k].xmas === !XMAS.on), dc = DICE_COLORS[introOn() ? cycle[SC.n % cycle.length] : diceColor(S.me.dc)];
     SC.n++;
-    return { t0, L, sim: simulate(L), flip, color, v: L.map(() => 1 + ((Math.random() * 6) | 0)) };
+    return { t0, L, sim: simulate(L), flip, color: dc.rgb, pip: dc.pip || IVORY, v: L.map(() => 1 + ((Math.random() * 6) | 0)) };
   }
   // Die k of throw T at time `now`: the same maths as poses(), mirrored for throws from the far end.
   function sceneDie(T, k, now) {
@@ -2409,11 +2600,11 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     else if (SC.prev && now >= cur.t0) SC.prev = null;
     const out = [], P = SC.prev, C = SC.cur;
     for (let k = 0; k < 6; k++) {
-      if (!P) { out.push(Object.assign(sceneDie(C, k, now), { col: C.color })); continue; }
+      if (!P) { out.push(Object.assign(sceneDie(C, k, now), { col: C.color, pip: C.pip })); continue; }
       const u0 = clamp((now - (C.t0 - SCENE_SCOOP)) / SCENE_SCOOP, 0, 1), u = u0 < 0.5 ? 4 * u0 * u0 * u0 : 1 - Math.pow(-2 * u0 + 2, 3) / 2;
       const A = sceneDie(P, k, Infinity), B = sceneDie(C, k, C.t0), l = C.L[k], bx = C.flip ? W - l[0] : l[0], by = C.flip ? H - l[1] : l[1];
       const R = mul(axisRot(0.7071, 0.7071, u * Math.PI * 3), u < 0.5 ? A.R : B.R);   // the spin hides the swap of faces
-      out.push({ x: A.x + (bx - A.x) * u, y: A.y + (by - A.y) * u, z: l[2] * u + Math.sin(Math.PI * u) * 70, R, col: P.color.map((c, i) => c + (C.color[i] - c) * u) });
+      out.push({ x: A.x + (bx - A.x) * u, y: A.y + (by - A.y) * u, z: l[2] * u + Math.sin(Math.PI * u) * 70, R, col: P.color.map((c, i) => c + (C.color[i] - c) * u), pip: P.pip.map((c, i) => c + (C.pip[i] - c) * u) });
     }
     return out;
   }
@@ -2425,7 +2616,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     const E = CAM.E, far = (p) => (p.x - E[0]) ** 2 + (p.y - E[1]) ** 2 + (p.z - E[2]) ** 2;
     const ds = sceneDice(now).sort((a, b) => far(b) - far(a));
     for (const p of ds) drawShadow(p);
-    for (const p of ds) { BODY = p.col; drawDie(p); }
+    for (const p of ds) { BODY = p.col; PIP = p.pip; drawDie(p); }
     for (const R of SIDES) if (R.near(CAM.E)) drawSide(R);
     drawOuterSides();
   }
@@ -2515,22 +2706,31 @@ details.custom-server[open] summary { margin-bottom: 8px; }
       + '<path d="M2 7l5.5 4L13 3l5.5 8L24 7l-2.2 10H4.2z" fill="url(#crg)" stroke="#6e4c10" stroke-width="1.1" stroke-linejoin="round"/>'
       + '<rect x="4.2" y="15.2" width="17.6" height="2.6" rx="1" fill="#b98424" stroke="#6e4c10" stroke-width="0.8"/>'
       + '<circle cx="13" cy="3" r="1.6" fill="#e5664f"/><circle cx="2" cy="7" r="1.3" fill="#fbe7a8"/><circle cx="24" cy="7" r="1.3" fill="#fbe7a8"/>';
+    if (XMAS.on) s.innerHTML = '<path d="M3 16 C 5 8, 11 2, 19 3 C 22 3.5, 24 6, 24 9 C 21 7, 17 7, 15 9 L 21 16 Z" fill="#d42433" stroke="#6e0c14" stroke-width="1"/>'   // Santa hat
+      + '<circle cx="24" cy="9.5" r="2.6" fill="#fff" stroke="#c9d4e0" stroke-width=".6"/><rect x="1.5" y="14.2" width="21" height="4.6" rx="2.3" fill="#fff" stroke="#c9d4e0" stroke-width=".6"/>';
     return s;
   }
   // Dice colour pickers (start screen and lobby). A change mid-lobby goes out with my presence.
   function renderDicePickers() {
+    const keys = pickableDice();
     for (const box of document.querySelectorAll("[data-dice-picker]")) {
-      if (!box.children.length) {
-        for (const k of Object.keys(DICE_COLORS)) {
+      if (box.children.length !== keys.length) {   // first time, or the holiday dice came or went
+        box.textContent = "";
+        box.classList.toggle("two-rows", keys.length > 6);
+        for (const k of keys) {
           const b = el("button", "swatch"); b.type = "button"; b.dataset.dc = k;
           b.setAttribute("role", "radio"); b.setAttribute("aria-label", DICE_COLORS[k].label); b.title = DICE_COLORS[k].label;
           const die = el("i"); die.style.setProperty("--dc", rgbCss(k)); b.appendChild(die);
+          if (DICE_COLORS[k].pip) die.style.setProperty("--pc", "rgb(" + DICE_COLORS[k].pip.join(",") + ")");
           b.addEventListener("click", () => setDiceColor(k));
           box.appendChild(b);
         }
+      }
+      if (!box.dataset.keys) {
+        box.dataset.keys = "1";
         // Arrow keys move through the colours, as in any radio group.
         box.addEventListener("keydown", (e) => {
-          const keys = Object.keys(DICE_COLORS), step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+          const keys = pickableDice(), step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
           if (!step) return;
           e.preventDefault();
           const k = keys[(keys.indexOf(S.me.dc) + step + keys.length) % keys.length];
@@ -2806,6 +3006,54 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     clearTimeout(floatOff); floatOff = setTimeout(() => { f.className = "float"; }, 1500);
   }
 
+  /* ---------- 13b. Holiday look ----------
+     Snow drifts behind the page while the holiday look is on: a fixed canvas under #app, so it shows
+     around the panels and over the title scene but never over the game's table. About 30 frames a second
+     and a few dozen flakes; still flakes with reduced motion, none while the tab is hidden. */
+  const SNOW = { cv: $("#snow"), flakes: [], w: 0, h: 0, raf: 0, last: 0, on: false };
+  function snowSize() {
+    const d = Math.min(2, window.devicePixelRatio || 1), w = innerWidth, h = innerHeight;
+    if (w === SNOW.w && h === SNOW.h) return;
+    SNOW.w = w; SNOW.h = h; SNOW.cv.width = w * d; SNOW.cv.height = h * d;
+    SNOW.cv.getContext("2d").setTransform(d, 0, 0, d, 0, 0);
+    const n = Math.round(clamp((w * h) / 7000, 30, 90));
+    SNOW.flakes = Array.from({ length: n }, () => { const r = 0.6 + Math.random() * 1.8; return { x: Math.random() * w, y: Math.random() * h, r, v: 10 + r * 11, ph: Math.random() * 6.283, a: 0.25 + Math.random() * 0.5 }; });
+  }
+  function snowDraw(dt) {
+    const g = SNOW.cv.getContext("2d"), t = performance.now() / 1000;
+    g.clearRect(0, 0, SNOW.w, SNOW.h);
+    for (const f of SNOW.flakes) {
+      f.y += f.v * dt; if (f.y > SNOW.h + 4) { f.y = -4; f.x = Math.random() * SNOW.w; }
+      const x = f.x + Math.sin(t * 0.6 + f.ph) * 6 * f.r;
+      g.fillStyle = "rgba(255, 255, 255, " + f.a + ")"; g.beginPath(); g.arc(x, f.y, f.r, 0, 6.283); g.fill();
+    }
+  }
+  function snowLoop(now) {
+    if (!SNOW.on) return;
+    SNOW.raf = requestAnimationFrame(snowLoop);
+    const dt = (now - SNOW.last) / 1000;
+    if (dt < 0.032) return;
+    SNOW.last = now; snowSize(); snowDraw(Math.min(dt, 0.1));
+  }
+  function snow(on) {
+    SNOW.on = on; SNOW.cv.hidden = !on; cancelAnimationFrame(SNOW.raf);
+    if (!on) return;
+    snowSize();
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { snowDraw(0); return; }
+    SNOW.last = performance.now(); SNOW.raf = requestAnimationFrame(snowLoop);
+  }
+  // Turn the holiday look on or off everywhere: table, dice picker, crown, logo hat, snow and the tune.
+  function applyHoliday() {
+    XMAS.on = xmasSeason(new Date()) || (TEST_OK && TEST.on && TEST.xmas);
+    document.documentElement.classList.toggle("xmas", XMAS.on);
+    if (!XMAS.on && DICE_COLORS[S.me.dc].xmas) setDiceColor("red");
+    renderDicePickers();
+    snow(XMAS.on);
+    SND.holiday(XMAS.on);
+    S.cacheKey = null; S.leader = undefined; S.dirty = true;
+    if (S.st) renderAll();
+  }
+
   /* ---------- 14. Settings ---------- */
   function openSettings(open) {
     $("#settings").hidden = !open;
@@ -2830,11 +3078,13 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     $("#test-box").hidden = !TEST_OK;
     $("#test-mode").checked = TEST.on;
     $("#test-hot").checked = TEST.hot;
+    $("#test-xmas").checked = TEST.xmas;
     $("#test-opts").hidden = !TEST.on;
   }
-  function setTest(k, v) { TEST[k] = v; save("l", "fk.test", TEST.on || TEST.hot ? TEST : null); renderTest(); }
+  function setTest(k, v) { TEST[k] = v; save("l", "fk.test", TEST.on || TEST.hot || TEST.xmas ? TEST : null); renderTest(); if (k !== "hot") applyHoliday(); }
   $("#test-mode").addEventListener("change", (e) => setTest("on", e.target.checked));
   $("#test-hot").addEventListener("change", (e) => setTest("hot", e.target.checked));
+  $("#test-xmas").addEventListener("change", (e) => setTest("xmas", e.target.checked));
   $("#gear").addEventListener("click", () => openSettings($("#settings").hidden));
   function renderSnd() { const b = $("#snd"); b.setAttribute("aria-pressed", String(!SND.muted)); b.title = SND.muted ? "Sound off" : "Sound on"; }
   $("#snd").addEventListener("click", () => { SND.setMuted(!SND.muted); renderSnd(); });
@@ -2929,7 +3179,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
   $("#name").value = load("l", "fk.name") || "";
   $("#name").addEventListener("input", renderNameHint);
   renderNameHint();
-  renderDicePickers();
+  applyHoliday();
   S.custom = Object.assign({ target: 5000, open: CLASSIC.open, pen: CLASSIC.pen }, load("l", "fk.rules") || {});
   if (load("l", "fk.ruleset") === "custom") $("#rules-custom-pick").checked = true;
   renderRulesPicker();
