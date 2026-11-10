@@ -349,7 +349,60 @@ details.custom-server[open] summary { margin-bottom: 8px; }
   width: max-content; max-width: calc(100% - 32px); padding: 10px 14px; border-radius: 12px; background: #263a30; color: var(--cream);
   border: 1px solid var(--line-strong); box-shadow: 0 8px 24px rgba(0, 0, 0, .45); font-size: 14px;
 }
+
+/* ---------- Title scene and splash ----------
+   The home screen sits over the table seen from a circling camera (#scene). On arrival a splash shows
+   the title over it; its tap is also the gesture browsers want before playing music. */
+#app { position: relative; z-index: 1; }
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+.veil { position: fixed; inset: 0; z-index: 0; pointer-events: none; transition: background-color .8s ease;
+  background-color: rgba(6, 10, 8, .5); background-image: radial-gradient(120% 80% at 50% 55%, rgba(12, 19, 16, 0) 40%, rgba(6, 10, 8, .85) 100%); }
+.veil.intro { background-color: rgba(6, 10, 8, 0); }
+#scr-start .panel { background: rgba(20, 30, 25, .78); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+#scr-start .mode-card { box-shadow: inset 0 0 0 4px rgba(0, 0, 0, .15), 0 8px 22px rgba(0, 0, 0, .35); }
+#splash {
+  position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; cursor: pointer;
+  padding: max(14vh, 64px) max(16px, env(safe-area-inset-right, 0px)) max(7vh, 32px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: linear-gradient(180deg, rgba(6, 10, 8, .7) 0%, rgba(6, 10, 8, 0) 40%, rgba(6, 10, 8, 0) 70%, rgba(6, 10, 8, .75) 100%); transition: background .6s ease;
+}
+#splash:focus-visible { outline: none; }
+.s-title {
+  font-family: var(--f-display); font-weight: 400; line-height: .95; font-size: clamp(64px, 20vw, 132px); letter-spacing: .02em; color: var(--brass-hi);
+  transform-origin: 0 0; text-shadow: 0 0 18px rgba(241, 212, 143, .45), 0 0 46px rgba(214, 140, 60, .35), 0 3px 0 #6b4a12, 0 6px 14px rgba(0, 0, 0, .7);
+  animation: s-in 1.1s cubic-bezier(.2, .8, .2, 1) both;
+}
+@keyframes s-in { from { opacity: 0; transform: translateY(14px) scale(.96); filter: blur(6px); } }
+.s-tag { margin-top: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .28em; color: var(--muted); animation: s-fade .8s .5s both; }
+.s-tap { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .24em; color: var(--brass-hi); animation: s-fade .8s 1.2s both, s-pulse 2.2s 2s ease-in-out infinite; }
+@keyframes s-fade { from { opacity: 0; } }
+@keyframes s-pulse { 50% { opacity: .35; } }
+.s-tag, .s-tap { transition: opacity .3s ease; }
+/* Handoff: the title flies into the top bar logo (startGame sets the transform) while the home screen rises in. */
+#splash.leaving { background: transparent; pointer-events: none; }
+#splash.leaving .s-tag, #splash.leaving .s-tap { opacity: 0; animation: none; }
+#splash.leaving .s-title { animation: none; transition: transform .75s cubic-bezier(.6, 0, .2, 1), text-shadow .75s ease; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); }
+#splash:not([hidden]):not(.leaving) ~ #app { opacity: 0; pointer-events: none; }
+#splash:not([hidden]) ~ #app .brand-word { opacity: 0; }
+#splash:not([hidden]):not(.leaving) ~ #app #scr-start > * { transform: translateY(18px); opacity: 0; }
+#splash ~ #app { transition: opacity .5s ease .35s; }
+#splash ~ #app #scr-start > * { transition: transform .6s cubic-bezier(.2, .8, .2, 1) .4s, opacity .6s ease .4s; }
+#splash ~ #app #scr-start > :nth-child(2) { transition-delay: .45s; }
+#splash ~ #app #scr-start > :nth-child(3) { transition-delay: .5s; }
+#splash ~ #app #scr-start > :nth-child(4) { transition-delay: .55s; }
+#splash ~ #app #scr-start > :nth-child(n+5) { transition-delay: .6s; }
+@media (prefers-reduced-motion: reduce) {
+  .s-title, .s-tag, .s-tap { animation: none; }
+  #splash.leaving .s-title { transition: none; }
+  #splash ~ #app #scr-start > * { transition: none; }
+}
 </style>
+
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="veil" class="veil intro"></div>
+<div id="splash" role="button" tabindex="0" aria-label="Tap to start">
+  <div><h1 class="s-title">Farkle</h1><p class="s-tag">Dice for 2&ndash;4 players</p></div>
+  <p class="s-tap">Tap to start</p>
+</div>
 
 <div id="app">
   <header class="topbar">
@@ -1850,9 +1903,19 @@ details.custom-server[open] summary { margin-bottom: 8px; }
   document.addEventListener("visibilitychange", () => SND.pause(document.hidden));
 
   /* ---------- 12. Table renderer ---------- */
-  const cv = $("#table"), ctx = cv.getContext("2d");
+  const cv = $("#table");
+  let ctx = cv.getContext("2d");   // the title scene swaps in its own canvas while it draws (inView)
   const bgC = document.createElement("canvas"), fgC = document.createElement("canvas");
   let noisePat = null;
+  function feltNap() {
+    if (!noisePat) {
+      const nc = document.createElement("canvas"); nc.width = nc.height = 96;
+      const nx = nc.getContext("2d"), img = nx.createImageData(96, 96), rnd = mulberry32(7);
+      for (let i = 0; i < img.data.length; i += 4) { const v = rnd() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 38; }
+      nx.putImageData(img, 0, 0); noisePat = nc;
+    }
+    return noisePat;
+  }
   function poly(g, pts) { g.beginPath(); pts.forEach((p, i) => { const q = proj(p[0], p[1], p[2]); if (i) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); }); g.closePath(); }
   function planeXf(g, x, y, z) {
     const P = proj(x, y, z), A = proj(x + 1, y, z), B = proj(x, y + 1, z);
@@ -1891,12 +1954,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     if (S.cacheKey === key) return;
     S.cacheKey = key;
     for (const c of [bgC, fgC]) { c.width = cv.width; c.height = cv.height; }
-    if (!noisePat) {
-      const nc = document.createElement("canvas"); nc.width = nc.height = 96;
-      const nx = nc.getContext("2d"), img = nx.createImageData(96, 96), rnd = mulberry32(7);
-      for (let i = 0; i < img.data.length; i += 4) { const v = rnd() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 38; }
-      nx.putImageData(img, 0, 0); noisePat = nc;
-    }
+    feltNap();
     let g = bgC.getContext("2d");
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, cssW, cssH);
@@ -2201,6 +2259,182 @@ details.custom-server[open] summary { margin-bottom: 8px; }
     if (S.dirty || S.anim || S.glide || pulsing || FIRE.parts.length || fireHeat(now)) { S.dirty = false; draw(now); }
   }
   requestAnimationFrame(loop);
+
+  /* ---------- 12b. Title scene: the table from a circling camera, behind the splash and home screen ----------
+     Display only. Throws use the real launch and physics, so they look like play. The game's cached
+     layers assume the view from the near rail, so the table is drawn here from any side; its colours
+     follow buildCaches, so change both together. */
+  const sceneCv = $("#scene"), splash = $("#splash");
+  const SV = { ctx: sceneCv.getContext("2d"), cam: { E: [0, 0, 1], f: [0, 0, -1], r: [1, 0, 0], u: [0, 1, 0] }, K: 1, OX: 0, OY: 0, w: 0, h: 0, dpr: 1 };
+  // drawDie and friends read the game's camera and canvas; the scene borrows them for one frame.
+  function inView(v, fn) {
+    const was = { E: CAM.E, f: CAM.f, r: CAM.r, u: CAM.u, K, OX, OY, dpr, ctx, BODY };
+    Object.assign(CAM, v.cam); K = v.K; OX = v.OX; OY = v.OY; dpr = v.dpr; ctx = v.ctx;
+    try { fn(); } finally { CAM.E = was.E; CAM.f = was.f; CAM.r = was.r; CAM.u = was.u; K = was.K; OX = was.OX; OY = was.OY; dpr = was.dpr; ctx = was.ctx; BODY = was.BODY; }
+  }
+  const TCX = W / 2, TCY = (H + NEAR) / 2 - 10;   // middle of the whole table, near rail included
+  function sceneAim(t) {
+    // One lap every 80 s (slower with reduced motion), drifting in, out, up and down on unrelated periods.
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, th = t * (Math.PI * 2 / (reduce ? 240 : 80));
+    const R = 470 + 80 * Math.sin(t * 0.11), Z = 330 + 110 * Math.sin(t * 0.07 + 1.3);
+    const E = [TCX + R * Math.sin(th), TCY + R * Math.cos(th), Z];
+    const T = [TCX + 30 * Math.sin(t * 0.05), TCY - 20 + 25 * Math.cos(t * 0.06), 0];
+    const norm = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); };
+    const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const f = norm([T[0] - E[0], T[1] - E[1], T[2] - E[2]]), r = norm(cross([0, 0, 1], f));
+    SV.cam = { E, f, r, u: cross(f, r) };
+  }
+  function sceneResize() {
+    const w = window.innerWidth, h = window.innerHeight, d = Math.min(2, window.devicePixelRatio || 1);
+    if (w === SV.w && h === SV.h && d === SV.dpr) return;
+    SV.w = w; SV.h = h; SV.dpr = d;
+    sceneCv.width = Math.round(w * d); sceneCv.height = Math.round(h * d);
+    // Portrait phones: the table spills a little past the sides; wide screens: it sits in the middle.
+    SV.K = Math.min(w * 1.55, h * 1.05); SV.OX = w / 2; SV.OY = h * 0.56;
+  }
+  // Soft out-of-focus lights in the room; they slide against the orbit for depth.
+  const BOKEH = Array.from({ length: 18 }, (_, i) => { const r = mulberry32(100 + i); return { a: r() * Math.PI * 2, y: 0.05 + r() * 0.5, s: 14 + r() * 46, h: r() < 0.7 ? 38 : 150 + r() * 40, o: 0.05 + r() * 0.1 }; });
+  function drawRoom() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const bg = ctx.createRadialGradient(SV.w / 2, SV.h * 0.45, 0, SV.w / 2, SV.h * 0.45, Math.max(SV.w, SV.h) * 0.8);
+    bg.addColorStop(0, "#1a2d23"); bg.addColorStop(1, "#070b09");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, SV.w, SV.h);
+    const yaw = Math.atan2(CAM.E[0] - TCX, CAM.E[1] - TCY);
+    for (const b of BOKEH) {
+      const x = ((((b.a - yaw) / (Math.PI * 2)) % 1 + 1) % 1) * (SV.w + 200) - 100, y = b.y * SV.h;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, b.s);
+      g.addColorStop(0, `hsla(${b.h}, 80%, 65%, ${b.o})`); g.addColorStop(1, `hsla(${b.h}, 80%, 65%, 0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, b.s, 0, 6.283); ctx.fill();
+    }
+  }
+  // A rail is in front of the dice when the camera is beyond its inner edge: those are drawn after
+  // the dice, the others (with their cushion faces) before.
+  const APRON = -34;   // underside of the table
+  const SIDES = [
+    { top: [[-RAIL, -RAIL], [W + RAIL, -RAIL], [W + RAIL, 0], [-RAIL, 0]], wall: [[0, 0], [W, 0]], near: (E) => E[1] < 0, tone: "#24100a" },
+    { top: [[-RAIL, 0], [0, 0], [0, H], [-RAIL, H]], wall: [[0, H], [0, 0]], near: (E) => E[0] < 0, tone: "#2e150b" },
+    { top: [[W, 0], [W + RAIL, 0], [W + RAIL, H], [W, H]], wall: [[W, 0], [W, H]], near: (E) => E[0] > W, tone: "#2a1309" },
+    { top: [[-RAIL, H], [W + RAIL, H], [W + RAIL, H + NEAR], [-RAIL, H + NEAR]], wall: [[W, H], [0, H]], near: (E) => E[1] > H, tone: "#2a1209", tray: true },
+  ];
+  const woodAcross = (a, b) => { const p = proj(TCX, -RAIL, RZ), q = proj(TCX, H + NEAR, RZ), g = ctx.createLinearGradient(p.x, p.y, q.x, q.y); g.addColorStop(0, a); g.addColorStop(1, b); return g; };
+  function drawTableBody() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const x0 = -RAIL, x1 = W + RAIL, y0 = -RAIL, y1 = H + NEAR, E = CAM.E;
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 40; ctx.shadowOffsetY = 18;
+    poly(ctx, [[x0, y0, APRON], [x1, y0, APRON], [x1, y1, APRON], [x0, y1, APRON]]); ctx.fillStyle = "#1c0c05"; ctx.fill(); ctx.restore();
+    const faces = [[E[1] > y1, [x0, y1], [x1, y1], "#2d1409"], [E[1] < y0, [x1, y0], [x0, y0], "#26110a"], [E[0] < x0, [x0, y0], [x0, y1], "#2a1309"], [E[0] > x1, [x1, y1], [x1, y0], "#2a1309"]];
+    for (const [on, a, b, c] of faces) if (on) { poly(ctx, [[a[0], a[1], RZ], [b[0], b[1], RZ], [b[0], b[1], APRON], [a[0], a[1], APRON]]); ctx.fillStyle = c; ctx.fill(); }
+    // Felt with its printed markings.
+    poly(ctx, [[0, 0, 0], [W, 0, 0], [W, H, 0], [0, H, 0]]);
+    const c0 = proj(W / 2, H * 0.48, 0), l = proj(0, H * 0.48, 0), r = proj(W, H * 0.48, 0);
+    const fg = ctx.createRadialGradient(c0.x, c0.y, 10, c0.x, c0.y, Math.max(40, Math.hypot(r.x - l.x, r.y - l.y) * 0.62));
+    fg.addColorStop(0, "#2c9363"); fg.addColorStop(0.55, "#1d6e48"); fg.addColorStop(1, "#0e3d27");
+    ctx.fillStyle = fg; ctx.fill();
+    ctx.save(); ctx.clip(); ctx.globalAlpha = 0.5; ctx.fillStyle = ctx.createPattern(feltNap(), "repeat"); ctx.fillRect(0, 0, SV.w, SV.h); ctx.restore();
+    planeXf(ctx, W / 2, H * 0.47, 0);
+    ctx.strokeStyle = "rgba(241, 212, 143, .22)"; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.ellipse(0, 0, 118, 128, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0, 0, 111, 121, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = "rgba(241, 212, 143, .2)"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = "42px Limelight, Georgia, serif"; ctx.fillText("FARKLE", 0, -10);
+    ctx.font = "600 13px Figtree, system-ui, sans-serif"; ctx.fillText("FIRST TO " + fmt(CLASSIC.target), 0, 24);
+    ctx.font = "600 10px Figtree, system-ui, sans-serif"; ctx.fillText("HOT DICE ROLL AGAIN", 0, 42);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function drawSide(R) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const [a, b] = R.wall;
+    if (!R.near(CAM.E)) { poly(ctx, [[a[0], a[1], RZ], [b[0], b[1], RZ], [b[0], b[1], 0], [a[0], a[1], 0]]); ctx.fillStyle = R.tone; ctx.fill(); }
+    poly(ctx, R.top.map(([x, y]) => [x, y, RZ]));
+    ctx.fillStyle = R.tray ? woodAcross("#6b331a", "#4a220f") : woodAcross("#5e2c15", "#3a190b"); ctx.fill();
+    if (R.tray) {
+      poly(ctx, [[TX0, TY0, RZ], [TX1, TY0, RZ], [TX1, TY1, RZ], [TX0, TY1, RZ]]); ctx.fillStyle = "#0f3624"; ctx.fill();
+      ctx.strokeStyle = "rgba(241, 212, 143, .35)"; ctx.lineWidth = 1.2; ctx.stroke();
+      planeXf(ctx, W / 2, H + NEAR - 9, RZ);
+      ctx.fillStyle = "rgba(241, 212, 143, .5)"; ctx.font = "600 9px Figtree, system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("KEPT", 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    const p = proj(a[0], a[1], RZ), q = proj(b[0], b[1], RZ);   // brass inlay along the cushion
+    ctx.strokeStyle = "rgba(241, 212, 143, .75)"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+  }
+  // Throws alternate ends of the table. After a rest the dice are scooped to where the next throw
+  // leaves the hand, so none pop in or out. During the splash they cycle the colours; at home they're yours.
+  const SCENE_COLORS = Object.keys(DICE_COLORS), SCENE_REST = 3200, SCENE_SCOOP = 650;
+  const SC = { n: 0, cur: null, prev: null };
+  const introOn = () => !splash.hidden && !splash.classList.contains("leaving");
+  function sceneThrow(t0) {
+    const L = makeLaunch((Math.random() * 2 ** 31) | 0, 6), flip = SC.n % 2 === 1;
+    const color = DICE_COLORS[introOn() ? SCENE_COLORS[SC.n % SCENE_COLORS.length] : diceColor(S.me.dc)].rgb;
+    SC.n++;
+    return { t0, L, sim: simulate(L), flip, color, v: L.map(() => 1 + ((Math.random() * 6) | 0)) };
+  }
+  // Die k of throw T at time `now`: the same maths as poses(), mirrored for throws from the far end.
+  function sceneDie(T, k, now) {
+    const sim = T.sim, f = Math.max(0, now - T.t0) / 1000 / DT;
+    const s0 = Math.min(sim.steps - 1, Math.floor(f)), s1 = Math.min(sim.steps - 1, s0 + 1), a = Math.min(1, f - s0);
+    const o0 = (s0 * sim.n + k) * 4, o1 = (s1 * sim.n + k) * 4, fr = sim.fr;
+    let x = fr[o0] + (fr[o1] - fr[o0]) * a, y = fr[o0 + 1] + (fr[o1 + 1] - fr[o0 + 1]) * a;
+    const z = fr[o0 + 2] + (fr[o1 + 2] - fr[o0 + 2]) * a, yaw = fr[o0 + 3] + (fr[o1 + 3] - fr[o0 + 3]) * a + (T.flip ? Math.PI : 0);
+    const sr = sim.srem[s0 * sim.n + k] + (sim.srem[s1 * sim.n + k] - sim.srem[s0 * sim.n + k]) * a;
+    let [ux, uy] = sim.axes[k];
+    if (T.flip) { x = W - x; y = H - y; ux = -ux; uy = -uy; }
+    return { x, y, z, R: mul(Rz(yaw), mul(axisRot(ux, uy, (sr / HS) * sim.tum[k]), RFACE[T.v[k]])) };
+  }
+  function sceneDice(now) {
+    if (!SC.cur) SC.cur = sceneThrow(now + 500);
+    const cur = SC.cur;
+    if (!SC.prev && now > cur.t0 + cur.sim.dur * 1000 + SCENE_REST) { SC.prev = cur; SC.cur = sceneThrow(now + SCENE_SCOOP); }
+    else if (SC.prev && now >= cur.t0) SC.prev = null;
+    const out = [], P = SC.prev, C = SC.cur;
+    for (let k = 0; k < 6; k++) {
+      if (!P) { out.push(Object.assign(sceneDie(C, k, now), { col: C.color })); continue; }
+      const u0 = clamp((now - (C.t0 - SCENE_SCOOP)) / SCENE_SCOOP, 0, 1), u = u0 < 0.5 ? 4 * u0 * u0 * u0 : 1 - Math.pow(-2 * u0 + 2, 3) / 2;
+      const A = sceneDie(P, k, Infinity), B = sceneDie(C, k, C.t0), l = C.L[k], bx = C.flip ? W - l[0] : l[0], by = C.flip ? H - l[1] : l[1];
+      const R = mul(axisRot(0.7071, 0.7071, u * Math.PI * 3), u < 0.5 ? A.R : B.R);   // the spin hides the swap of faces
+      out.push({ x: A.x + (bx - A.x) * u, y: A.y + (by - A.y) * u, z: l[2] * u + Math.sin(Math.PI * u) * 70, R, col: P.color.map((c, i) => c + (C.color[i] - c) * u) });
+    }
+    return out;
+  }
+  function drawScene(now) {
+    sceneAim(now / 1000);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, sceneCv.width, sceneCv.height);
+    drawRoom(); drawTableBody();
+    for (const R of SIDES) if (!R.near(CAM.E)) drawSide(R);
+    const E = CAM.E, far = (p) => (p.x - E[0]) ** 2 + (p.y - E[1]) ** 2 + (p.z - E[2]) ** 2;
+    const ds = sceneDice(now).sort((a, b) => far(b) - far(a));
+    for (const p of ds) drawShadow(p);
+    for (const p of ds) { BODY = p.col; drawDie(p); }
+    for (const R of SIDES) if (R.near(CAM.E)) drawSide(R);
+  }
+  // Runs only while the splash or home screen shows; the lobby and game get the plain background.
+  function sceneLoop(now) {
+    requestAnimationFrame(sceneLoop);
+    const on = !splash.hidden || !$("#scr-start").hidden;
+    if (sceneCv.hidden === on) { sceneCv.hidden = !on; $("#veil").hidden = !on; }
+    if (!on) return;
+    sceneResize();
+    inView(SV, () => drawScene(now));
+  }
+  requestAnimationFrame(sceneLoop);
+
+  // Splash: shown on arrival, skipped for invite links and rejoins (they go straight to a room).
+  // Its tap is the gesture that lets the lounge music start, so it waits for one instead of timing out.
+  {
+    const sess = load("s", "fk.sess");
+    if (new URLSearchParams(location.search).get("room") || (sess && /^\d{4}$/.test(sess.code))) { splash.hidden = true; $("#veil").classList.remove("intro"); }
+    else { $("#app").inert = true; splash.focus({ preventScroll: true }); }
+  }
+  function enterHome() {
+    if (splash.hidden || splash.classList.contains("leaving")) return;
+    const title = splash.querySelector(".s-title"), a = title.getBoundingClientRect(), b = $(".brand-word").getBoundingClientRect();
+    splash.classList.add("leaving"); $("#veil").classList.remove("intro"); $("#app").inert = false;
+    // The title flies into the top bar logo, which takes over when it lands.
+    requestAnimationFrame(() => { title.style.transform = `translate(${b.left - a.left}px, ${b.top - a.top}px) scale(${b.width / a.width})`; });
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setTimeout(() => { splash.hidden = true; splash.classList.remove("leaving"); title.style.transform = ""; }, reduce ? 0 : 800);
+  }
+  splash.addEventListener("click", enterHome);
+  splash.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); enterHome(); } });
 
   // Tap to set a die aside: find the die whose projected top is nearest the tap.
   function pickDie(cx, cy) {
@@ -2665,7 +2899,7 @@ details.custom-server[open] summary { margin-bottom: 8px; }
   }, 700);
 
   // Local test hook (localhost only): lets a test script read state and pick dice by index.
-  if (location.hostname === "localhost") window.__farkle = { S, act, toggleDie, scoreOf, pickDie, canAct, SND, hotFlair, poses, proj, setDiceColor, FIRE, fireHeat };
+  if (location.hostname === "localhost") window.__farkle = { S, act, toggleDie, scoreOf, pickDie, canAct, SND, hotFlair, poses, proj, setDiceColor, FIRE, fireHeat, enterHome, SV };
 
   // Start-up: restore name and settings, open Settings when there's no way to connect yet,
   // and rejoin the room this tab was in before a reload.
