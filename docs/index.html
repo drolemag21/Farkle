@@ -480,21 +480,12 @@ html.xmas .brand-word::after {
     <div class="row">
       <button id="settings-save" class="btn primary" type="button">Save</button>
     </div>
-    <div class="test-box">
-      <label class="field" for="xmas-mode">Holiday look
-        <select id="xmas-mode">
-          <option value="auto">Automatic (Dec 1 to Jan 6)</option>
-          <option value="on">Always on</option>
-          <option value="off">Off</option>
-        </select>
-      </label>
-      <p class="hint">Garland, Christmas dice, snow and a holiday tune. Only on this device. Applies right away.</p>
-    </div>
     <!-- Test tools for the Claude Artifact (the testing ground). The GitHub Pages build never shows them. -->
     <div id="test-box" class="test-box" hidden>
       <label class="switch"><span>Test mode<small>Tools for trying things out. Applies right away.</small></span><input id="test-mode" type="checkbox" role="switch"></label>
       <div id="test-opts" class="settings" hidden>
         <label class="switch"><span>Force hot dice<small>Every roll you make comes up hot dice.</small></span><input id="test-hot" type="checkbox" role="switch"></label>
+        <label class="switch"><span>Christmas mode<small>The holiday look now, without waiting for Dec 1. Only on this device.</small></span><input id="test-xmas" type="checkbox" role="switch"></label>
       </div>
     </div>
   </section>
@@ -719,11 +710,11 @@ html.xmas .brand-word::after {
     ornament: { label: "Gold ornament", rgb: [222, 172, 58], pip: [140, 18, 30], xmas: 1 }, frost: { label: "Frost", rgb: [196, 226, 246], pip: [28, 62, 128], xmas: 1 },
     holly: { label: "Holly", rgb: [14, 66, 34], pip: [236, 52, 58], xmas: 1 }, poinsettia: { label: "Poinsettia", rgb: [196, 26, 42], pip: [96, 214, 112], xmas: 1 },
   };
-  // Holiday look: on by itself from Dec 1 to Jan 6 by this device's clock; Settings can force it on or
-  // off. Looks and sound only and decided per device, so none of it goes over the network.
-  const XMAS = { mode: ["on", "off"].includes(load("l", "fk.xmas")) ? load("l", "fk.xmas") : "auto", on: false };
+  // Holiday look: on by itself from Dec 1 to Jan 6 by this device's clock (players get no switch); test
+  // mode can force it on. Looks and sound only and decided per device, so none of it goes over the network.
+  // `on` is set by applyHoliday at start-up, before anything is drawn.
+  const XMAS = { on: false };
   const xmasSeason = (d) => d.getMonth() === 11 || (d.getMonth() === 0 && d.getDate() <= 6);
-  XMAS.on = XMAS.mode === "on" || (XMAS.mode === "auto" && xmasSeason(new Date()));
   const pickableDice = () => Object.keys(DICE_COLORS).filter((k) => XMAS.on || !DICE_COLORS[k].xmas);
   const diceColor = (k) => (Object.prototype.hasOwnProperty.call(DICE_COLORS, k) ? k : "red");
   // Keep glide: each die takes GLIDE_MS, the next leaves GLIDE_STAGGER later, then a short pause.
@@ -987,7 +978,7 @@ html.xmas .brand-word::after {
   // Test tools exist only outside the GitHub Pages build (which sets FARKLE_HOSTED), so live players
   // can't force rolls. The host checks this too, not just the switch.
   const TEST_OK = !window.FARKLE_HOSTED;
-  const TEST = Object.assign({ on: false, hot: false }, (TEST_OK && load("l", "fk.test")) || {});
+  const TEST = Object.assign({ on: false, hot: false, xmas: false }, (TEST_OK && load("l", "fk.test")) || {});
   const testHot = () => TEST_OK && TEST.on && TEST.hot;
 
   /* ---------- 7. Transports ----------
@@ -3062,7 +3053,7 @@ html.xmas .brand-word::after {
   }
   // Turn the holiday look on or off everywhere: table, dice picker, crown, logo hat, snow and the tune.
   function applyHoliday() {
-    XMAS.on = XMAS.mode === "on" || (XMAS.mode === "auto" && xmasSeason(new Date()));
+    XMAS.on = xmasSeason(new Date()) || (TEST_OK && TEST.on && TEST.xmas);
     document.documentElement.classList.toggle("xmas", XMAS.on);
     if (!XMAS.on && DICE_COLORS[S.me.dc].xmas) setDiceColor("red");
     renderDicePickers();
@@ -3071,7 +3062,6 @@ html.xmas .brand-word::after {
     S.cacheKey = null; S.leader = undefined; S.dirty = true;
     if (S.st) renderAll();
   }
-  $("#xmas-mode").addEventListener("change", (e) => { XMAS.mode = e.target.value; save("l", "fk.xmas", XMAS.mode === "auto" ? null : XMAS.mode); applyHoliday(); });
 
   /* ---------- 14. Settings ---------- */
   function openSettings(open) {
@@ -3097,11 +3087,13 @@ html.xmas .brand-word::after {
     $("#test-box").hidden = !TEST_OK;
     $("#test-mode").checked = TEST.on;
     $("#test-hot").checked = TEST.hot;
+    $("#test-xmas").checked = TEST.xmas;
     $("#test-opts").hidden = !TEST.on;
   }
-  function setTest(k, v) { TEST[k] = v; save("l", "fk.test", TEST.on || TEST.hot ? TEST : null); renderTest(); }
+  function setTest(k, v) { TEST[k] = v; save("l", "fk.test", TEST.on || TEST.hot || TEST.xmas ? TEST : null); renderTest(); if (k !== "hot") applyHoliday(); }
   $("#test-mode").addEventListener("change", (e) => setTest("on", e.target.checked));
   $("#test-hot").addEventListener("change", (e) => setTest("hot", e.target.checked));
+  $("#test-xmas").addEventListener("change", (e) => setTest("xmas", e.target.checked));
   $("#gear").addEventListener("click", () => openSettings($("#settings").hidden));
   function renderSnd() { const b = $("#snd"); b.setAttribute("aria-pressed", String(!SND.muted)); b.title = SND.muted ? "Sound off" : "Sound on"; }
   $("#snd").addEventListener("click", () => { SND.setMuted(!SND.muted); renderSnd(); });
@@ -3196,7 +3188,6 @@ html.xmas .brand-word::after {
   $("#name").value = load("l", "fk.name") || "";
   $("#name").addEventListener("input", renderNameHint);
   renderNameHint();
-  $("#xmas-mode").value = XMAS.mode;
   applyHoliday();
   S.custom = Object.assign({ target: 5000, open: CLASSIC.open, pen: CLASSIC.pen }, load("l", "fk.rules") || {});
   if (load("l", "fk.ruleset") === "custom") $("#rules-custom-pick").checked = true;
