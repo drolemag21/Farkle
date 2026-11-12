@@ -166,8 +166,15 @@ input:focus-visible, select:focus-visible, button:focus-visible, canvas:focus-vi
 .rule-picks #rules-reset { align-self: flex-start; }
 .join-row { display: flex; gap: 8px; }
 .join-row input { flex: 1; min-width: 0; font-family: var(--f-mono); font-size: 20px; letter-spacing: .3em; text-align: center; }
-.or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; }
-.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+/* Play vs bots: a bot count beside the button, one row under Create. */
+.bot-row { display: flex; gap: 10px; }
+.bot-row .big { flex: 1; min-width: 0; padding: 0 12px; }
+.bot-row .big svg { width: 20px; height: 20px; flex: none; color: var(--brass-hi); }
+.bot-row .big span { white-space: nowrap; }
+@media (max-width: 359px) { .bot-row .big svg { display: none; } }
+.bot-count { display: flex; flex: none; border-radius: 11px; border: 1px solid var(--line-strong); background: var(--panel); overflow: hidden; }
+.bot-count button { width: 44px; min-height: 54px; padding: 0; border: 0; background: transparent; color: var(--muted); font: 500 17px var(--f-mono); cursor: pointer; touch-action: manipulation; }
+.bot-count button[aria-checked="true"] { background: #2a3a31; color: var(--brass-hi); box-shadow: inset 0 0 0 1px var(--brass); }
 details.custom-server summary { cursor: pointer; font-size: 14px; min-height: 32px; display: flex; align-items: center; color: var(--muted); }
 details.custom-server[open] summary { margin-bottom: 8px; }
 .link-btn { align-self: center; min-height: 44px; padding: 0 12px; border: 0; background: none; color: var(--muted); font: 14px var(--f-body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
@@ -516,10 +523,20 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
         </label>
       </div>
       <button id="btn-create" class="btn primary big" type="button">Create room</button>
-      <div class="or">or join a friend</div>
+      <!-- A game against bots runs on this device alone: no room, no code, straight to the table. -->
+      <div class="bot-row">
+        <div id="bot-count" class="bot-count" role="radiogroup" aria-label="Number of bots">
+          <button type="button" role="radio" data-n="1" aria-label="1 bot">1</button>
+          <button type="button" role="radio" data-n="2" aria-label="2 bots">2</button>
+          <button type="button" role="radio" data-n="3" aria-label="3 bots">3</button>
+        </div>
+        <button id="btn-bots" class="btn big" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9.5" cy="13" r="1.2" fill="currentColor"/><circle cx="14.5" cy="13" r="1.2" fill="currentColor"/></svg><span id="bots-label">Play vs 2 bots</span>
+        </button>
+      </div>
       <div class="join-row">
         <input id="join-code" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000" aria-label="4-digit room code">
-        <button id="btn-join" class="btn big" type="button">Join room</button>
+        <button id="btn-join" class="btn big" type="button">Join a friend</button>
       </div>
       <button id="btn-scoring" class="link-btn" type="button" aria-haspopup="dialog">How scoring works</button>
       <!-- Sheets: slide up over the home screen so the screen itself fits on a phone. -->
@@ -645,6 +662,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
          RoomNet   Claude Artifact "room" capability (presence-based)
          SupaNet   Supabase Realtime Broadcast + Presence
          TabsNet   BroadcastChannel between tabs of one browser (testing)
+         SoloNet   nothing leaves the page: a game against bots
      ===================================================================== */
 
   /* ---------- 1. Small helpers ---------- */
@@ -1111,6 +1129,11 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   TabsNet.prototype.sendIntent = function (i) { this.bc.postMessage({ k: "intent", i, from: this.me.pid }); };
   TabsNet.prototype.setMe = function (me) { this.me = me; this._hello(); this._emit(); };
   TabsNet.prototype.leave = function () { try { this.bc.postMessage({ k: "bye", pid: this.me.pid }); clearInterval(this.iv); this.bc.close(); } catch (e) { /* closed */ } };
+
+  // A game against bots: the host is the only person, so there's nobody to tell anything.
+  function SoloNet() { this.kind = "solo"; }
+  SoloNet.prototype.join = async function (code, me, hd) { hd.conn("on"); hd.peers([{ pid: me.pid, info: me, isMe: true }]); };
+  SoloNet.prototype.publish = SoloNet.prototype.sendIntent = SoloNet.prototype.setMe = SoloNet.prototype.leave = function () {};
 
   async function pickNet() {
     let mode = CFG.net;
@@ -1597,7 +1620,8 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   function setReady(v) { S.me.ready = v; if (S.net) S.net.setMe(S.me); if (S.isHost) hostPresenceTick(); renderAll(); }
 
   /* ---------- 11. Rooms: create, join, leave ---------- */
-  async function enterRoom(code, create, rules) {
+  // bots > 0: a solo game against that many bots, started at once. A reload passes solo: true to pick it up again.
+  async function enterRoom(code, create, rules, bots, solo) {
     if (S.inRoom || S.joining) return;
     const name = $("#name").value.trim();
     // maxlength stops typing, but a name saved before the cap (or set by script) can still be longer.
@@ -1608,7 +1632,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     S.me.ready = false;
     S.joining = true;
     let net;
-    try { net = await pickNet(); } catch (e) { S.joining = false; toast(e.message); openSettings(true); return; }
+    try { net = bots || solo ? new SoloNet() : await pickNet(); } catch (e) { S.joining = false; toast(e.message); openSettings(true); return; }
     Object.assign(S, { net, netKind: net.kind, code, inRoom: true, st: null, M: null, isHost: false, lastEvN: -1, anim: null, localSel: null,
       present: new Set([S.pid]), info: new Map([[S.pid, S.me]]), absent: new Map(), seenIntents: new Map(), joinedAt: Date.now(), conn: "wait", resume: null });
     if (create) { S.isHost = true; S.M = newState(code, rules); }
@@ -1621,8 +1645,12 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
       return;
     }
     S.joining = false;
-    save("s", "fk.sess", { code, name: S.me.name });   // per tab: a reload rejoins as the same person
-    if (S.isHost) hostPublish([]);
+    save("s", "fk.sess", { code, name: S.me.name, solo: net.kind === "solo" || undefined });   // per tab: a reload rejoins as the same person
+    if (net.kind === "solo") {
+      if (S.resume) tryResume();                     // nobody else could have taken over
+      else if (!S.isHost) leaveRoom();               // the saved game is gone
+      else { for (let k = 0; k < bots; k++) S.M.players.push(newBot(S.M)); act("start"); }
+    } else if (S.isHost) hostPublish([]);
     else {
       act("sync");
       setTimeout(() => { if (S.inRoom && !S.st && !S.isHost) act("sync"); }, 2500);
@@ -1634,7 +1662,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     const saved = cleanState(S.resume); S.resume = null;
     if (!saved || !S.inRoom || S.isHost) return;
     if (S.st && S.st.host !== S.pid && S.present.has(S.st.host)) return;
-    becomeHost(S.st && ahead(S.st, saved) ? S.st : saved, "is back as host");
+    becomeHost(S.st && ahead(S.st, saved) ? S.st : saved, S.netKind === "solo" ? "is back at the table" : "is back as host");
   }
   function leaveRoom() {
     try { if (S.net) S.net.leave(); } catch (e) { /* ignore */ }
@@ -2774,7 +2802,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     const c = $("#conn");
     const state = S.inRoom ? S.conn : "off";
     c.dataset.state = state;
-    const label = { room: "Claude room", supabase: "Online", tabs: "This device" }[S.netKind] || "Online";
+    const label = { room: "Claude room", supabase: "Online", tabs: "This device", solo: "Solo" }[S.netKind] || "Online";
     $("#conn-text").textContent = c.title = state === "on" ? label : state === "wait" ? "Connecting" : state === "lost" ? "Reconnecting" : "Offline";
   }
   function seatColor(i) { return SEAT_COLORS[i] || "#a3b3a9"; }
@@ -3083,7 +3111,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
       list.appendChild(li);
     });
     $("#btn-again").hidden = !S.isHost;
-    $("#over-note").textContent = S.isHost ? "Play again keeps everyone at the table." : "Waiting for the host to start another game.";
+    $("#over-note").textContent = !S.isHost ? "Waiting for the host to start another game." : S.netKind === "solo" ? "Play again deals a new game against the same bots." : "Play again keeps everyone at the table.";
   }
 
   // Banners also clear on a timer, so a paused animation (background tab) can't leave one on screen.
@@ -3207,6 +3235,19 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   $("#btn-create").addEventListener("click", () => {
     enterRoom(String(rand32() % 10000).padStart(4, "0"), true, pickedRules());
   });
+  // How many bots to play against: 1 to 3, remembered on this device.
+  let botCount = clamp(int(load("l", "fk.bots") || 2, 2), 1, MAX_PLAYERS - 1);
+  function renderBotCount() {
+    for (const b of $("#bot-count").children) b.setAttribute("aria-checked", String(+b.dataset.n === botCount));
+    $("#bots-label").textContent = "Play vs " + botCount + (botCount === 1 ? " bot" : " bots");
+  }
+  $("#bot-count").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-n]");
+    if (!b) return;
+    botCount = +b.dataset.n; save("l", "fk.bots", botCount); renderBotCount();
+  });
+  renderBotCount();
+  $("#btn-bots").addEventListener("click", () => enterRoom(String(rand32() % 10000).padStart(4, "0"), true, pickedRules(), botCount));
   for (const inp of document.querySelectorAll('input[name="rules"]')) inp.addEventListener("change", () => { save("l", "fk.ruleset", inp.value); renderRulesPicker(); });
   $("#rules-reset").addEventListener("click", () => { S.custom = { target: CLASSIC.target, open: CLASSIC.open, pen: CLASSIC.pen }; save("l", "fk.rules", S.custom); renderRulesPicker(); });
   $("#join-code").addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
@@ -3218,7 +3259,8 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   });
   $("#btn-ready").addEventListener("click", () => setReady(!S.me.ready));
   $("#btn-start").addEventListener("click", () => act("start"));
-  $("#btn-again").addEventListener("click", () => act("again"));
+  // Against bots there's nobody to wait for, so Play again deals straight away.
+  $("#btn-again").addEventListener("click", () => { act("again"); if (S.netKind === "solo") act("start"); });
   $("#btn-roll").addEventListener("click", () => sendTurn(S.st && S.st.ts === "rolled" ? "keep" : "roll"));
   $("#btn-bank").addEventListener("click", () => sendTurn("bank"));
   for (const id of ["#btn-leave", "#btn-leave2", "#btn-leave3"]) $(id).addEventListener("click", leaveRoom);
@@ -3295,7 +3337,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
       $("#join-code").value = linked;
       toast("Room " + linked + " is filled in. Add your name, then Join room.");
     }
-    if (sess && /^\d{4}$/.test(sess.code)) { if (sess.name) { $("#name").value = cleanName(sess.name); renderNameHint(); } enterRoom(sess.code, false); }
+    if (sess && /^\d{4}$/.test(sess.code)) { if (sess.name) { $("#name").value = cleanName(sess.name); renderNameHint(); } enterRoom(sess.code, false, null, 0, !!sess.solo); }
   }, 500);
 })();
 </script>
