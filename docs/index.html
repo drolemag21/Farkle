@@ -375,6 +375,17 @@ button.seat-name svg { width: 14px; height: 14px; flex: none; color: var(--brass
 }
 .banner.bad { color: var(--bad); }
 .banner.show { animation: pop 1.8s ease-out forwards; }
+/* Your turn: stays up until you roll, on a soft dark pool so it reads over the dice, and pulses in size and glow (never in opacity). */
+.banner.wait { opacity: 1; isolation: isolate; animation: pop-in .45s ease-out, breathe 1.6s ease-in-out .45s infinite; }
+.banner.wait::before {
+  content: ""; position: absolute; z-index: -1; left: 50%; top: 50%; width: min(340px, 92%); height: 2.3em; transform: translate(-50%, -50%);
+  border-radius: 50%; background: radial-gradient(closest-side, rgba(6, 10, 8, .82), rgba(6, 10, 8, .6) 55%, rgba(6, 10, 8, 0));
+}
+@keyframes pop-in { 0% { opacity: 0; transform: scale(.6); } 60% { opacity: 1; transform: scale(1.07); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes breathe {
+  0%, 100% { transform: scale(1); text-shadow: 0 3px 0 rgba(0, 0, 0, .55), 0 0 10px rgba(241, 212, 143, .25); }
+  50% { transform: scale(1.07); text-shadow: 0 3px 0 rgba(0, 0, 0, .55), 0 0 24px rgba(241, 212, 143, .75); }
+}
 /* Hot dice: a neon sign that sputters on. */
 .banner.hot {
   color: #fff1cf; font-size: clamp(44px, 13vw, 68px); letter-spacing: .03em;
@@ -403,7 +414,7 @@ button.seat-name svg { width: 14px; height: 14px; flex: none; color: var(--brass
 @keyframes pop { 0% { opacity: 0; transform: scale(.6); } 14% { opacity: 1; transform: scale(1.07); } 24% { transform: scale(1); } 74% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } }
 @keyframes rise { 0% { opacity: 0; transform: translateY(10px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-40px); } }
 @keyframes fade { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .banner.show, .banner.hot.show, .float.show { animation: fade 1.6s linear forwards; } .chip-bar i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .banner.show, .banner.hot.show, .float.show { animation: fade 1.6s linear forwards; } .banner.wait { animation: none; } .chip-bar i { transition: none; } }
 .turn { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; }
 .turn-line { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .turn-who { font-weight: 700; font-size: 17px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1386,7 +1397,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
         if (d.fin) banner("Final round", "", 900);
         break;
       }
-      case "TURN_PASSED": S.localSel = null; if (myTurn(st)) { banner("Your turn", "", 150); SND.turn(0.15); } break;
+      case "TURN_PASSED": S.localSel = null; if (myTurn(st)) SND.turn(0.15); break;   // the banner comes from syncWaitBanner
       case "GAME_STARTED": S.localSel = null; S.anim = null; S.glide = null; banner("Game on", ""); if (myTurn(st)) SND.turn(0.9); break;
     }
     S.dirty = true;
@@ -3182,6 +3193,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
 
   function renderTurn() {
     const st = S.st;
+    syncWaitBanner();
     if (!st || st.phase === "lobby") return;
     const cur = st.players[st.turn], mine = myTurn(st), name = cur ? cur.name : "Someone";
     const sel = curSel(), selV = scoreOf(sel.map((k) => st.dice[k].v)), bad = sel.length > 0 && selV === 0;
@@ -3233,13 +3245,21 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
   }
 
   // Banners also clear on a timer, so a paused animation (background tab) can't leave one on screen.
-  let bannerTimer = 0, bannerOff = 0, floatOff = 0;
+  // bannerBusy covers a one-shot banner from the moment it's queued until it clears, so "Your turn" waits behind it.
+  let bannerTimer = 0, bannerOff = 0, floatOff = 0, bannerBusy = false;
   function banner(text, kind, delay) {
-    clearTimeout(bannerTimer); clearTimeout(bannerOff);
+    clearTimeout(bannerTimer); clearTimeout(bannerOff); bannerBusy = true;
     bannerTimer = setTimeout(() => {
       const b = $("#banner"); b.textContent = text; b.className = "banner " + (kind || ""); void b.offsetWidth; b.classList.add("show");
-      bannerOff = setTimeout(() => { b.className = "banner"; }, kind === "hot" ? 2500 : 1900);
+      bannerOff = setTimeout(() => { b.className = "banner"; bannerBusy = false; syncWaitBanner(); }, kind === "hot" ? 2500 : 1900);
     }, delay || 0);
+  }
+  // "Your turn" stays on screen, pulsing, from the start of my turn until I throw (or the turn leaves me).
+  function syncWaitBanner() {
+    const st = S.st, b = $("#banner"), on = b.classList.contains("wait");
+    const waiting = !!st && st.phase === "play" && myTurn(st) && st.ts === "pre";
+    if (waiting && !on && !bannerBusy) { b.textContent = "Your turn"; b.className = "banner wait"; }
+    else if (!waiting && on) b.className = "banner";
   }
   function floatText(text, kind) {
     const f = $("#float"); f.textContent = text; f.className = "float " + (kind || ""); void f.offsetWidth; f.classList.add("show");
