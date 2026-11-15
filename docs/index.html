@@ -375,10 +375,17 @@ button.seat-name svg { width: 14px; height: 14px; flex: none; color: var(--brass
 }
 .banner.bad { color: var(--bad); }
 .banner.show { animation: pop 1.8s ease-out forwards; }
-/* Your turn: stays up and breathes until you roll. */
-.banner.wait { opacity: 1; animation: pop-in .45s ease-out, breathe 1.6s ease-in-out .45s infinite; }
+/* Your turn: stays up until you roll, on a soft dark pool so it reads over the dice, and pulses in size and glow (never in opacity). */
+.banner.wait { opacity: 1; isolation: isolate; animation: pop-in .45s ease-out, breathe 1.6s ease-in-out .45s infinite; }
+.banner.wait::before {
+  content: ""; position: absolute; z-index: -1; left: 50%; top: 50%; width: min(340px, 92%); height: 2.3em; transform: translate(-50%, -50%);
+  border-radius: 50%; background: radial-gradient(closest-side, rgba(6, 10, 8, .82), rgba(6, 10, 8, .6) 55%, rgba(6, 10, 8, 0));
+}
 @keyframes pop-in { 0% { opacity: 0; transform: scale(.6); } 60% { opacity: 1; transform: scale(1.07); } 100% { opacity: 1; transform: scale(1); } }
-@keyframes breathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .55; transform: scale(1.06); } }
+@keyframes breathe {
+  0%, 100% { transform: scale(1); text-shadow: 0 3px 0 rgba(0, 0, 0, .55), 0 0 10px rgba(241, 212, 143, .25); }
+  50% { transform: scale(1.07); text-shadow: 0 3px 0 rgba(0, 0, 0, .55), 0 0 24px rgba(241, 212, 143, .75); }
+}
 /* Hot dice: a neon sign that sputters on. */
 .banner.hot {
   color: #fff1cf; font-size: clamp(44px, 13vw, 68px); letter-spacing: .03em;
