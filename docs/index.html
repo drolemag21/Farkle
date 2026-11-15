@@ -87,11 +87,8 @@ p { margin: 0; }
 .icon-btn[aria-expanded="true"] { border-color: var(--line-strong); background: var(--panel-2); }
 .icon-btn svg { width: 20px; height: 20px; }
 #snd[aria-pressed="true"] .snd-off, #snd[aria-pressed="false"] .snd-on { display: none; }
-#snd[aria-pressed="false"], #gmusic[aria-pressed="false"] { color: var(--muted); }
-#gmusic[aria-pressed="true"] .mus-off { display: none; }
+#snd[aria-pressed="false"] { color: var(--muted); }
 @media (max-width: 420px) { .brand-sub { display: none; } }
-/* Four controls don't fit beside the logo on a phone: the connection keeps its dot, the words go to its tooltip. */
-@media (max-width: 400px) { .top-right:has(#gmusic:not([hidden])) #conn-text { display: none; } }
 
 /* ---------- Panels, fields, buttons ---------- */
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
@@ -252,6 +249,26 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 .sheet-head h2 { font-size: 17px; }
 .sheet-panel .score-table { margin-top: 0; }
 .sheet-panel.rules p { margin-top: 0; }
+/* Game menu: connection, music and sound, How to Play, Settings, and Leave set apart at the bottom. */
+.menu-conn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; font-size: 13px; color: var(--muted); }
+.menu-conn b { color: var(--cream); font-weight: 600; }
+.menu-conn i, .menu-btn i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #5d6b63; }
+.menu-conn[data-state="on"] i, .menu-btn[data-state="on"] i { background: var(--good); }
+.menu-conn[data-state="wait"] i, .menu-btn[data-state="wait"] i { background: var(--brass); }
+.menu-conn[data-state="lost"] i, .menu-btn[data-state="lost"] i { background: var(--bad); }
+.menu-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.menu-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 50px; padding: 0 14px; border: 0; border-top: 1px solid var(--line);
+  background: none; color: var(--cream); font: 15px var(--f-body); text-align: left; cursor: pointer;
+}
+.menu-row:first-child { border-top: 0; }
+.menu-row:focus-visible { outline: 2px solid var(--brass-hi); outline-offset: -2px; }
+.menu-ic { flex: none; width: 22px; height: 22px; color: var(--brass-hi); }
+.menu-ic svg { width: 22px; height: 22px; display: block; }
+.menu-l { flex: 1; }
+.menu-chev { color: var(--muted); font-size: 22px; line-height: 1; }
+.menu-leave { min-height: 48px; color: var(--bad); border-color: rgba(239, 106, 82, .45); background: transparent; }
+.menu-leave:hover:not(:disabled) { border-color: var(--bad); }
 @media (prefers-reduced-motion: no-preference) { .sheet:not([hidden]) .sheet-panel { animation: sheet-up .22s ease-out; } }
 @keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } }
 .score-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
@@ -337,6 +354,21 @@ button.seat-name svg { width: 14px; height: 14px; flex: none; color: var(--brass
 
 /* ---------- Game ---------- */
 #scr-game { gap: 10px; }
+/* In a game the table gets the room: the top bar's controls live in the game menu, and the bottom padding shrinks. */
+#app:has(#scr-game:not([hidden])) { padding-bottom: 10px; }
+#app:has(#scr-game:not([hidden])) .topbar { display: none; }
+/* Settings opened from the game menu float over the table instead of pushing it down. */
+#app:has(#scr-game:not([hidden])) #settings:not([hidden]) {
+  position: fixed; z-index: 24; top: max(10px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+  width: min(528px, calc(100% - 32px)); max-height: calc(100% - 20px); overflow-y: auto; border-color: var(--line-strong);
+  box-shadow: 0 0 0 100vmax rgba(5, 10, 8, .72);
+}
+/* How to Play opened from the game menu covers the game, which carries on underneath. */
+#scr-howto.over-game {
+  position: fixed; inset: 0; z-index: 24; overflow-y: auto; background: var(--ink);
+  padding: max(10px, env(safe-area-inset-top, 0px)) max(16px, calc((100% - 528px) / 2)) max(16px, env(safe-area-inset-bottom, 0px));
+}
+#scr-howto.over-game .howto-foot { display: none; }
 .board { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 6px; }
 @media (min-width: 480px) { .board { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .chip { position: relative; display: flex; align-items: center; gap: 8px; padding: 7px 10px 9px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); min-width: 0; }
@@ -356,7 +388,6 @@ button.seat-name svg { width: 14px; height: 14px; flex: none; color: var(--brass
 .chip-bar { position: absolute; left: 10px; right: 10px; bottom: 4px; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, .08); overflow: hidden; }
 .chip-bar i { display: block; height: 100%; background: var(--pc); border-radius: 4px; transition: width .5s ease; }
 .chip-status { font-size: 11px; color: var(--bad); white-space: nowrap; }
-.chip-score.off { font: 600 10px var(--f-body); letter-spacing: .04em; flex: none; text-transform: uppercase; color: var(--muted); white-space: nowrap; line-height: 19px; }
 /* Farkles in a row toward the penalty: filled dots out of three, in a tab on the card's top-left
    corner (the crown has the other) so they never take width from the name. The board's row gap clears it. */
 .chip-fk {
@@ -367,6 +398,13 @@ button.seat-name svg { width: 14px; height: 14px; flex: none; color: var(--brass
 .chip-fk i.on { background: var(--bad); border-color: var(--bad); }
 .chip-status:empty { display: none; }
 .table-wrap { position: relative; width: 100%; margin-inline: auto; }
+.menu-btn {
+  position: absolute; top: 4px; right: 4px; z-index: 3; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%;
+  border: 1px solid var(--line); background: rgba(12, 19, 16, .78); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); color: var(--brass-hi); cursor: pointer;
+}
+.menu-btn svg { width: 20px; height: 20px; }
+.menu-btn i { position: absolute; top: 5px; right: 5px; box-shadow: 0 0 0 2px #0c1310; }
+.menu-btn:focus-visible { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
 #table { display: block; width: 100%; touch-action: manipulation; cursor: pointer; border-radius: 6px; }
 .banner {
   position: absolute; left: 0; right: 0; top: 36%; text-align: center; pointer-events: none; opacity: 0;
@@ -419,11 +457,14 @@ button.seat-name svg { width: 14px; height: 14px; flex: none; color: var(--brass
 .turn-line { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .turn-who { font-weight: 700; font-size: 17px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .turn-pts { font-size: 17px; color: var(--brass-hi); white-space: nowrap; }
-.turn-sub { font-size: 13px; color: var(--muted); min-height: 19px; }
+.turn-line .turn-pts { margin-left: auto; }
+.final-pill { flex: none; align-self: center; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #2b0d06; background: var(--bad); border-radius: 99px; padding: 2px 8px; }
+/* One line, always: a second line would shrink the table mid-turn. */
+.turn-sub { font-size: 13px; color: var(--muted); height: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .actions:has(> .btn[hidden]) > .btn { grid-column: 1 / -1; }
-.game-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
-#final-note { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* On someone else's turn the buttons are invisible but keep their space, so the table holds one size all game. */
+.actions.idle { visibility: hidden; }
 .over {
   position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: rgba(5, 10, 8, .72);
   padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
@@ -509,9 +550,6 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
     <div class="brand"><span class="brand-word">Farkle</span><span class="brand-sub">Live table</span></div>
     <div class="top-right">
       <span id="conn" class="conn" data-state="off"><i></i><span id="conn-text">Offline</span></span>
-      <button id="gmusic" class="icon-btn" type="button" aria-pressed="false" aria-label="Music during games" title="Music during games: off" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17.5V6l10-2v11.5"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="15.5" r="2.5"/><path class="mus-off" d="M4 4l16 16"/></svg>
-      </button>
       <button id="snd" class="icon-btn" type="button" aria-pressed="true" aria-label="Sound" title="Sound on">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="snd-on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="snd-off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
       </button>
@@ -549,6 +587,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
       </div>
     </details>
     <div class="row">
+      <button id="settings-close" class="btn ghost" type="button">Close</button>
       <button id="settings-save" class="btn primary" type="button">Save</button>
     </div>
     <!-- Test tools for the Claude Artifact (the testing ground). The GitHub Pages build never shows them. -->
@@ -661,16 +700,17 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
         <canvas id="table" tabindex="0" aria-label="Dice table. On your turn, tap the dice you want to keep, or press 1 to 6."></canvas>
         <div id="banner" class="banner" aria-live="polite"></div>
         <div id="float" class="float" aria-hidden="true"></div>
+        <!-- The game's only menu: it sits in the empty corner beside the far rail, where no die can land. -->
+        <button id="btn-menu" class="menu-btn" type="button" aria-haspopup="dialog" aria-controls="sheet-menu" aria-label="Menu" title="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><i></i></button>
       </div>
       <div id="turn" class="turn panel">
-        <div class="turn-line"><span id="turn-who" class="turn-who"></span><span id="turn-pts" class="turn-pts mono"></span></div>
+        <div class="turn-line"><span id="turn-who" class="turn-who"></span><span id="final-pill" class="final-pill" hidden>Final round</span><span id="turn-pts" class="turn-pts mono"></span></div>
         <p id="turn-sub" class="turn-sub"></p>
         <div class="actions">
           <button id="btn-roll" class="btn primary big" type="button">Roll</button>
           <button id="btn-bank" class="btn big" type="button">Bank</button>
         </div>
       </div>
-      <div class="game-foot"><span id="final-note" aria-live="polite"></span><button id="btn-leave2" class="btn ghost small" type="button">Leave</button></div>
       <div id="over" class="over" hidden>
         <div class="panel" role="dialog" aria-labelledby="over-title">
           <span class="eyebrow">Game over</span>
@@ -683,6 +723,19 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
       </div>
     </section>
     <!-- Sheets slide up over whichever screen opened them. -->
+    <div id="sheet-menu" class="sheet" hidden>
+      <div class="sheet-panel panel" role="dialog" aria-modal="true" aria-labelledby="sheet-menu-title">
+        <div class="sheet-head"><h2 id="sheet-menu-title">Menu</h2><button class="btn primary small" type="button" data-close>Done</button></div>
+        <p id="menu-conn" class="menu-conn" data-state="off"><i></i><span id="menu-conn-text"></span></p>
+        <div class="menu-list">
+          <label class="switch menu-row"><span class="menu-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17.5V6l10-2v11.5"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="15.5" r="2.5"/></svg></span><span class="menu-l">Music</span><input id="menu-music" type="checkbox" role="switch"></label>
+          <label class="switch menu-row"><span class="menu-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg></span><span class="menu-l">Sound</span><input id="menu-sound" type="checkbox" role="switch"></label>
+          <button id="menu-howto" class="menu-row" type="button"><span class="menu-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></span><span class="menu-l">How to Play</span><span class="menu-chev" aria-hidden="true">&rsaquo;</span></button>
+          <button id="menu-settings" class="menu-row" type="button"><span class="menu-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><span class="menu-l">Settings</span><span class="menu-chev" aria-hidden="true">&rsaquo;</span></button>
+        </div>
+        <button id="btn-leave2" class="btn menu-leave" type="button">Leave game</button>
+      </div>
+    </div>
     <div id="sheet-rules" class="sheet" hidden>
       <div class="sheet-panel panel" role="dialog" aria-modal="true" aria-labelledby="sheet-rules-title">
         <div class="sheet-head"><h2 id="sheet-rules-title">Table rules</h2><button class="btn primary small" type="button" data-close>Done</button></div>
@@ -1766,6 +1819,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
     becomeHost(S.st && ahead(S.st, saved) ? S.st : saved, S.netKind === "solo" ? "is back at the table" : "is back as host");
   }
   function leaveRoom() {
+    closeSheets(); openSettings(false);
     try { if (S.net) S.net.leave(); } catch (e) { /* ignore */ }
     clearTimeout(S.hostTimer); clearTimeout(S.botTimer); S.botEv = -1;
     Object.assign(S, { net: null, inRoom: false, st: null, M: null, isHost: false, anim: null, localSel: null, conn: "off", code: "" });
@@ -2245,16 +2299,12 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
     const w = Math.round(wrap.clientWidth);
     if (!w) return;
     const newDpr = Math.min(2, window.devicePixelRatio || 1);
-    // The table takes the height left on screen below the scores, after the turn panel and footer,
+    // The table takes the height left on screen below the scores, after the turn panel,
     // but never more than its full-width size and never so little that the dice are hard to tap.
-    // On short phones (table under 320 px) the footer, last action and Leave, may sit just below the fold instead;
-    // Roll and Bank never do.
     const scr = $("#scr-game"), app = getComputedStyle($("#app")), gap = parseFloat(getComputedStyle(scr).rowGap) || 0;
-    const foot = $(".game-foot").offsetHeight + gap;
     const room = window.innerHeight - (wrap.getBoundingClientRect().top + window.scrollY) - $("#turn").offsetHeight - gap - (parseFloat(app.paddingBottom) || 0);
     const m = 4, bw = BOUNDS.x1 - BOUNDS.x0, bh = BOUNDS.y1 - BOUNDS.y0, full = (w - 2 * m) / bw * bh + 2 * m;
-    const fit = room - foot >= 320 ? room - foot : room;
-    const h = Math.round(Math.max(260, Math.min(fit, full)));
+    const h = Math.round(Math.max(260, Math.min(room, full)));
     if (w === cssW && h === cssH && newDpr === dpr && cv.width) return;
     cssW = w; cssH = h; dpr = newDpr;
     cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
@@ -2832,9 +2882,10 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
   // Runs while the splash, home screen or lobby shows, so the orbit carries on into the room; the game gets the plain background.
   function sceneLoop(now) {
     requestAnimationFrame(sceneLoop);
-    const on = !splash.hidden || !$("#scr-start").hidden || !$("#scr-howto").hidden || !$("#scr-lobby").hidden;
+    const howto = !$("#scr-howto").hidden && !S.inRoom;   // over a game it covers the table on its own
+    const on = !splash.hidden || !$("#scr-start").hidden || howto || !$("#scr-lobby").hidden;
     if (sceneCv.hidden === on) { sceneCv.hidden = !on; $("#veil").hidden = !on; }
-    $("#veil").classList.toggle("dim", !$("#scr-howto").hidden);   // How to Play is the one screen of paragraphs
+    $("#veil").classList.toggle("dim", howto);   // How to Play is the one screen of paragraphs
     if (!on) return;
     sceneResize();
     inView(SV, () => drawScene(now));
@@ -2893,7 +2944,11 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
     const st = S.st;
     const screen = !S.inRoom ? (S.howto ? "howto" : "start") : !st || st.phase === "lobby" ? "lobby" : "game";
     showScreen(screen);
-    $("#gmusic").hidden = screen !== "game";   // the lounge always plays at the door and lobby
+    // In a room How to Play opens from the game menu and covers whatever screen is up, so closing it returns there.
+    const howto = $("#scr-howto");
+    howto.classList.toggle("over-game", S.inRoom);
+    if (S.inRoom && S.howto) howto.hidden = false;
+    $("#howto-back").innerHTML = S.inRoom ? "&lsaquo; Back" : "&lsaquo; Menu";
     renderConn();
     if (screen === "lobby") renderLobby();
     if (screen === "game") { resize(); renderGame(); }
@@ -2906,6 +2961,23 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
     c.dataset.state = state;
     const label = { room: "Claude room", supabase: "Online", tabs: "This device", solo: "Solo" }[S.netKind] || "Online";
     $("#conn-text").textContent = c.title = state === "on" ? label : state === "wait" ? "Connecting" : state === "lost" ? "Reconnecting" : "Offline";
+    renderMenu();
+  }
+  // The game menu stands in for the top bar's connection pill: a dot on its button, the words inside.
+  function renderMenu() {
+    const state = S.inRoom ? S.conn : "off", st = S.st;
+    $("#btn-menu").dataset.state = $("#menu-conn").dataset.state = state;
+    const solo = S.netKind === "solo";
+    const label = solo ? "Solo game" : { room: "Claude room", tabs: "This device" }[S.netKind] || "Online";
+    const head = state === "on" || solo ? label : state === "wait" ? "Connecting" : state === "lost" ? "Reconnecting" : "Offline";
+    const parts = [];
+    if (!solo && S.code) parts.push("Room " + S.code);
+    if (st) parts.push(st.players.length + " at the table");
+    const watching = st ? [...S.present].filter((pid) => !st.players.some((p) => p.pid === pid)).length : 0;
+    if (watching) parts.push(watching + " watching");
+    const t = $("#menu-conn-text"); t.textContent = "";
+    t.appendChild(el("b", "", head));
+    if (parts.length) t.appendChild(document.createTextNode(" \u00b7 " + parts.join(" \u00b7 ")));
   }
   function seatColor(i) { return SEAT_COLORS[i] || "#a3b3a9"; }
   const rgbCss = (k) => "rgb(" + DICE_COLORS[diceColor(k)].rgb.join(",") + ")";
@@ -3170,8 +3242,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
         c.appendChild(fk);
       }
       c.appendChild(top);
-      const on = onBoard(st, p);
-      c.appendChild(el("span", "chip-score" + (on ? "" : " off"), on ? fmt(p.score) : "Off board"));
+      c.appendChild(el("span", "chip-score", fmt(p.score)));
       const bar = el("span", "chip-bar"), fill = el("i"); fill.style.width = clamp((p.score / st.target) * 100, 0, 100) + "%"; bar.appendChild(fill); c.appendChild(bar);
       // One-line cards: the glow already marks who's rolling, so only an absence needs words.
       const status = p.gone ? `Away${p.skips ? `, skipped ${p.skips}` : ""}` : "";
@@ -3183,11 +3254,10 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
       board.appendChild(c);
     });
     renderTurn();
-    const watching = [...S.present].filter((pid) => !st.players.some((p) => p.pid === pid)).length;
-    const fin = st.fin != null && st.players[st.fin];
-    // The target is printed on the felt, so the footer shows the latest action unless it's the final round.
-    const last = st.log.length ? st.log[st.log.length - 1] : "";
-    $("#final-note").textContent = (fin && st.phase === "play" ? `Final round: beat ${fin.name}'s ${fmt(fin.score)}.` : last) + (watching ? ` ${watching} watching.` : "");
+    const fin = st.fin != null && st.players[st.fin], pill = $("#final-pill");
+    pill.hidden = !(fin && st.phase === "play");
+    pill.title = fin ? `Beat ${fin.name}'s ${fmt(fin.score)}` : "";
+    renderMenu();
     renderOver();
   }
 
@@ -3205,23 +3275,25 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
     let sub = "";
     if (st.phase === "play") {
       if (rolling) sub = "Rolling...";
-      else if (st.ts === "farkle") sub = `Farkle. ${mine ? "You score" : name + " scores"} nothing this turn.`;
+      else if (st.ts === "farkle") sub = `Farkle! ${mine ? "You score" : name + " scores"} nothing.`;
       else if (st.ts === "banked") sub = `${mine ? "You" : name} banked.`;
       else if (st.busy) sub = "Checking the dice...";
       else if (!mine) sub = st.ts === "pre" ? `${name} is about to roll.` : st.ts === "kept" ? `${name} is deciding: roll or bank.` : sel.length ? `${name} is keeping ${bad ? "dice" : fmt(selV)}.` : `${name} is choosing dice.`;
-      else if (st.ts === "pre") sub = need ? `Roll all six. You need ${fmt(need)} in one turn to get on the board.` : "Roll all six dice to start your turn.";
-      else if (st.ts === "kept" && short) sub = `You need ${fmt(need)} in one turn to get on the board. ` + (remaining === 0 ? "Hot dice: roll all six again." : `Roll the other ${remaining}.`);
-      else if (st.ts === "kept") sub = remaining === 0 ? `Hot dice! Roll all six again, or bank ${fmt(st.tp)}.` : `Roll the other ${remaining}, or bank ${fmt(st.tp)}.`;
+      else if (st.ts === "pre") sub = need ? `Roll all six. ${fmt(need)} gets you on the board.` : "Roll all six dice to start your turn.";
+      else if (st.ts === "kept" && short) sub = (remaining === 0 ? "Hot dice: roll all six." : `Roll the other ${remaining}.`) + ` Need ${fmt(need)} to get on.`;
+      else if (st.ts === "kept") sub = remaining === 0 ? `Hot dice! Roll all six, or bank ${fmt(st.tp)}.` : `Roll the other ${remaining}, or bank ${fmt(st.tp)}.`;
       else if (!sel.length) sub = "Tap the dice that score, then Keep.";
       else if (bad) sub = "Every die you keep has to score.";
-      else sub = remaining === 0 ? "All six score. Keep them for hot dice." : "Keep these, or tap more dice that score.";
+      else sub = remaining === 0 ? "All six score. Keep them for hot dice." : "Keep these, or tap more that score.";
     }
     $("#turn-sub").textContent = sub;
     const rb = $("#btn-roll"), bb = $("#btn-bank");
     const show = mine && st.phase === "play";
     // After a roll there's one gold Keep; after a keep, Roll (gold) and Bank. The gold button is always the next step.
-    rb.hidden = !show; bb.hidden = !show || st.ts !== "kept";
-    const ok = canAct();
+    // Roll keeps its place on other players' turns (invisible), so the panel and the table don't change size.
+    rb.hidden = st.phase !== "play"; bb.hidden = !show || st.ts !== "kept";
+    $(".actions").classList.toggle("idle", !show);
+    const ok = show && canAct();
     rb.textContent = st.ts === "pre" ? "Roll 6 dice" : st.ts === "rolled" || st.ts === "farkle" ? "Keep" : remaining === 0 ? "Hot dice: roll 6" : `Roll ${remaining}`;
     rb.disabled = !ok || (st.ts === "rolled" && selV <= 0);
     bb.textContent = short ? `Need ${fmt(need)}` : `Bank ${fmt(st.tp)}`;
@@ -3346,16 +3418,19 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
   $("#test-hot").addEventListener("change", (e) => setTest("hot", e.target.checked));
   $("#test-xmas").addEventListener("change", (e) => setTest("xmas", e.target.checked));
   $("#gear").addEventListener("click", () => openSettings($("#settings").hidden));
-  function renderSnd() { const b = $("#snd"); b.setAttribute("aria-pressed", String(!SND.muted)); b.title = SND.muted ? "Sound off" : "Sound on"; }
-  $("#snd").addEventListener("click", () => { SND.setMuted(!SND.muted); renderSnd(); });
+  $("#settings-close").addEventListener("click", () => { openSettings(false); if (!$("#scr-game").hidden) $("#btn-menu").focus(); });
+  function renderSnd() { const b = $("#snd"); b.setAttribute("aria-pressed", String(!SND.muted)); b.title = SND.muted ? "Sound off" : "Sound on"; $("#menu-sound").checked = !SND.muted; }
+  const setMuted = (m) => { SND.setMuted(m); renderSnd(); };
+  $("#snd").addEventListener("click", () => setMuted(!SND.muted));
+  $("#menu-sound").addEventListener("change", (e) => setMuted(!e.target.checked));
   renderSnd();
-  function renderMusic() { const b = $("#gmusic"); b.setAttribute("aria-pressed", String(gameMusic)); b.title = "Music during games: " + (gameMusic ? "on" : "off"); }
-  $("#gmusic").addEventListener("click", () => {
-    gameMusic = !gameMusic; save("l", "fk.gmusic", gameMusic ? 1 : null);
-    renderMusic(); syncSound();
+  // Music during games (the lounge always plays at the door and in the lobby). The switch is in the game menu.
+  $("#menu-music").checked = gameMusic;
+  $("#menu-music").addEventListener("change", (e) => {
+    gameMusic = e.target.checked; save("l", "fk.gmusic", gameMusic ? 1 : null);
+    syncSound();
     if (gameMusic && SND.muted) toast("Sound is off. Turn it on to hear the music.");
   });
-  renderMusic();
   $("#net-mode").addEventListener("change", renderSettings);
   $("#settings-save").addEventListener("click", () => {
     CFG.net = $("#net-mode").value;
@@ -3376,10 +3451,18 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
   $("#btn-single").addEventListener("click", playSolo);
   // Multiplayer opens a hosted room straight away; the join bar there covers people who came to join.
   $("#btn-multi").addEventListener("click", () => enterRoom(newCode(), true, pickedRules()));
-  function showHowto(on) { S.howto = on; renderAll(); scrollTo(0, 0); $(on ? "#howto-back" : "#btn-howto").focus({ focusVisible: false }); }
+  function showHowto(on) {
+    S.howto = on; renderAll();
+    if (S.inRoom) $(on ? "#howto-back" : "#btn-menu").focus({ focusVisible: false });
+    else { scrollTo(0, 0); $(on ? "#howto-back" : "#btn-howto").focus({ focusVisible: false }); }
+  }
   $("#btn-howto").addEventListener("click", () => showHowto(true));
   $("#howto-back").addEventListener("click", () => showHowto(false));
   $("#btn-allcombos").addEventListener("click", () => openSheet("#sheet-scoring"));
+  $("#btn-menu").addEventListener("click", () => { renderMenu(); openSheet("#sheet-menu"); });
+  // Both open over the game; the menu closes first so focus returns to its button.
+  $("#menu-howto").addEventListener("click", () => { closeSheets(); showHowto(true); });
+  $("#menu-settings").addEventListener("click", () => { closeSheets(); openSettings(true); $("#settings-close").focus(); });
   $("#btn-tryit").addEventListener("click", playSolo);
   // Rule changes are remembered on this device and, from the lobby, go to the table at once.
   function rulesChanged() {
@@ -3456,14 +3539,15 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     if ([...document.querySelectorAll(".sheet")].some((sh) => !sh.hidden)) closeSheets();
-    else if (S.howto && !S.inRoom) showHowto(false);
+    else if (S.howto) showHowto(false);
+    else if (!$("#settings").hidden && !$("#scr-game").hidden) $("#settings-close").click();
   });
   function selectCode() { const r = document.createRange(); r.selectNodeContents($("#lobby-code")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Code selected. Copy it from here."); }
   window.addEventListener("pagehide", () => { try { if (S.net) S.net.leave(); } catch (e) { /* closing */ } });
   // The table's height depends on the window and on the panels around it, so watch all of them.
   const refit = () => { if (!$("#scr-game").hidden) { resize(); S.dirty = true; } };
   const ro = new ResizeObserver(refit);
-  for (const sel of ["#table-wrap", "#board", "#turn", ".game-foot"]) ro.observe($(sel));
+  for (const sel of ["#table-wrap", "#board", "#turn"]) ro.observe($(sel));
   window.addEventListener("resize", refit);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { S.cacheKey = ""; S.dirty = true; });
 
