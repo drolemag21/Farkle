@@ -448,8 +448,6 @@ button.seat-name svg { width: 14px; height: 14px; flex: none; color: var(--brass
 .turn-pts { font-size: 17px; color: var(--brass-hi); white-space: nowrap; }
 .turn-line .turn-pts { margin-left: auto; }
 .final-pill { flex: none; align-self: center; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #2b0d06; background: var(--bad); border-radius: 99px; padding: 2px 8px; }
-/* One line, always: a second line would shrink the table mid-turn. */
-.turn-sub { font-size: 13px; color: var(--muted); height: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .actions:has(> .btn[hidden]) > .btn { grid-column: 1 / -1; }
 /* On someone else's turn the buttons are invisible but keep their space, so the table holds one size all game. */
@@ -694,7 +692,6 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
       </div>
       <div id="turn" class="turn panel">
         <div class="turn-line"><span id="turn-who" class="turn-who"></span><span id="final-pill" class="final-pill" hidden>Final round</span><span id="turn-pts" class="turn-pts mono"></span></div>
-        <p id="turn-sub" class="turn-sub"></p>
         <div class="actions">
           <button id="btn-roll" class="btn primary big" type="button">Roll</button>
           <button id="btn-bank" class="btn big" type="button">Bank</button>
@@ -3261,21 +3258,6 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
     const need = cur && !onBoard(st, cur) ? st.rules.open : 0, short = st.tp < need;
     $("#turn-who").textContent = st.phase === "over" ? "Game over" : mine ? "Your turn" : `${name}'s turn`;
     $("#turn-pts").textContent = st.phase === "play" ? `Turn ${fmt(st.tp)}${selV > 0 ? " + " + fmt(selV) : ""}` : "";
-    let sub = "";
-    if (st.phase === "play") {
-      if (rolling) sub = "Rolling...";
-      else if (st.ts === "farkle") sub = `Farkle! ${mine ? "You score" : name + " scores"} nothing.`;
-      else if (st.ts === "banked") sub = `${mine ? "You" : name} banked.`;
-      else if (st.busy) sub = "Checking the dice...";
-      else if (!mine) sub = st.ts === "pre" ? `${name} is about to roll.` : st.ts === "kept" ? `${name} is deciding: roll or bank.` : sel.length ? `${name} is keeping ${bad ? "dice" : fmt(selV)}.` : `${name} is choosing dice.`;
-      else if (st.ts === "pre") sub = need ? `Roll all six. ${fmt(need)} gets you on the board.` : "Roll all six dice to start your turn.";
-      else if (st.ts === "kept" && short) sub = (remaining === 0 ? "Hot dice: roll all six." : `Roll the other ${remaining}.`) + ` Need ${fmt(need)} to get on.`;
-      else if (st.ts === "kept") sub = remaining === 0 ? `Hot dice! Roll all six, or bank ${fmt(st.tp)}.` : `Roll the other ${remaining}, or bank ${fmt(st.tp)}.`;
-      else if (!sel.length) sub = "Tap the dice that score, then Keep.";
-      else if (bad) sub = "Every die you keep has to score.";
-      else sub = remaining === 0 ? "All six score. Keep them for hot dice." : "Keep these, or tap more that score.";
-    }
-    $("#turn-sub").textContent = sub;
     const rb = $("#btn-roll"), bb = $("#btn-bank");
     const show = mine && st.phase === "play";
     // After a roll there's one gold Keep; after a keep, Roll (gold) and Bank. The gold button is always the next step.
@@ -3283,7 +3265,10 @@ html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::
     rb.hidden = st.phase !== "play"; bb.hidden = !show || st.ts !== "kept";
     $(".actions").classList.toggle("idle", !show);
     const ok = show && canAct();
-    rb.textContent = st.ts === "pre" ? "Roll 6 dice" : st.ts === "rolled" || st.ts === "farkle" ? "Keep" : remaining === 0 ? "Hot dice: roll 6" : `Roll ${remaining}`;
+    // No status line (owner, 2026-11-15): the banners and the dice say what happened, and the gold button says the
+    // two things nothing else on screen does: that a tap is still on its way, and why Keep is greyed out.
+    rb.textContent = rolling ? "Rolling\u2026" : st.busy ? "Checking\u2026" : st.ts === "pre" ? "Roll 6 dice"
+      : st.ts === "rolled" && bad ? "Not all score" : st.ts === "rolled" || st.ts === "farkle" ? "Keep" : remaining === 0 ? "Hot dice: roll 6" : `Roll ${remaining}`;
     rb.disabled = !ok || (st.ts === "rolled" && selV <= 0);
     bb.textContent = short ? `Need ${fmt(need)}` : `Bank ${fmt(st.tp)}`;
     bb.disabled = !ok || short;
