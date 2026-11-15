@@ -1,0 +1,356 @@
+<title>Farkle Menu Flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&family=Figtree:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the flow left to right (home, single player, how to play), then three takes on the multiplayer room. Single theme: the game's night table. */
+:root {
+  --ink: #0c1310; --panel: #141e19; --panel-2: #1b2822;
+  --line: rgba(214, 173, 92, .18); --line-strong: rgba(214, 173, 92, .42);
+  --brass: #d6ad5c; --brass-hi: #f1d48f; --brass-ink: #2b1e06;
+  --cream: #f3ebd9; --muted: #a3b3a9; --soft: #cfe0d5;
+  --felt: #1e6d48; --felt-deep: #0f3f29; --bad: #ef6a52; --good: #6fd39b;
+  --p0: #e5664f; --p1: #5b9bea; --p2: #e9bf55; --p3: #ad85ea;
+  --f-display: "Limelight", Didot, Georgia, serif;
+  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "DM Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--ink); color: var(--cream); font: 15px/1.5 var(--f-body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 32px; }
+h1 { font: 400 clamp(30px, 6vw, 44px)/1.1 var(--f-display); color: var(--brass-hi); margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+h3 { font-size: 22px; margin: 0; font-weight: 700; }
+p { margin: 0; }
+.eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--brass); font-weight: 600; }
+.lead { color: var(--soft); max-width: 70ch; }
+.sec { display: flex; flex-direction: column; gap: 16px; }
+.sec-head { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 22px; }
+
+.frames { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 32px 24px; align-items: start; }
+.opt { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.opt-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.tag { font: 500 11px var(--f-mono); padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line-strong); color: var(--muted); }
+.tag.rec { background: var(--brass); color: var(--brass-ink); border-color: var(--brass); }
+.opt-pitch { color: var(--soft); font-size: 14px; }
+.pc { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.pc span::before { font-family: var(--f-mono); margin-right: 6px; }
+.pc .p::before { content: "+"; color: var(--good); }
+.pc .c::before { content: "−"; color: var(--bad); }
+
+.phone { position: relative; width: 100%; max-width: 360px; height: 680px; border-radius: 34px; border: 8px solid #050807; background: radial-gradient(120% 60% at 50% 0%, #15241c 0%, var(--ink) 70%); box-shadow: 0 0 0 1px var(--line), 0 20px 50px rgba(0,0,0,.5); overflow: hidden; }
+.scr { position: absolute; inset: 0; padding: 14px 14px 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+.bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 32px; }
+.logo { font: 400 24px var(--f-display); color: var(--brass-hi); }
+.icons { display: flex; gap: 6px; }
+.icons i { width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--line); display: block; }
+.back { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.title { font-weight: 700; font-size: 16px; }
+.grow { flex: 1; }
+
+.btn { min-height: 50px; border-radius: 11px; border: 1px solid var(--line-strong); background: var(--panel-2); color: var(--cream); font: 600 16px var(--f-body); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 12px; cursor: pointer; width: 100%; }
+.btn.primary { background: linear-gradient(180deg, var(--brass-hi), var(--brass)); color: var(--brass-ink); border-color: #a9822f; box-shadow: 0 2px 0 #7d5e1d, inset 0 1px 0 rgba(255,255,255,.35); }
+.btn.off { opacity: .45; }
+.btn.ghost { background: transparent; border-color: var(--line); color: var(--soft); }
+.btn.sm { min-height: 40px; font-size: 14px; width: auto; }
+.btn:focus-visible, .door:focus-visible, .link:focus-visible, .joincard summary:focus-visible { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row > * { min-width: 0; }
+.help { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.link { align-self: center; background: none; border: 0; padding: 6px; font: 14px var(--f-body); color: var(--soft); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.link b { color: var(--brass-hi); font-weight: 600; }
+.inp { height: 46px; border-radius: 10px; border: 1px solid var(--line-strong); background: #0a110d; display: flex; align-items: center; padding: 0 12px; color: var(--cream); }
+.inp.code { justify-content: center; font: 500 20px var(--f-mono); letter-spacing: .35em; color: var(--muted); }
+.step { display: flex; border: 1px solid var(--line-strong); border-radius: 11px; overflow: hidden; flex: none; }
+.step span { width: 40px; height: 40px; display: grid; place-items: center; font: 500 15px var(--f-mono); color: var(--muted); }
+.step span.on { background: #2a3a31; color: var(--brass-hi); box-shadow: inset 0 0 0 1px var(--brass); }
+.rules { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--line); background: var(--panel); color: var(--soft); }
+.rules b { color: var(--cream); }
+.rules u { color: var(--brass-hi); text-underline-offset: 3px; }
+.note { font: 500 11px/1.3 var(--f-mono); background: var(--bad); color: #1a0703; padding: 4px 7px; border-radius: 6px; }
+
+/* Home */
+.home-title { font: 400 54px/1 var(--f-display); color: var(--brass-hi); text-align: center; margin-top: 30px; text-shadow: 0 0 24px rgba(241,212,143,.25); }
+.home-sub { text-align: center; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
+.door { display: flex; gap: 14px; align-items: center; text-align: left; padding: 16px; border-radius: 16px; border: 1px solid var(--line-strong); background: var(--panel); color: var(--cream); font: inherit; width: 100%; cursor: pointer; }
+.door svg { width: 40px; height: 40px; flex: none; color: var(--brass-hi); }
+.door div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.door b { font-size: 18px; }
+.door small { font-size: 13px; color: var(--muted); line-height: 1.35; }
+.door .chev { margin-left: auto; color: var(--brass); font-size: 22px; }
+.door.felt { background: radial-gradient(130% 120% at 30% 0%, var(--felt) 0%, var(--felt-deep) 100%); border-color: var(--brass); }
+.door.felt small { color: var(--soft); }
+.door.quiet { padding: 12px 16px; border-color: var(--line); background: transparent; }
+.door.quiet svg { width: 28px; height: 28px; color: var(--muted); }
+.door.quiet b { font-size: 16px; }
+
+/* Seats */
+.seats { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); overflow: hidden; }
+.seats li { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 12px; }
+.seats li + li { border-top: 1px solid var(--line); }
+.die { width: 20px; height: 20px; border-radius: 5px; flex: none; box-shadow: inset 0 -2px 0 rgba(0,0,0,.28); }
+.die.empty { background: transparent; border: 1.5px dashed var(--line-strong); box-shadow: none; }
+.nm { flex: 1; min-width: 0; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.nm small { font-weight: 400; color: var(--muted); font-size: 13px; }
+.nm.wait { font-weight: 400; color: var(--muted); font-style: italic; }
+.me-edit { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; height: 38px; border-radius: 9px; border: 1px solid var(--brass); background: #0a110d; padding: 0 10px; font-weight: 700; }
+.me-edit svg { width: 15px; height: 15px; color: var(--brass); }
+.pill { font: 500 10.5px var(--f-mono); padding: 2px 7px; border-radius: 99px; background: var(--panel-2); color: var(--brass-hi); border: 1px solid var(--line-strong); }
+.codecard { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); }
+.codecard .code { font: 500 32px/1.1 var(--f-mono); letter-spacing: .16em; color: var(--brass-hi); }
+.foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
+.foot-hint { text-align: center; font-size: 12.5px; color: var(--muted); }
+
+/* M1: join bar */
+.joinbar { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 14px; border: 1px dashed var(--line-strong); }
+.joinbar .lbl { font-size: 12.5px; color: var(--soft); font-weight: 600; }
+.joinbar .inp { height: 42px; flex: 1; font-size: 17px; }
+
+/* M2: big code */
+.hero { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 14px; border-radius: 18px; background: radial-gradient(130% 120% at 30% 0%, var(--felt) 0%, var(--felt-deep) 100%); border: 1px solid var(--brass); text-align: center; }
+.hero .code { font: 500 50px/1 var(--f-mono); letter-spacing: .14em; color: var(--brass-hi); }
+.hero p { font-size: 13px; color: var(--soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 6px; border-radius: 99px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; font-weight: 600; }
+.chip .die { width: 16px; height: 16px; }
+.chip.wait { color: var(--muted); font-weight: 400; font-style: italic; border-style: dashed; }
+.shade { position: absolute; inset: 0; background: rgba(5,10,8,.72); display: flex; align-items: flex-end; z-index: 4; }
+.sheet { width: 100%; background: var(--panel); border-top: 1px solid var(--line-strong); border-radius: 18px 18px 0 0; padding: 14px 14px 18px; display: flex; flex-direction: column; gap: 12px; }
+@media (prefers-reduced-motion: no-preference) { .shade:not([hidden]) .sheet { animation: up .22s ease-out; } }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; }
+.sheet-head b { font-size: 17px; }
+.x { background: none; border: 0; color: var(--muted); font: 14px var(--f-body); cursor: pointer; text-decoration: underline; }
+.boxes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.boxes span { height: 60px; border-radius: 12px; border: 1px solid var(--line-strong); background: #0a110d; display: grid; place-items: center; font: 500 28px var(--f-mono); color: var(--brass-hi); }
+.boxes span.cur { border-color: var(--brass); box-shadow: 0 0 0 2px rgba(214,173,92,.3); }
+.boxes span.e { color: transparent; }
+
+/* M3: name-first + expanding join card */
+.namecard { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; border: 1px solid var(--brass); background: var(--panel); }
+.namecard .lbl { font-size: 13px; font-weight: 600; }
+.swatches { display: flex; gap: 8px; }
+.swatches b { width: 24px; height: 24px; border-radius: 6px; display: block; }
+.swatches b:first-child { outline: 2px solid var(--brass); outline-offset: 2px; }
+.joincard { border-radius: 14px; border: 1px solid var(--line); background: var(--panel); }
+.joincard summary { list-style: none; cursor: pointer; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; color: var(--soft); }
+.joincard summary::-webkit-details-marker { display: none; }
+.joincard summary::after { content: "▴"; color: var(--brass); }
+.joincard[open] summary::after { content: "▾"; }
+.joincard .body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+
+/* How to play */
+.howto { display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; color: var(--soft); }
+.howto ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.mini { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13px; padding: 10px 12px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); }
+.mini span:nth-child(even) { font-family: var(--f-mono); color: var(--brass-hi); text-align: right; }
+.pips { display: inline-flex; gap: 3px; vertical-align: middle; }
+.pips i { width: 16px; height: 16px; border-radius: 4px; background: var(--cream); color: #1a1a1a; font: 600 10px/16px var(--f-mono); text-align: center; font-style: normal; }
+
+.flow-note { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.flow-note > div { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.flow-note ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; color: var(--soft); }
+.flow-note b { color: var(--cream); }
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="eyebrow">Farkle Table · menu flow, round 2</span>
+    <h1>Single Player, Multiplayer, How to Play</h1>
+    <p class="lead">Three doors on the home screen, no name field. The name moves into the lobby, as the text on your own seat. Single Player opens a practice lobby with 1 bot. Multiplayer opens a hosted room straight away, with a way to join someone else's room at the bottom. Below the flow are three takes on that room screen.</p>
+  </header>
+
+  <section class="sec">
+    <div class="frames">
+      <!-- Home -->
+      <article class="opt">
+        <div class="opt-head"><h2>Home</h2></div>
+        <p class="opt-pitch">Nothing to fill in. Each door says who you play with in plain words.</p>
+        <div class="phone"><div class="scr">
+          <div class="bar"><span></span><span class="icons"><i></i><i></i><i></i></span></div>
+          <div class="home-title">Farkle</div>
+          <div class="home-sub">Dice for 1–4 players</div>
+          <button class="door" type="button" onclick="document.getElementById('f-single').scrollIntoView({behavior:'smooth',block:'center'})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9.5" cy="13" r="1.2" fill="currentColor"/><circle cx="14.5" cy="13" r="1.2" fill="currentColor"/></svg>
+            <div><b>Single Player</b><small>You against bots, on this phone.</small></div><span class="chev">›</span>
+          </button>
+          <button class="door felt" type="button" onclick="document.getElementById('f-multi').scrollIntoView({behavior:'smooth',block:'start'})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2A4.5 4.5 0 0 1 21 18.5"/></svg>
+            <div><b>Multiplayer</b><small>Play friends online, 2–4 players. Host a table or join one.</small></div><span class="chev">›</span>
+          </button>
+          <button class="door quiet" type="button" onclick="document.getElementById('f-howto').scrollIntoView({behavior:'smooth',block:'center'})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>
+            <div><b>How to Play</b></div><span class="chev">›</span>
+          </button>
+        </div></div>
+        <div class="pc"><span class="p">Three choices, none of them a form.</span><span class="p">Multiplayer gets the felt, so it reads as the main way to play.</span><span class="c">The subtitle says "1–4 players" now; worth a look on the splash too.</span></div>
+      </article>
+
+      <!-- Single -->
+      <article class="opt" id="f-single">
+        <div class="opt-head"><h2>Single Player lobby</h2></div>
+        <p class="opt-pitch">The same lobby as online, minus the code. One bot sits down by default; the stepper adds more seats.</p>
+        <div class="phone"><div class="scr">
+          <div class="bar"><span class="back">‹ Menu</span><span class="title">Practice table</span><span style="width:52px"></span></div>
+          <ol class="seats">
+            <li><span class="die" style="background:var(--p0)"></span><span class="me-edit">Ana <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></span></li>
+            <li><span class="die" style="background:var(--p1)"></span><span class="nm">Bot Rolo <small>· bot</small></span></li>
+          </ol>
+          <div class="row" style="justify-content:space-between"><span style="font-weight:600">Bots</span><div class="step"><span class="on">1</span><span>2</span><span>3</span></div></div>
+          <div class="rules"><span>Rules: <b>Classic</b> · first to 10,000</span><u>Change</u></div>
+          <div class="foot">
+            <p class="foot-hint">Just you and the bots. Nobody can join this table.</p>
+            <div class="btn primary">Start game</div>
+          </div>
+        </div></div>
+        <div class="pc"><span class="p">Name, dice, bots and rules all sit where the game starts.</span><span class="p">The line above Start answers "can my friend join?" before it's asked.</span><span class="c">One more tap than today's straight-to-table button.</span></div>
+      </article>
+
+      <!-- How to play -->
+      <article class="opt" id="f-howto">
+        <div class="opt-head"><h2>How to Play</h2></div>
+        <p class="opt-pitch">A full screen, not the scoring table alone. Turn flow first, then the points.</p>
+        <div class="phone"><div class="scr">
+          <div class="bar"><span class="back">‹ Menu</span><span class="title">How to Play</span><span style="width:52px"></span></div>
+          <div class="howto">
+            <p>First to <b style="color:var(--cream)">10,000</b> wins. On your turn:</p>
+            <ol>
+              <li>Roll six dice.</li>
+              <li>Set aside at least one scoring die.</li>
+              <li>Roll the rest to push your luck, or <b style="color:var(--cream)">Bank</b> to keep the points.</li>
+              <li>A roll with nothing that scores is a <b style="color:var(--bad)">Farkle</b>: the turn's points are gone.</li>
+            </ol>
+            <div class="mini">
+              <span><span class="pips"><i>1</i></span> each</span><span>100</span>
+              <span><span class="pips"><i>5</i></span> each</span><span>50</span>
+              <span><span class="pips"><i>1</i><i>1</i><i>1</i></span></span><span>1,000</span>
+              <span><span class="pips"><i>4</i><i>4</i><i>4</i></span> three of a kind</span><span>face × 100</span>
+              <span>Straight 1–6</span><span>1,500</span>
+              <span>Three pairs</span><span>1,500</span>
+            </div>
+            <span class="link" style="align-self:flex-start;padding:0">All scoring combos</span>
+          </div>
+          <div class="foot"><div class="btn primary">Try it vs a bot</div></div>
+        </div></div>
+        <div class="pc"><span class="p">Ends with a way into Single Player, the safe place to learn.</span><span class="c">The full table moves one tap deeper.</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec" id="f-multi">
+    <div class="sec-head">
+      <span class="eyebrow">Multiplayer</span>
+      <h2>Three takes on the hosted room</h2>
+      <p class="lead">Tapping Multiplayer creates a room right away. The risk: someone who came to join sees their own code first and sends it to the host. People who open an invite link skip the menu, so this only catches people typing a code, but the join option has to be visible without scrolling.</p>
+    </div>
+    <div class="frames">
+      <!-- M1 -->
+      <article class="opt">
+        <div class="opt-head"><h2>M1 · Join bar</h2><span class="tag rec">recommended</span></div>
+        <p class="opt-pitch">Today's lobby plus an always-open code field at the bottom. Joining is one field and one tap, never hidden.</p>
+        <div class="phone"><div class="scr">
+          <div class="bar"><span class="back">‹ Menu</span><span class="title">Your table</span><span style="width:52px"></span></div>
+          <div class="codecard"><div><span class="eyebrow">Room code</span><div class="code">4821</div></div><div class="btn primary sm">Invite</div></div>
+          <ol class="seats">
+            <li><span class="die" style="background:var(--p0)"></span><span class="me-edit">Player 42 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></span><span class="pill">host</span></li>
+            <li><span class="die empty"></span><span class="nm wait">Waiting for a friend…</span></li>
+          </ol>
+          <div class="rules"><span>Rules: <b>Classic</b> · 10,000</span><u>Change</u></div>
+          <div class="btn primary off">Start · need 1 more</div>
+          <div class="foot">
+            <div class="joinbar">
+              <span class="lbl">Joining a friend instead? Enter their code</span>
+              <div class="row"><div class="inp code">0000</div><div class="btn sm">Join</div></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="pc"><span class="p">The joiner never needs a second screen.</span><span class="p">The dashed border sets it apart from the host controls.</span><span class="c">Two code-shaped things on one screen; the labels have to do the work.</span><span class="c">The keyboard covers the seats while you type.</span></div>
+      </article>
+
+      <!-- M2 -->
+      <article class="opt">
+        <div class="opt-head"><h2>M2 · Code front and center</h2><span class="tag">sheet</span></div>
+        <p class="opt-pitch">The room is about sharing the code, so the code is the hero. Joining is a clear button at the bottom that opens a four-box code sheet.</p>
+        <div class="phone" id="m2"><div class="scr">
+          <div class="bar"><span class="back">‹ Menu</span><span class="icons"><i></i></span></div>
+          <div class="hero">
+            <span class="eyebrow" style="color:var(--brass-hi)">Your table is open</span>
+            <div class="code">4821</div>
+            <p>Send this code to 1–3 friends.</p>
+            <div class="btn primary sm" style="width:100%">Invite friends</div>
+          </div>
+          <div class="chips">
+            <span class="chip"><span class="die" style="background:var(--p0)"></span>Player 42 ✎</span>
+            <span class="chip wait"><span class="die empty"></span>open seat</span>
+          </div>
+          <div class="rules"><span>Rules: <b>Classic</b> · 10,000</span><u>Change</u></div>
+          <div class="foot">
+            <div class="btn primary off">Start · need 1 more</div>
+            <button class="btn ghost" type="button" data-open>Have a code? Join a friend</button>
+          </div>
+        </div>
+        <div class="shade" hidden><div class="sheet">
+          <div class="sheet-head"><b>Join a friend's table</b><button class="x" type="button">Cancel</button></div>
+          <p class="help">Type the 4-digit code on your friend's screen. You'll leave your own table.</p>
+          <div class="boxes"><span>7</span><span>3</span><span class="cur e">0</span><span class="e">0</span></div>
+          <div class="btn primary off">Join table</div>
+        </div></div>
+        </div>
+        <div class="pc"><span class="p">Clearest for hosts: you can't miss the code.</span><span class="p">Join is a full-width button, findable without reading.</span><span class="c">Seats shrink to chips; less room for dice colour and ready state.</span><span class="c">The big code is what a confused joiner will read and send.</span></div>
+      </article>
+
+      <!-- M3 -->
+      <article class="opt">
+        <div class="opt-head"><h2>M3 · Name first</h2><span class="tag">expanding card</span></div>
+        <p class="opt-pitch">Since the name left the home screen, ask for it first, with dice. Join sits in a collapsed card at the bottom that opens in place.</p>
+        <div class="phone"><div class="scr">
+          <div class="bar"><span class="back">‹ Menu</span><span class="title">Your table · <span style="font-family:var(--f-mono);color:var(--brass-hi)">4821</span></span><div class="btn primary sm" style="min-height:32px;padding:0 10px;font-size:13px">Invite</div></div>
+          <div class="namecard">
+            <span class="lbl">What should friends call you?</span>
+            <div class="inp" style="border-color:var(--brass)">Ana<span style="color:var(--brass);margin-left:1px">|</span></div>
+            <div class="swatches"><b style="background:#d6303a"></b><b style="background:#62c33b"></b><b style="background:#2e6fe0"></b><b style="background:#f0761b"></b><b style="background:#8e48d6"></b><b style="background:#18aac2"></b></div>
+          </div>
+          <ol class="seats">
+            <li><span class="die" style="background:#d6303a"></span><span class="nm">Ana</span><span class="pill">host</span></li>
+            <li><span class="die empty"></span><span class="nm wait">Waiting for a friend…</span></li>
+          </ol>
+          <div class="rules"><span>Rules: <b>Classic</b> · 10,000</span><u>Change</u></div>
+          <div class="foot">
+            <div class="btn primary off">Start · need 1 more</div>
+            <details class="joincard">
+              <summary>Joining someone else's table?</summary>
+              <div class="body">
+                <p class="help">Enter the code from your friend's screen.</p>
+                <div class="row"><div class="inp code" style="flex:1">0000</div><div class="btn sm">Join</div></div>
+              </div>
+            </details>
+          </div>
+        </div></div>
+        <div class="pc"><span class="p">Friends see a real name, not "Player 42".</span><span class="p">The name card hides itself once a name is saved on this device.</span><span class="c">Join is one tap deeper than M1.</span><span class="c">Tallest screen of the three at 375 px.</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="flow-note">
+    <div>
+      <h2>Recommendation: M1, with the name card from M3 on first visit</h2>
+      <p class="lead">M1 keeps join visible with no extra tap, which matters most since joiners land here by default. Borrow M3's name card only when there's no saved name, so first-timers aren't introduced as "Player 42" and returning players skip it.</p>
+    </div>
+    <div>
+      <h2>Build notes</h2>
+      <ul>
+        <li><b>Leaving the auto room.</b> Join leaves the hosted room before joining, so a room nobody uses is dropped right away instead of sitting there.</li>
+        <li><b>Renaming in a live room.</b> The network code can already re-send your player info, so editing the name on your seat updates everyone's screen.</li>
+        <li><b>Single Player gains a lobby.</b> Today the bots button skips straight to the table; it would now use the lobby screen with the code hidden.</li>
+        <li><b>Rules move into lobbies only.</b> The Classic/Custom cards leave home; the lobby's existing rules line takes over.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+const m2 = document.getElementById("m2");
+m2.querySelector("[data-open]").addEventListener("click", () => { m2.querySelector(".shade").hidden = false; });
+m2.querySelector(".shade").addEventListener("click", (e) => { if (e.target.classList.contains("shade") || e.target.classList.contains("x")) e.currentTarget.hidden = true; });
+</script>

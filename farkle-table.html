@@ -124,6 +124,34 @@ input:focus-visible, select:focus-visible, button:focus-visible, canvas:focus-vi
 
 /* ---------- Start screen ---------- */
 .screen { display: flex; flex-direction: column; gap: 14px; }
+/* Home: the title, then three doors under it. The splash title flies into .home-title, so it uses the same face and spacing. */
+#scr-start { gap: 0; padding-top: 4vh; }
+.home-title {
+  align-self: center; font-family: var(--f-display); font-weight: 400; line-height: .95; font-size: clamp(56px, 17vw, 80px); letter-spacing: .02em;
+  color: var(--brass-hi); text-shadow: 0 0 18px rgba(241, 212, 143, .35), 0 3px 0 #6b4a12, 0 6px 14px rgba(0, 0, 0, .7);
+}
+.home-sub { margin: 10px 0 24px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .24em; color: var(--muted); }
+/* The big title stands in for the logo on the home screen. */
+#app:has(#scr-start:not([hidden])) .brand { visibility: hidden; }
+.doors { display: flex; flex-direction: column; gap: 12px; }
+.door {
+  display: flex; align-items: center; gap: 14px; width: 100%; min-height: 76px; padding: 14px 16px; border-radius: 16px; text-align: left; cursor: pointer;
+  border: 1px solid var(--line-strong); background: rgba(20, 30, 25, .82); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  color: var(--cream); font: inherit; box-shadow: 0 8px 22px rgba(0, 0, 0, .35); touch-action: manipulation; transition: border-color .15s, transform .1s;
+}
+.door:hover { border-color: var(--brass); }
+.door:active { transform: translateY(1px); }
+.door:focus-visible { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
+.door svg { width: 40px; height: 40px; flex: none; color: var(--brass-hi); }
+.door-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.door-text b { font-size: 18px; }
+.door-text small { font-size: 13px; line-height: 1.35; color: var(--muted); }
+.door .chev { margin-left: auto; font-size: 26px; line-height: 1; color: var(--brass); }
+.door.felt { border-color: var(--brass); background: radial-gradient(130% 120% at 30% 0%, var(--felt) 0%, var(--felt-deep) 100%); }
+.door.felt small { color: #cfe0d5; }
+.door.quiet { min-height: 56px; padding: 10px 16px; border-color: var(--line); background: rgba(12, 19, 16, .6); box-shadow: none; }
+.door.quiet svg { width: 28px; height: 28px; color: var(--muted); }
+.door.quiet b { font-size: 16px; }
 .modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .mode { position: relative; cursor: pointer; }
 .mode input { position: absolute; opacity: 0; pointer-events: none; }
@@ -166,15 +194,38 @@ input:focus-visible, select:focus-visible, button:focus-visible, canvas:focus-vi
 .rule-picks #rules-reset { align-self: flex-start; }
 .join-row { display: flex; gap: 8px; }
 .join-row input { flex: 1; min-width: 0; font-family: var(--f-mono); font-size: 20px; letter-spacing: .3em; text-align: center; }
-/* Play vs bots: a bot count beside the button, one row under Create. */
-.bot-row { display: flex; gap: 10px; }
-.bot-row .big { flex: 1; min-width: 0; padding: 0 12px; }
-.bot-row .big svg { width: 20px; height: 20px; flex: none; color: var(--brass-hi); }
-.bot-row .big span { white-space: nowrap; }
-@media (max-width: 359px) { .bot-row .big svg { display: none; } }
-.bot-count { display: flex; flex: none; border-radius: 11px; border: 1px solid var(--line-strong); background: var(--panel); overflow: hidden; }
-.bot-count button { width: 44px; min-height: 54px; padding: 0; border: 0; background: transparent; color: var(--muted); font: 500 17px var(--f-mono); cursor: pointer; touch-action: manipulation; }
-.bot-count button[aria-checked="true"] { background: #2a3a31; color: var(--brass-hi); box-shadow: inset 0 0 0 1px var(--brass); }
+.join-bar { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 14px; border: 1px dashed var(--line-strong); }
+.join-bar label { font-size: 13px; font-weight: 600; color: #cfe0d5; }
+.join-bar .join-row input { min-height: 46px; }
+.join-bar .btn { min-height: 46px; padding: 0 18px; }
+.name-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-color: var(--brass); }
+.name-line { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; font-size: 14px; }
+#name-count { font-size: 12px; font-weight: 400; color: var(--muted); }
+.name-line[data-over="1"] #name-count { color: var(--bad); }
+.name-row { display: flex; gap: 8px; }
+.name-row input { flex: 1; min-width: 0; }
+.name-row .btn { flex: none; padding: 0 18px; }
+/* How to Play */
+#scr-howto { flex: 1; gap: 12px; }
+.howto-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.howto-bar h2 { font-size: 17px; }
+.back-btn { justify-self: start; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--muted); font: 15px var(--f-body); cursor: pointer; }
+.back-btn:hover { color: var(--cream); }
+.howto-lead { font-size: 15px; }
+.howto-steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; color: #cfe0d5; }
+.howto-steps b, .howto-lead b { color: var(--cream); }
+.howto-steps .bad { color: var(--bad); }
+.howto-mini {
+  display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line);
+  background: rgba(20, 30, 25, .78); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); font-size: 14px;
+}
+.howto-mini dt { display: flex; align-items: center; gap: 6px; }
+.howto-mini dd { margin: 0; text-align: right; font-family: var(--f-mono); color: var(--brass-hi); font-variant-numeric: tabular-nums; }
+.pips { display: inline-flex; gap: 3px; }
+.pips i { width: 20px; height: 20px; border-radius: 5px; background: var(--cream); color: #1a1a1a; font: 600 12px/20px var(--f-mono); text-align: center; font-style: normal; box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .2); }
+#btn-allcombos { align-self: flex-start; padding: 0; }
+.howto-foot { margin-top: auto; position: sticky; bottom: 0; padding: 10px 0 env(safe-area-inset-bottom, 0px); display: flex; flex-direction: column; }
+.veil.dim { background-color: rgba(6, 10, 8, .8); }
 details.custom-server summary { cursor: pointer; font-size: 14px; min-height: 32px; display: flex; align-items: center; color: var(--muted); }
 details.custom-server[open] summary { margin-bottom: 8px; }
 .link-btn { align-self: center; min-height: 44px; padding: 0 12px; border: 0; background: none; color: var(--muted); font: 14px var(--f-body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
@@ -197,18 +248,6 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 .score-table td:last-child { text-align: right; font-family: var(--f-mono); color: var(--brass-hi); font-variant-numeric: tabular-nums; }
 .rules p { margin-top: 10px; font-size: 13px; color: var(--muted); }
 
-.who { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
-.name-line { display: flex; justify-content: space-between; gap: 10px; }
-#name-count { font-size: 12px; }
-.name-line[data-over="1"] #name-count { color: var(--bad); }
-.dice-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
-.dice-line .swatches { gap: 2px; justify-content: flex-end; flex-wrap: nowrap; }
-/* Under 360 px six 44 px dice don't fit beside the label: the label goes above them. */
-@media (max-width: 359px) {
-  .who { padding: 10px; }
-  .dice-line { flex-direction: column; align-items: stretch; gap: 2px; }
-  .dice-line .swatches { gap: 0; justify-content: space-between; }
-}
 /* Dice colour picker: a row of little dice, one per colour. */
 .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
 .swatch { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border-radius: 12px; border: 1px solid transparent; background: transparent; cursor: pointer; touch-action: manipulation; }
@@ -223,7 +262,6 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 /* Holiday look: the Christmas dice add a second row of six under the usual ones. */
 .swatches.two-rows { display: grid; grid-template-columns: repeat(6, 44px); gap: 2px; }
 .seat-picker .swatches.two-rows { grid-template-columns: repeat(6, 1fr); justify-items: center; gap: 0; }
-@media (max-width: 359px) { .dice-line .swatches.two-rows { grid-template-columns: repeat(6, 1fr); justify-items: center; gap: 0; } }
 .die-sw { width: 12px; height: 12px; flex: none; border-radius: 3px; background: var(--dc); box-shadow: 0 0 0 1px rgba(0, 0, 0, .35); margin-left: auto; }
 
 /* ---------- Lobby ---------- */
@@ -237,6 +275,10 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--pc, var(--muted)); box-shadow: 0 0 0 3px rgba(0, 0, 0, .3); }
 .seat-name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .seat-name small { font-size: 15px; font-weight: 400; color: var(--muted); }
+/* My own name opens the name card. */
+button.seat-name { display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--cream); font: 700 15px var(--f-body); text-align: left; cursor: pointer; }
+button.seat-name span { overflow: hidden; text-overflow: ellipsis; }
+button.seat-name svg { width: 14px; height: 14px; flex: none; color: var(--brass); }
 .seats .die-sw { width: 18px; height: 18px; border-radius: 5px; margin: 0; box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .28), 0 0 0 1px rgba(0, 0, 0, .35); }
 .seat-sw { width: 54px; flex: none; display: grid; place-items: center; }
 .seat-dice { width: 54px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 0; border-radius: 11px; border: 1px solid var(--line-strong); background: var(--panel-2); color: var(--brass-hi); cursor: pointer; touch-action: manipulation; }
@@ -267,6 +309,10 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 .rl-vals .bad { color: var(--bad); }
 .rules-line svg { width: 16px; height: 16px; flex: none; color: #cfe0d5; transition: transform .15s; }
 .rules-line[aria-expanded="true"] svg { transform: rotate(180deg); }
+/* For the host the line opens the rules sheet, so it says so instead of showing the fold arrow. */
+.rl-change { display: none; flex: none; font-size: 13px; font-weight: 600; color: var(--brass-hi); text-decoration: underline; text-underline-offset: 3px; }
+.rules-line.can-change .rl-change { display: inline; }
+.rules-line.can-change svg { display: none; }
 .lobby-bar {
   margin-top: auto; position: sticky; bottom: 0; z-index: 5; display: flex; flex-direction: column; gap: 8px;
   padding: 10px 0 env(safe-area-inset-bottom, 0px); background: var(--ink); border-top: 1px solid var(--line);
@@ -380,17 +426,16 @@ details.custom-server[open] summary { margin-bottom: 8px; }
 #snow { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
 /* Holiday look: a Santa hat on the corner of the F, on the logo and the splash title. Sized in em so it
    sits the same on both, and rides along when the title flies into the logo. */
-html.xmas .brand-word, html.xmas .s-title { position: relative; }
-html.xmas .brand-word::after, html.xmas .s-title::after {
+html.xmas .brand-word, html.xmas .s-title, html.xmas .home-title { position: relative; }
+html.xmas .brand-word::after, html.xmas .s-title::after, html.xmas .home-title::after {
   content: ""; position: absolute; left: -.33em; top: -.4em; width: .73em; height: .57em; transform: rotate(-22deg); pointer-events: none;
   background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 20'%3E%3Cpath d='M3 16 C 5 8, 11 2, 19 3 C 22 3.5, 24 6, 24 9 C 21 7, 17 7, 15 9 L 21 16 Z' fill='%23d42433' stroke='%236e0c14' stroke-width='1'/%3E%3Ccircle cx='24' cy='9.5' r='2.6' fill='%23fff' stroke='%23c9d4e0' stroke-width='.6'/%3E%3Crect x='1.5' y='14.2' width='21' height='4.6' rx='2.3' fill='%23fff' stroke='%23c9d4e0' stroke-width='.6'/%3E%3C/svg%3E");
 }
 .veil { position: fixed; inset: 0; z-index: 0; pointer-events: none; transition: background-color .8s ease;
   background-color: rgba(6, 10, 8, .5); background-image: radial-gradient(120% 80% at 50% 55%, rgba(12, 19, 16, 0) 40%, rgba(6, 10, 8, .85) 100%); }
 .veil.intro { background-color: rgba(6, 10, 8, 0); }
-#scr-start .panel, #scr-lobby .panel, #scr-lobby .seats { background: rgba(20, 30, 25, .78); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+#scr-lobby .panel, #scr-lobby .seats { background: rgba(20, 30, 25, .78); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 #scr-lobby .lobby-bar { background: rgba(12, 19, 16, .72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-#scr-start .mode-card { box-shadow: inset 0 0 0 4px rgba(0, 0, 0, .15), 0 8px 22px rgba(0, 0, 0, .35); }
 #splash {
   position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; cursor: pointer;
   padding: max(14vh, 64px) max(16px, env(safe-area-inset-right, 0px)) max(7vh, 32px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
@@ -408,15 +453,16 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
 @keyframes s-fade { from { opacity: 0; } }
 @keyframes s-pulse { 50% { opacity: .35; } }
 .s-tag, .s-tap { transition: opacity .3s ease; }
-/* Handoff: the title flies into the top bar logo (startGame sets the transform) while the home screen rises in. */
+/* Handoff: the title flies into the home screen's title (enterHome sets the transform) while the doors rise in. */
 #splash.leaving { background: transparent; pointer-events: none; }
 #splash.leaving .s-tag, #splash.leaving .s-tap { opacity: 0; animation: none; }
 #splash.leaving .s-title { animation: none; transition: transform .75s cubic-bezier(.6, 0, .2, 1), text-shadow .75s ease; text-shadow: 0 2px 0 rgba(0, 0, 0, .45); }
 #splash:not([hidden]):not(.leaving) ~ #app { opacity: 0; pointer-events: none; }
-#splash:not([hidden]) ~ #app .brand-word { opacity: 0; }
-#splash:not([hidden]):not(.leaving) ~ #app #scr-start > * { transform: translateY(18px); opacity: 0; }
+/* The flying title is measured against .home-title, so that one doesn't rise in: it appears the moment the flight ends. */
+#splash:not([hidden]) ~ #app .brand-word, #splash:not([hidden]) ~ #app .home-title { opacity: 0; }
+#splash:not([hidden]):not(.leaving) ~ #app #scr-start > :not(.home-title) { transform: translateY(18px); opacity: 0; }
 #splash ~ #app { transition: opacity .5s ease .35s; }
-#splash ~ #app #scr-start > * { transition: transform .6s cubic-bezier(.2, .8, .2, 1) .4s, opacity .6s ease .4s; }
+#splash ~ #app #scr-start > :not(.home-title) { transition: transform .6s cubic-bezier(.2, .8, .2, 1) .4s, opacity .6s ease .4s; }
 #splash ~ #app #scr-start > :nth-child(2) { transition-delay: .45s; }
 #splash ~ #app #scr-start > :nth-child(3) { transition-delay: .5s; }
 #splash ~ #app #scr-start > :nth-child(4) { transition-delay: .55s; }
@@ -494,83 +540,46 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   </section>
 
   <main>
-    <!-- 1. Name, game mode, create or join -->
+    <!-- 1. Home: who you're playing with. The name and rules wait for the lobby. -->
     <section id="scr-start" class="screen">
-      <div class="panel who">
-        <div class="field">
-          <label id="name-hint" class="name-line" for="name"><span>Your name at the table</span><span id="name-count" class="mono">0/12</span></label>
-          <input id="name" type="text" maxlength="12" autocomplete="nickname" placeholder="e.g. Ana" aria-describedby="name-count" title="12 characters at most, so it fits on phone score cards">
-        </div>
-        <div class="dice-line">
-          <span id="dice-label">Dice</span>
-          <div class="swatches" role="radiogroup" aria-labelledby="dice-label" data-dice-picker></div>
-        </div>
-      </div>
-      <div class="modes" role="radiogroup" aria-label="Rules">
-        <label class="mode">
-          <input type="radio" name="rules" id="rules-classic-pick" value="classic" checked>
-          <span class="mode-card">
-            <span class="mode-top"><span class="mode-name">Classic</span><span class="mode-target">10,000</span></span>
-            <span class="mode-desc"><span>500 to get on</span><span>3 Farkles &minus;1,000</span></span>
-          </span>
-        </label>
-        <label class="mode" id="rules-custom-card">
-          <input type="radio" name="rules" id="rules-custom-pick" value="custom">
-          <span class="mode-card">
-            <span class="mode-top"><span class="mode-name">Custom</span><span id="custom-target" class="mode-target">10,000</span></span>
-            <span id="custom-desc" class="mode-desc"></span>
-          </span>
-        </label>
-      </div>
-      <button id="btn-create" class="btn primary big" type="button">Create room</button>
-      <!-- A game against bots runs on this device alone: no room, no code, straight to the table. -->
-      <div class="bot-row">
-        <div id="bot-count" class="bot-count" role="radiogroup" aria-label="Number of bots">
-          <button type="button" role="radio" data-n="1" aria-label="1 bot">1</button>
-          <button type="button" role="radio" data-n="2" aria-label="2 bots">2</button>
-          <button type="button" role="radio" data-n="3" aria-label="3 bots">3</button>
-        </div>
-        <button id="btn-bots" class="btn big" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9.5" cy="13" r="1.2" fill="currentColor"/><circle cx="14.5" cy="13" r="1.2" fill="currentColor"/></svg><span id="bots-label">Play vs 2 bots</span>
+      <h1 class="home-title">Farkle</h1>
+      <p class="home-sub">Dice for 2&ndash;4 players</p>
+      <nav class="doors" aria-label="Play">
+        <button id="btn-single" class="door" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9.5" cy="13" r="1.2" fill="currentColor"/><circle cx="14.5" cy="13" r="1.2" fill="currentColor"/></svg>
+          <span class="door-text"><b>Single Player</b><small>You against bots, on this phone.</small></span><span class="chev" aria-hidden="true">&rsaquo;</span>
         </button>
-      </div>
-      <div class="join-row">
-        <input id="join-code" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000" aria-label="4-digit room code">
-        <button id="btn-join" class="btn big" type="button">Join a friend</button>
-      </div>
-      <button id="btn-scoring" class="link-btn" type="button" aria-haspopup="dialog">How scoring works</button>
-      <!-- Sheets: slide up over the home screen so the screen itself fits on a phone. -->
-      <div id="sheet-rules" class="sheet" hidden>
-        <div class="sheet-panel panel" role="dialog" aria-modal="true" aria-labelledby="sheet-rules-title">
-          <div class="sheet-head"><h2 id="sheet-rules-title">Custom rules</h2><button class="btn primary small" type="button" data-close>Done</button></div>
-          <div id="rules-custom" class="rule-picks">
-            <fieldset class="pick" data-rule="target"><legend>Winning score</legend><p class="hint">Reaching it starts the final round.</p><div class="pick-row"></div></fieldset>
-            <fieldset class="pick" data-rule="open"><legend>Get on the board</legend><p class="hint">Points you must bank in one turn before your score starts counting.</p><div class="pick-row"></div></fieldset>
-            <fieldset class="pick" data-rule="pen"><legend>3 Farkles in a row</legend><p class="hint">Penalty for three Farkles back to back. The count then starts over.</p><div class="pick-row"></div></fieldset>
-            <button id="rules-reset" class="btn ghost small" type="button">Reset to Classic values</button>
-          </div>
-        </div>
-      </div>
-      <div id="sheet-scoring" class="sheet" hidden>
-        <div class="sheet-panel panel rules" role="dialog" aria-modal="true" aria-labelledby="sheet-scoring-title">
-          <div class="sheet-head"><h2 id="sheet-scoring-title">How scoring works</h2><button class="btn small" type="button" data-close>Close</button></div>
-          <table class="score-table">
-            <tr><td>Each 1</td><td>100</td></tr>
-            <tr><td>Each 5</td><td>50</td></tr>
-            <tr><td>Three 1s</td><td>1,000</td></tr>
-            <tr><td>Three of a kind (2 to 6)</td><td>face &times; 100</td></tr>
-            <tr><td>Four of a kind</td><td>1,000</td></tr>
-            <tr><td>Five of a kind</td><td>2,000</td></tr>
-            <tr><td>Six of a kind</td><td>3,000</td></tr>
-            <tr><td>Straight 1-2-3-4-5-6</td><td>1,500</td></tr>
-            <tr><td>Three pairs</td><td>1,500</td></tr>
-            <tr><td>Four of a kind + a pair</td><td>1,500</td></tr>
-            <tr><td>Two triplets</td><td>2,500</td></tr>
-          </table>
-          <p>After every roll, keep at least one scoring die, then roll the rest or bank. A roll with nothing that scores is a Farkle: you lose the points from that turn. Keep all six and you have hot dice: roll all six again. When someone banks past the target, everyone else gets one last turn.</p>
-          <p>Classic rules add two more: your first bank must be 500 or more in one turn to get you on the board, and three Farkles in a row cost 1,000 (scores stop at 0). Custom rules let the host change both, and the target.</p>
-        </div>
-      </div>
+        <button id="btn-multi" class="door felt" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2A4.5 4.5 0 0 1 21 18.5"/></svg>
+          <span class="door-text"><b>Multiplayer</b><small>Play friends online, 2&ndash;4 players. Host a table or join one.</small></span><span class="chev" aria-hidden="true">&rsaquo;</span>
+        </button>
+        <button id="btn-howto" class="door quiet" type="button" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>
+          <span class="door-text"><b>How to Play</b></span><span class="chev" aria-hidden="true">&rsaquo;</span>
+        </button>
+      </nav>
+    </section>
+
+    <!-- 1b. How to Play: a turn in four steps and the common scores; the full table is one tap deeper. -->
+    <section id="scr-howto" class="screen" hidden>
+      <div class="howto-bar"><button id="howto-back" class="back-btn" type="button">&lsaquo; Menu</button><h2>How to Play</h2><span aria-hidden="true"></span></div>
+      <p class="howto-lead">First to <b>10,000</b> wins. On your turn:</p>
+      <ol class="howto-steps">
+        <li>Roll six dice.</li>
+        <li>Set aside at least one scoring die.</li>
+        <li>Roll the rest to push your luck, or <b>Bank</b> to keep the points.</li>
+        <li>A roll with nothing that scores is a <b class="bad">Farkle</b>: the turn's points are gone.</li>
+      </ol>
+      <dl class="howto-mini">
+        <dt><span class="pips"><i>1</i></span> each</dt><dd>100</dd>
+        <dt><span class="pips"><i>5</i></span> each</dt><dd>50</dd>
+        <dt><span class="pips"><i>1</i><i>1</i><i>1</i></span></dt><dd>1,000</dd>
+        <dt><span class="pips"><i>4</i><i>4</i><i>4</i></span> three of a kind</dt><dd>face &times; 100</dd>
+        <dt>Straight 1&ndash;6</dt><dd>1,500</dd>
+        <dt>Three pairs</dt><dd>1,500</dd>
+      </dl>
+      <button id="btn-allcombos" class="link-btn" type="button" aria-haspopup="dialog">All scoring combos</button>
+      <div class="howto-foot"><button id="btn-tryit" class="btn primary big" type="button">Try it vs a bot</button></div>
     </section>
 
     <!-- 2. Lobby -->
@@ -586,11 +595,19 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
       </div>
       <p id="lobby-mode" class="hint" hidden></p>
       <p id="lobby-note" class="note" hidden></p>
+      <!-- Name: asked for on a first visit, and opened again by tapping my own name. -->
+      <div id="name-card" class="panel name-card" hidden>
+        <label id="name-hint" class="name-line" for="name"><span id="name-ask">What should friends call you?</span><span id="name-count" class="mono">0/12</span></label>
+        <div class="name-row">
+          <input id="name" type="text" maxlength="12" autocomplete="nickname" enterkeyhint="done" placeholder="e.g. Ana" aria-describedby="name-count" title="12 characters at most, so it fits on phone score cards">
+          <button id="name-done" class="btn primary" type="button">Done</button>
+        </div>
+      </div>
       <!-- Seats as a list. My own row carries my dice colour; tapping it opens the picker row under it. -->
       <ol id="slots" class="seats" aria-label="Seats"></ol>
       <div id="lobby-dice" class="swatches" role="radiogroup" aria-label="Your dice colour" data-dice-picker></div>
       <button id="rules-line" class="rules-line" type="button" aria-expanded="false" aria-controls="lobby-rules" hidden>
-        <span id="rules-line-name" class="rl-name">Classic</span><span id="rules-line-vals" class="rl-vals"></span>
+        <span id="rules-line-name" class="rl-name">Classic</span><span id="rules-line-vals" class="rl-vals"></span><span class="rl-change">Change</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div id="lobby-rules" class="rules-card" hidden></div>
@@ -603,6 +620,14 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
           </button>
           <button id="btn-ready" class="btn primary big" type="button" aria-pressed="false">I'm ready</button>
           <button id="btn-start" class="btn primary big" type="button" hidden>Start game</button>
+        </div>
+        <!-- Multiplayer opens a hosted room right away, so someone who came to join a friend needs a way out here. -->
+        <div id="join-bar" class="join-bar" hidden>
+          <label for="join-code">Joining a friend instead? Enter their code</label>
+          <div class="join-row">
+            <input id="join-code" type="text" inputmode="numeric" maxlength="4" autocomplete="off" enterkeyhint="go" placeholder="0000">
+            <button id="btn-join" class="btn" type="button">Join</button>
+          </div>
         </div>
       </div>
     </section>
@@ -635,6 +660,55 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
         </div>
       </div>
     </section>
+    <!-- Sheets slide up over whichever screen opened them. -->
+    <div id="sheet-rules" class="sheet" hidden>
+      <div class="sheet-panel panel" role="dialog" aria-modal="true" aria-labelledby="sheet-rules-title">
+        <div class="sheet-head"><h2 id="sheet-rules-title">Table rules</h2><button class="btn primary small" type="button" data-close>Done</button></div>
+        <div class="modes" role="radiogroup" aria-label="Rules">
+          <label class="mode">
+            <input type="radio" name="rules" id="rules-classic-pick" value="classic" checked>
+            <span class="mode-card">
+              <span class="mode-top"><span class="mode-name">Classic</span><span class="mode-target">10,000</span></span>
+              <span class="mode-desc"><span>500 to get on</span><span>3 Farkles &minus;1,000</span></span>
+            </span>
+          </label>
+          <label class="mode" id="rules-custom-card">
+            <input type="radio" name="rules" id="rules-custom-pick" value="custom">
+            <span class="mode-card">
+              <span class="mode-top"><span class="mode-name">Custom</span><span id="custom-target" class="mode-target">10,000</span></span>
+              <span id="custom-desc" class="mode-desc"></span>
+            </span>
+          </label>
+        </div>
+        <div id="rules-custom" class="rule-picks">
+          <fieldset class="pick" data-rule="target"><legend>Winning score</legend><p class="hint">Reaching it starts the final round.</p><div class="pick-row"></div></fieldset>
+          <fieldset class="pick" data-rule="open"><legend>Get on the board</legend><p class="hint">Points you must bank in one turn before your score starts counting.</p><div class="pick-row"></div></fieldset>
+          <fieldset class="pick" data-rule="pen"><legend>3 Farkles in a row</legend><p class="hint">Penalty for three Farkles back to back. The count then starts over.</p><div class="pick-row"></div></fieldset>
+          <button id="rules-reset" class="btn ghost small" type="button">Reset to Classic values</button>
+        </div>
+      </div>
+    </div>
+    <div id="sheet-scoring" class="sheet" hidden>
+      <div class="sheet-panel panel rules" role="dialog" aria-modal="true" aria-labelledby="sheet-scoring-title">
+        <div class="sheet-head"><h2 id="sheet-scoring-title">All scoring combos</h2><button class="btn small" type="button" data-close>Close</button></div>
+        <table class="score-table">
+          <tr><td>Each 1</td><td>100</td></tr>
+          <tr><td>Each 5</td><td>50</td></tr>
+          <tr><td>Three 1s</td><td>1,000</td></tr>
+          <tr><td>Three of a kind (2 to 6)</td><td>face &times; 100</td></tr>
+          <tr><td>Four of a kind</td><td>1,000</td></tr>
+          <tr><td>Five of a kind</td><td>2,000</td></tr>
+          <tr><td>Six of a kind</td><td>3,000</td></tr>
+          <tr><td>Straight 1-2-3-4-5-6</td><td>1,500</td></tr>
+          <tr><td>Three pairs</td><td>1,500</td></tr>
+          <tr><td>Four of a kind + a pair</td><td>1,500</td></tr>
+          <tr><td>Two triplets</td><td>2,500</td></tr>
+        </table>
+        <p>Keep all six and you have hot dice: roll all six again. When someone banks past the target, everyone else gets one last turn.</p>
+        <p>Classic rules add two more: your first bank must be 500 or more in one turn to get you on the board, and three Farkles in a row cost 1,000 (scores stop at 0). The host can change both, and the target, from the rules line in the lobby.</p>
+      </div>
+    </div>
+
   </main>
   <div id="toast" class="toast" role="status" hidden></div>
 </div>
@@ -980,7 +1054,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   const S = {
     pid: PID,
     me: { pid: PID, sid: randId(8), name: "", ready: false, dc: diceColor(load("l", "fk.dice")) },
-    net: null, netKind: "", code: "", inRoom: false, joining: false, conn: "off",
+    net: null, netKind: "", code: "", inRoom: false, joining: false, conn: "off", howto: false,
     st: null,             // latest state snapshot seen (everyone)
     isHost: false, M: null, hostTimer: 0, botTimer: 0, botEv: -1, seenIntents: new Map(),
     present: new Set([PID]), info: new Map(), absent: new Map(),
@@ -1383,6 +1457,13 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
       hostEmit("LOBBY", {}, "New game. Ready up.");
       return;
     }
+    // Rules can change until the game starts; the lobby shows everyone the new line.
+    if (i.t === "rules") {
+      if (i.pid !== M.host || M.phase !== "lobby") return;
+      M.rules = cleanRules(d.rules); M.target = M.rules.target;
+      hostEmit("LOBBY", {}, null);
+      return;
+    }
     if (i.t === "addbot") {
       if (i.pid !== M.host || M.phase !== "lobby" || M.players.length >= MAX_PLAYERS) return;
       M.players.push(newBot(M));
@@ -1620,15 +1701,13 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   function setReady(v) { S.me.ready = v; if (S.net) S.net.setMe(S.me); if (S.isHost) hostPresenceTick(); renderAll(); }
 
   /* ---------- 11. Rooms: create, join, leave ---------- */
-  // bots > 0: a solo game against that many bots, started at once. A reload passes solo: true to pick it up again.
-  async function enterRoom(code, create, rules, bots, solo) {
+  // bots > 0: a single-player table with that many bots, on this device only. A reload passes solo: true to pick it up again.
+  // The name is the one saved on this device; without one, a placeholder until the name card is filled in.
+  async function enterRoom(code, create, rules, bots, solo, name) {
     if (S.inRoom || S.joining) return;
-    const name = $("#name").value.trim();
-    // maxlength stops typing, but a name saved before the cap (or set by script) can still be longer.
-    if (name.length > NAME_MAX) { renderNameHint(); toast("Names can be " + NAME_MAX + " characters at most."); $("#name").focus(); return; }
-    S.me.name = cleanName(name || "Player " + (1 + (rand32() % 90)));
-    if (!name) { $("#name").value = S.me.name; renderNameHint(); }
-    save("l", "fk.name", S.me.name);
+    const saved = load("l", "fk.name");
+    S.me.name = cleanName(name || saved || "Player " + (1 + (rand32() % 90)));
+    nameCardOpen = !saved;
     S.me.ready = false;
     S.joining = true;
     let net;
@@ -1649,7 +1728,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     if (net.kind === "solo") {
       if (S.resume) tryResume();                     // nobody else could have taken over
       else if (!S.isHost) leaveRoom();               // the saved game is gone
-      else { for (let k = 0; k < bots; k++) S.M.players.push(newBot(S.M)); act("start"); }
+      else { for (let k = 0; k < bots; k++) S.M.players.push(newBot(S.M)); hostPublish([]); }
     } else if (S.isHost) hostPublish([]);
     else {
       act("sync");
@@ -2731,8 +2810,9 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   // Runs while the splash, home screen or lobby shows, so the orbit carries on into the room; the game gets the plain background.
   function sceneLoop(now) {
     requestAnimationFrame(sceneLoop);
-    const on = !splash.hidden || !$("#scr-start").hidden || !$("#scr-lobby").hidden;
+    const on = !splash.hidden || !$("#scr-start").hidden || !$("#scr-howto").hidden || !$("#scr-lobby").hidden;
     if (sceneCv.hidden === on) { sceneCv.hidden = !on; $("#veil").hidden = !on; }
+    $("#veil").classList.toggle("dim", !$("#scr-howto").hidden);   // How to Play is the one screen of paragraphs
     if (!on) return;
     sceneResize();
     inView(SV, () => drawScene(now));
@@ -2748,9 +2828,9 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   }
   function enterHome() {
     if (splash.hidden || splash.classList.contains("leaving")) return;
-    const title = splash.querySelector(".s-title"), a = title.getBoundingClientRect(), b = $(".brand-word").getBoundingClientRect();
+    const title = splash.querySelector(".s-title"), a = title.getBoundingClientRect(), b = $($("#scr-start").hidden ? ".brand-word" : ".home-title").getBoundingClientRect();
     splash.classList.add("leaving"); $("#veil").classList.remove("intro"); $("#app").inert = false;
-    // The title flies into the top bar logo, which takes over when it lands.
+    // The title flies into the home screen's title (the top bar logo when another screen shows), which takes over when it lands.
     requestAnimationFrame(() => { title.style.transform = `translate(${b.left - a.left}px, ${b.top - a.top}px) scale(${b.width / a.width})`; });
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     setTimeout(() => { splash.hidden = true; splash.classList.remove("leaving"); title.style.transform = ""; }, reduce ? 0 : 800);
@@ -2786,10 +2866,10 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   });
 
   /* ---------- 13. Screens ---------- */
-  function showScreen(id) { for (const s of ["start", "lobby", "game"]) $("#scr-" + s).hidden = s !== id; }
+  function showScreen(id) { for (const s of ["start", "howto", "lobby", "game"]) $("#scr-" + s).hidden = s !== id; }
   function renderAll() {
     const st = S.st;
-    const screen = !S.inRoom ? "start" : !st || st.phase === "lobby" ? "lobby" : "game";
+    const screen = !S.inRoom ? (S.howto ? "howto" : "start") : !st || st.phase === "lobby" ? "lobby" : "game";
     showScreen(screen);
     $("#gmusic").hidden = screen !== "game";   // the lounge always plays at the door and lobby
     renderConn();
@@ -2860,7 +2940,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     $("#name-hint").dataset.over = n > NAME_MAX ? "1" : "0";
   }
 
-  // Rule rows for the home summary and the lobby card. `vs` marks values that differ from Classic.
+  // Rule rows for the lobby card. `vs` marks values that differ from Classic.
   function fillRules(box, r, vs, by) {
     box.textContent = "";
     box.hidden = false;
@@ -2885,10 +2965,11 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
       box.appendChild(row);
     }
   }
-  // Home screen rule picker. The Custom values are remembered on this device.
+  // The host's rule picker (a sheet from the lobby's rules line). The choice and the Custom values are remembered on this device.
   const pickedRules = () => (document.querySelector('input[name="rules"]:checked').value === "custom" ? cleanRules(Object.assign({}, S.custom, { name: "custom" })) : Object.assign({}, CLASSIC));
   function renderRulesPicker() {
     const c = cleanRules(Object.assign({}, S.custom, { name: "custom" }));
+    $("#rules-custom").hidden = !$("#rules-custom-pick").checked;
     $("#custom-target").textContent = fmt(c.target);
     const cd = $("#custom-desc"); cd.textContent = "";
     cd.appendChild(el("span", "", c.open ? `${fmt(c.open)} to get on` : "No minimum"));
@@ -2899,7 +2980,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
         for (const v of RULE_OPTS[key]) {
           const lab = el("label", "pick-chip"), inp = document.createElement("input");
           inp.type = "radio"; inp.name = "r-" + key; inp.value = String(v);
-          inp.addEventListener("change", () => { S.custom[key] = v; save("l", "fk.rules", S.custom); renderRulesPicker(); });
+          inp.addEventListener("change", () => { S.custom[key] = v; save("l", "fk.rules", S.custom); rulesChanged(); });
           lab.appendChild(inp); lab.appendChild(el("span", "", v ? (key === "pen" ? "\u2212" : "") + fmt(v) : "Off"));
           row.appendChild(lab);
         }
@@ -2908,7 +2989,7 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     }
   }
 
-  // Bottom sheets on the home screen. Focus goes into the sheet and back to the button that opened it.
+  // Bottom sheets (rules, How to Play). Focus goes into the sheet and back to the button that opened it.
   let sheetOpener = null;
   function openSheet(id) {
     sheetOpener = document.activeElement;
@@ -2925,10 +3006,12 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   }
 
   // Lobby. My dice picker is one element that moves into a row under my seat while it's open.
-  let lobbyDiceOpen = false, rulesOpen = false;
+  let lobbyDiceOpen = false, rulesOpen = false, nameCardOpen = false;
   function renderLobby() {
-    const st = S.st;
+    const st = S.st, solo = S.netKind === "solo";
     $("#lobby-code").textContent = S.code;
+    $(".lobby-head").hidden = solo;   // nobody can join a single-player table, so there's no code to share
+    $("#join-bar").hidden = true;
     const note = $("#lobby-note"), slots = $("#slots"), picker = $("#lobby-dice");
     slots.after(picker); picker.hidden = true;   // park it before the list is rebuilt
     slots.textContent = "";
@@ -2940,13 +3023,18 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
       note.hidden = waited < 6000;
       note.textContent = "No host has answered yet. Check the code with whoever created the room, or keep waiting.";
       $("#btn-ready").hidden = true; $("#btn-start").hidden = true; $("#start-hint").textContent = "";
+      $("#name-card").hidden = true;
       return;
     }
     $("#lobby-mode").hidden = true;
     const host = st.players.find((p) => p.pid === st.host);
     const r = st.rules;
     $("#rules-line").hidden = false;
-    $("#rules-line").setAttribute("aria-expanded", String(rulesOpen));
+    const canChange = S.isHost && st.phase === "lobby";
+    $("#rules-line").classList.toggle("can-change", canChange);
+    $("#rules-line").setAttribute("aria-expanded", String(!canChange && rulesOpen));
+    if (canChange) { $("#rules-line").setAttribute("aria-haspopup", "dialog"); $("#rules-line").title = "Change the rules"; }
+    else { $("#rules-line").removeAttribute("aria-haspopup"); $("#rules-line").title = ""; }
     $("#rules-line-name").textContent = r.name === "custom" ? "Custom" : "Classic";
     const vals = $("#rules-line-vals"); vals.textContent = fmt(r.target) + " \u00b7 " + (r.open ? fmt(r.open) + " to get on" : "No minimum") + " \u00b7 ";
     vals.appendChild(el("span", r.pen ? "bad" : "", r.pen ? "\u2212" + fmt(r.pen) : "No penalty"));
@@ -2954,14 +3042,28 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     $("#lobby-rules").hidden = !rulesOpen;
     const amPlayer = st.players.some((p) => p.pid === S.pid);
     if (!amPlayer) lobbyDiceOpen = false;
+    // A joiner's first snapshot can come before the host seats them, so the card waits for the seat.
+    const card = $("#name-card"), showCard = nameCardOpen && amPlayer;
+    if (card.hidden === showCard) {   // opening: start from the name in use, unless it's still the placeholder
+      card.hidden = !showCard;
+      if (showCard) { $("#name").value = load("l", "fk.name") ? S.me.name : ""; renderNameHint(); }
+    }
+    $("#name-ask").textContent = solo ? "Your name at the table" : "What should friends call you?";
     note.hidden = amPlayer;
     note.textContent = "This table is full. You're watching.";
     st.players.forEach((p, i) => {
       const li = el("li", "seat"), me = p.pid === S.pid;
       li.style.setProperty("--pc", seatColor(i));
       li.appendChild(el("span", "dot"));
-      const nm = el("span", "seat-name", p.name);
-      if (me) nm.appendChild(el("small", "", " (you)"));
+      let nm;
+      if (me) {
+        // My own name opens the name card.
+        nm = el("button", "seat-name"); nm.type = "button"; nm.title = "Change your name";
+        nm.setAttribute("aria-label", p.name + " (you). Change your name"); nm.setAttribute("aria-expanded", String(nameCardOpen)); nm.setAttribute("aria-controls", "name-card");
+        const t = el("span", "", p.name); t.appendChild(el("small", "", " (you)")); nm.appendChild(t);
+        nm.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>');
+        nm.addEventListener("click", () => { nameCardOpen = !nameCardOpen; renderLobby(); if (nameCardOpen) $("#name").focus(); });
+      } else nm = el("span", "seat-name", p.name);
       li.appendChild(nm);
       const tags = el("span", "tags");
       if (p.pid === st.host) tags.appendChild(el("span", "tag host", "Host"));
@@ -2994,7 +3096,8 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     const open = MAX_PLAYERS - st.players.length;
     if (open > 0) {
       const li = el("li", "seat seat-open"); li.appendChild(el("span", "dot"));
-      li.appendChild(el("span", "seat-name", open === 1 ? "1 open seat \u00b7 share the code to fill it" : open + " open seats \u00b7 share the code to fill them"));
+      li.appendChild(el("span", "seat-name", solo ? (open === 1 ? "1 open seat" : open + " open seats")
+        : open === 1 ? "1 open seat \u00b7 share the code to fill it" : open + " open seats \u00b7 share the code to fill them"));
       // The host can fill a seat with a bot.
       if (S.isHost) {
         const b = el("button", "btn seat-add", "+ Bot"); b.type = "button"; b.title = "Add a bot player";
@@ -3015,7 +3118,11 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     const waiting = st.players.filter((p) => !p.ready && p.pid !== st.host).map((p) => p.name);
     sb.disabled = !st.players.length || waiting.length > 0;
     const others = st.players.length - (host ? 1 : 0);
-    $("#start-hint").textContent = S.isHost
+    // Until another person sits down, the host may have meant to join someone else's table instead.
+    $("#join-bar").hidden = !S.isHost || solo || st.players.some((p) => p.pid !== S.pid && !isBot(p.pid));
+    $("#start-hint").textContent = solo
+      ? others ? "Just you and the bots. Nobody can join this table." : "Add a bot to play against, or start alone to practice."
+      : S.isHost
       ? waiting.length ? `Waiting for ${waiting.join(", ")} to ready up.` : others === 0 ? "Nobody else yet. Add a bot, or start alone for a practice game." : "Everyone's ready. Start whenever you like."
       : waiting.length ? "The host starts the game once everyone is ready." : "Everyone's ready. Waiting for the host to start.";
   }
@@ -3232,31 +3339,51 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
   });
 
   /* ---------- 15. Wiring ---------- */
-  $("#btn-create").addEventListener("click", () => {
-    enterRoom(String(rand32() % 10000).padStart(4, "0"), true, pickedRules());
-  });
-  // How many bots to play against: 1 to 3, remembered on this device.
-  let botCount = clamp(int(load("l", "fk.bots") || 2, 2), 1, MAX_PLAYERS - 1);
-  function renderBotCount() {
-    for (const b of $("#bot-count").children) b.setAttribute("aria-checked", String(+b.dataset.n === botCount));
-    $("#bots-label").textContent = "Play vs " + botCount + (botCount === 1 ? " bot" : " bots");
+  const newCode = () => String(rand32() % 10000).padStart(4, "0");
+  // Single Player: a table on this device with one bot; more join from the open-seat row.
+  const playSolo = () => { S.howto = false; enterRoom(newCode(), true, pickedRules(), 1); };
+  $("#btn-single").addEventListener("click", playSolo);
+  // Multiplayer opens a hosted room straight away; the join bar there covers people who came to join.
+  $("#btn-multi").addEventListener("click", () => enterRoom(newCode(), true, pickedRules()));
+  function showHowto(on) { S.howto = on; renderAll(); scrollTo(0, 0); $(on ? "#howto-back" : "#btn-howto").focus({ focusVisible: false }); }
+  $("#btn-howto").addEventListener("click", () => showHowto(true));
+  $("#howto-back").addEventListener("click", () => showHowto(false));
+  $("#btn-allcombos").addEventListener("click", () => openSheet("#sheet-scoring"));
+  $("#btn-tryit").addEventListener("click", playSolo);
+  // Rule changes are remembered on this device and, from the lobby, go to the table at once.
+  function rulesChanged() {
+    renderRulesPicker();
+    if (S.isHost && S.st && S.st.phase === "lobby") act("rules", { rules: pickedRules() });
   }
-  $("#bot-count").addEventListener("click", (e) => {
-    const b = e.target.closest("button[data-n]");
-    if (!b) return;
-    botCount = +b.dataset.n; save("l", "fk.bots", botCount); renderBotCount();
-  });
-  renderBotCount();
-  $("#btn-bots").addEventListener("click", () => enterRoom(String(rand32() % 10000).padStart(4, "0"), true, pickedRules(), botCount));
-  for (const inp of document.querySelectorAll('input[name="rules"]')) inp.addEventListener("change", () => { save("l", "fk.ruleset", inp.value); renderRulesPicker(); });
-  $("#rules-reset").addEventListener("click", () => { S.custom = { target: CLASSIC.target, open: CLASSIC.open, pen: CLASSIC.pen }; save("l", "fk.rules", S.custom); renderRulesPicker(); });
+  for (const inp of document.querySelectorAll('input[name="rules"]')) inp.addEventListener("change", () => { save("l", "fk.ruleset", inp.value); rulesChanged(); });
+  $("#rules-reset").addEventListener("click", () => { S.custom = { target: CLASSIC.target, open: CLASSIC.open, pen: CLASSIC.pen }; save("l", "fk.rules", S.custom); rulesChanged(); });
   $("#join-code").addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
   $("#join-code").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#btn-join").click(); });
+  // Joining leaves the room Multiplayer opened, so nobody is left waiting at it.
   $("#btn-join").addEventListener("click", () => {
     const code = $("#join-code").value;
     if (!/^\d{4}$/.test(code)) { toast("Room codes are 4 digits."); $("#join-code").focus(); return; }
-    enterRoom(code, false);
+    if (code === S.code) { toast("That's this table's code. Enter the code from your friend's screen."); return; }
+    $("#join-code").value = "";
+    leaveRoom(); enterRoom(code, false);
   });
+  // The name card: saved on this device and sent with my presence, so the lobby updates for everyone.
+  function commitName(close) {
+    const v = $("#name").value.trim();
+    if (v.length > NAME_MAX) { renderNameHint(); toast("Names can be " + NAME_MAX + " characters at most."); $("#name").focus(); return; }
+    if (v) {
+      S.me.name = cleanName(v); save("l", "fk.name", S.me.name);
+      const sess = load("s", "fk.sess"); if (sess) save("s", "fk.sess", Object.assign(sess, { name: S.me.name }));
+      if (S.net) S.net.setMe(S.me);
+      if (S.isHost) hostPresenceTick();
+    }
+    if (close) { nameCardOpen = false; const b = $("button.seat-name"); if (b) b.focus(); }
+    renderAll();
+  }
+  $("#name").addEventListener("input", renderNameHint);
+  $("#name").addEventListener("change", () => commitName(false));
+  $("#name").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); commitName(true); } });
+  $("#name-done").addEventListener("click", () => commitName(true));
   $("#btn-ready").addEventListener("click", () => setReady(!S.me.ready));
   $("#btn-start").addEventListener("click", () => act("start"));
   // Against bots there's nobody to wait for, so Play again deals straight away.
@@ -3277,18 +3404,29 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     if (navigator.share) navigator.share(url ? { title: "Farkle", text, url } : { title: "Farkle", text }).catch((e) => { if (!e || e.name !== "AbortError") copy(); });
     else copy();
   });
-  $("#rules-line").addEventListener("click", () => { rulesOpen = !rulesOpen; renderLobby(); });
+  // The host changes the rules from the line; everyone else unfolds the card that explains them.
+  $("#rules-line").addEventListener("click", () => {
+    if (S.isHost && S.st && S.st.phase === "lobby") {
+      const r = S.st.rules;
+      if (r.name === "custom") { S.custom = { target: r.target, open: r.open, pen: r.pen }; save("l", "fk.rules", S.custom); }
+      $(r.name === "custom" ? "#rules-custom-pick" : "#rules-classic-pick").checked = true;
+      renderRulesPicker(); openSheet("#sheet-rules");
+      return;
+    }
+    rulesOpen = !rulesOpen; renderLobby();
+  });
   $("#lobby-dice").addEventListener("click", (e) => {
     if (!e.target.closest(".swatch")) return;
     lobbyDiceOpen = false; renderLobby(); const n = $(".seat-dice"); if (n) n.focus();
   });
-  // Choosing Custom (or tapping it again) opens its pickers.
-  $("#rules-custom-pick").addEventListener("click", () => openSheet("#sheet-rules"));
-  $("#btn-scoring").addEventListener("click", () => openSheet("#sheet-scoring"));
   for (const sh of document.querySelectorAll(".sheet")) {
     sh.addEventListener("click", (e) => { if (e.target === sh || e.target.closest("[data-close]")) closeSheets(); });
   }
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheets(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if ([...document.querySelectorAll(".sheet")].some((sh) => !sh.hidden)) closeSheets();
+    else if (S.howto && !S.inRoom) showHowto(false);
+  });
   function selectCode() { const r = document.createRange(); r.selectNodeContents($("#lobby-code")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Code selected. Copy it from here."); }
   window.addEventListener("pagehide", () => { try { if (S.net) S.net.leave(); } catch (e) { /* closing */ } });
   // The table's height depends on the window and on the panels around it, so watch all of them.
@@ -3312,9 +3450,6 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
 
   // Start-up: restore name and settings, open Settings when there's no way to connect yet,
   // and rejoin the room this tab was in before a reload.
-  $("#name").value = load("l", "fk.name") || "";
-  $("#name").addEventListener("input", renderNameHint);
-  renderNameHint();
   applyHoliday();
   S.custom = Object.assign({ target: 5000, open: CLASSIC.open, pen: CLASSIC.pen }, load("l", "fk.rules") || {});
   if (load("l", "fk.ruleset") === "custom") $("#rules-custom-pick").checked = true;
@@ -3333,11 +3468,12 @@ html.xmas .brand-word::after, html.xmas .s-title::after {
     if (needsKeys) openSettings(true);
     const sess = load("s", "fk.sess");
     const linked = new URLSearchParams(location.search).get("room");
-    if (!(sess && sess.code) && /^\d{4}$/.test(linked || "")) {
-      $("#join-code").value = linked;
-      toast("Room " + linked + " is filled in. Add your name, then Join room.");
+    if (sess && /^\d{4}$/.test(sess.code)) enterRoom(sess.code, false, null, 0, !!sess.solo, sess.name);
+    // An invite link goes straight to its table; the name card there asks first-timers for a name.
+    else if (/^\d{4}$/.test(linked || "") && !needsKeys) {
+      try { history.replaceState(null, "", location.pathname); } catch (e) { /* some frames refuse it; a reload would just rejoin */ }
+      enterRoom(linked, false);
     }
-    if (sess && /^\d{4}$/.test(sess.code)) { if (sess.name) { $("#name").value = cleanName(sess.name); renderNameHint(); } enterRoom(sess.code, false, null, 0, !!sess.solo); }
   }, 500);
 })();
 </script>
