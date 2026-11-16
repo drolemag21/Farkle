@@ -5,7 +5,7 @@ Status: **design only, nothing built.** Decisions below were agreed with the own
 Main influences: Balatro (the run), extraction shooters (bring gear in, lose it if you die; seasonal wipes). Rule of thumb: reuse the existing table (physics, dice art, turn flow, host path, sound, sheets) and add the mode as its own bounded section of `farkle-table.html`.
 
 ## The idea in one line
-Play a solo roguelite run to build your tools: each boss you beat banks a better evidence locker, and when you stop or fail you open the last one you banked. Then risk your dice against friends in multiplayer duels, which is where the real extraction risk lives. Duels feed back into runs through your faction, which raises your power floor in both modes.
+Play a solo roguelite run to build your tools: each boss you beat banks a better evidence locker, and when you stop or fail you open the last one you banked. Then risk your dice against other players in duels, which is where the real extraction risk lives. Duels feed back into runs through your faction, which raises your power floor in both modes.
 
 **Two modes, two kinds of freedom** (agreed 2026-11-16):
 - **Runs are curated.** You start from a preset case file, with a few choices about how it begins, but your bag never enters a run. Low risk: failing costs only the locker upgrade you were working toward, never what you've banked or anything you own.
@@ -115,12 +115,16 @@ Decided 2026-11-16: these are **types beside the rarity ladder**, not new rungs.
 - **Dust** is the only second currency. Sources: breaking unwanted dice, crumbled dice, cashed-out streak pots, duel spoils (both players). Spent on rerolling or upgrading faces, pack upgrades (see 4 dice instead of 3, or one rarity tier better at the next extraction), small run-start boons (+1 reroll at ante 1, +$5; nothing that stacks), and faction ranks.
 
 ## 5. The duel (multiplayer)
+**Designed for a public player base, not a fixed friend group** (owner, 2026-11-16). Few people play today, but nothing here should assume a small circle.
+
+**Bot duels until matchmaking exists** (decided 2026-11-16). Until matchmaking is designed and built, duels are played against bots with a random spread of bags and difficulties, so the duel is fully playable now and the stakes are real. Reuses the existing bots and the host path they use. Bots take a die from your bag when they win, and you take one from theirs ("Taken from <bot name>" in lineage). Bot bags create dice from nothing, a new source the run economy doesn't have: size bot bag strength so beating bots doesn't outpace runs as the way to build a bag. Duels between real players use the same rules once matchmaking lands.
+
 - **Format:** best of 3 rounds; each round both players get 3 turns, most points wins; a tie is one sudden-death turn each.
 - **Relics:** each round adds a shared relic both players play under (it can bend the round's rules, e.g. last turn scores double). **Relics stack** (decided 2026-11-16): round 1 has one, round 2 two, round 3 all three. The deciding round is the most rule-bent.
 - **Duels are chaotic by design** (decided 2026-11-16): you bring your whole bag of loaded dice and play under stacking relics. The chaos and the risk are the point; they make the drama. Balance work in duels only guards against relic pairs that contradict each other or break scoring (undefined or endless results), not against swingy outcomes.
 - **One unique** among your six dice in play (decided 2026-11-16).
-- **Open bags, no gear matchmaking** (decided 2026-11-16). Beating a far better-geared opponent is the whole point. In a friend group of 2-4 there's no matchmaking anyway; the Before Start screen (both bags shown, both accept) *is* the matchmaking: an underdog who duels an Ultra bag chose the swing. The underdog is protected by floors, not by restricting what anyone brings: spoils and pot scale with the opponent's bag, the upside is asymmetric (they risk a Common, they can take an Ultra), Records' lock and catch-up perks. Runs are the safe route to a strong bag: a player who'd rather not duel often can build an Ultra bag through PvE, slower but without risk.
-- **Tune, don't cap:** simulate bot duels to set how much rarity adds, aiming for a target underdog win rate (Common bag vs Ultra bag, proposed 25-30%). Too low and underdogs stop accepting; too high and building a bag means nothing.
+- **Open bags, no gear matchmaking** (decided 2026-11-16). Beating a far better-geared opponent is the whole point: rags to riches, playing well within your means for a big prize. The Before Start screen (both bags shown, both accept) means an underdog who duels an Ultra bag chose the swing. The underdog is protected by floors, not by restricting what anyone brings: spoils and pot scale with the opponent's bag, the upside is asymmetric (they risk a Common, they can take an Ultra), Records' lock and catch-up perks. Runs are the safe route to a strong bag: a player who'd rather not duel often can build an Ultra bag through PvE, slower but without risk.
+- **Tune, don't cap:** Farkle's luck is the point and is never tuned away. Simulated bot duels (thousands of games, so luck averages out) are a sanity check on the power budgets: they show whether an Ultra bag wins 60% or 98% against a Common one. If upsets are near-impossible, rags to riches is gone; if building a bag barely matters, there's nothing to win.
 - **Before Start:** both bags and both streak pots are shown, and both players accept. Nobody gets ambushed.
 - **Stakes:** the **winner picks one die from the loser's whole bag.** That's the risk of bringing your dice, and the zero-to-hero payoff.
 - **Streak pot:** each win adds game-created dust to the winner's own pot, scaled by the **opponent's** bag strength (beating a Common bag adds almost nothing; beating a strong bag adds a lot). The pot is at risk: losing a match hands it to the winner. Cash out any time into dust, which resets it. This is what the strong player plays for, and every match against them is a jackpot for the underdog.
@@ -128,14 +132,14 @@ Decided 2026-11-16: these are **types beside the rarity ladder**, not new rungs.
 - **Spoils for both players:** every match pays dust to both, the loser less, both scaled by the opponent's bag strength. Losing to a strong bag still pays. Without this the weaker player's best move is not to duel.
 - **Relic unlocks:** any relic you **see** in a duel, win or lose, unlocks its run-side counterpart in your charm or boss pool for the season (decided 2026-11-16). Both players get the same unlocks, in line with spoils for both. Variety, not power (Balatro's unlocks), and a reason to duel often. Up to 3 unlocks per duel, so size the relic pool so that seeing all of it takes most of a season.
 - **Reactions:** a small fixed set (tip hat, raise glass, slow clap), rate-limited, no free text. Cosmetic (section 7).
-- The economy only moves between people who play each other; in a friend group the same dice will change hands.
+- The economy only moves between people who play each other.
 - **Not doing:** flat run power per duel win (starting money, permanent mult). It snowballs strong players and trivialises solo runs. Duels give faction rank (a capped floor, section 6), case file and relic unlocks, and better dice to put at risk.
 
 ## 6. Seasons
 - **Full wipe** each season: the bag, faction ranks, unlocked relics and case files, and dust all reset. Strong duel → run rewards are only affordable because they can't compound past a season. A wipe also restores late joiners and losers, and caps what a hand-edited bag is worth.
 - **Frozen bag:** at season end every bag die moves into the **trophy case**. Unplayable, but kept with its lineage and stats. Wipe the power, keep the memory.
 - **Kept across seasons:** the trophy case, cosmetics, titles.
-- **Length:** about 6-8 weeks to start. A group of 2-4 plays far fewer duels than a public game, so size everything so someone playing once a week finishes the track.
+- **Length:** about 6-8 weeks to start. Size everything so someone playing once a week finishes the track.
 - **v1 is cheap:** tag the bag with a season id computed from the date on each device. A new id freezes the old bag and starts a fresh one. No server.
 
 ### Factions (season progression)
@@ -198,7 +202,7 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 ## 10. Build order
 1. Solo roguelite with extraction (seeded RNG, action log, save/resume from day one). Must be fun on its own.
 2. Case files (preset starts), then the bag screen, lockers and the parts drawer (applying parts to bag dice). Give every die a lineage field.
-3. The duel.
+3. The duel, against bots with random bags and difficulties (real-player matchmaking later).
 4. Seasons: wipe, trophy case, factions. Then cosmetics.
 
 ## Open questions
@@ -213,7 +217,9 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Locker rarity odds per tier.
 - Part odds per tier: which layers (stamp, material, edition) can drop at which tier; can unwanted parts be broken into dust?
 - Dust values (breaking, crumbling, pot growth) and dust costs.
-- Underdog win-rate target for Common vs Ultra bags (25-30% proposed), and the power budgets that hit it in bot duels.
+- Power budgets: check with simulated bot duels that upsets stay possible and bag strength still matters.
+- Bot duels: bag strength and difficulty spread; whether bot bags scale with yours or stay random.
+- Matchmaking for real-player duels (public, not friend-group): open bags means no gear matching; how the Before Start accept works with strangers (dodging).
 - Duel player count: strictly 2, or 3-4 using the existing rooms?
 - What's in the shop's reroll vs the table's reroll (one currency or two)?
 - Heat levels: how each scales table targets and pack odds.
