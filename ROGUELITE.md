@@ -1,17 +1,93 @@
 # Roguelite mode: design
 
-Status: **design only, nothing built.** Decisions below were agreed with the owner (2026-11-16). Open questions are listed at the end; settle them here before building the part they touch.
+Status: **design only, nothing built; step-1 content set drafted, awaiting review.** Decisions below were agreed with the owner (2026-11-16). Open questions are listed at the end; settle them here before building the part they touch.
 
 Main influences: Balatro (the run), extraction shooters (bring gear in, lose it if you die; seasonal wipes). Rule of thumb: reuse the existing table (physics, dice art, turn flow, host path, sound, sheets) and add the mode as its own bounded section of `farkle-table.html`.
 
 ## Next step (to-do)
-**Draft the step-1 content set** (build order step 1, the solo run), as a new section of this file for the owner to review before any code:
-- One starting case file: starting dice, charm, money, twist; its kingpin, case-unique pool and set.
-- About 12 charms.
-- 6 boss house rules, one per ante, the kingpin's included. Draft these first: what a house rule can change shapes the run's code.
-- Placeholder table targets, turns per table, money, interest and shop prices (tuned later in a prototype).
+**Owner review of the step-1 content set draft** (next section). Once it's agreed, prototype the solo run (build order step 1).
 
-The owner will start this in a new session.
+## Step-1 content set (DRAFT, not agreed)
+Drafted 2026-11-16 for the owner to review. Numbers are placeholders for the prototype. Difficulty figures come from a quick simulation of the existing bot strategy (`botKeep` + `BOT_BANK`) over 20-40k tables with plain dice, no charms, 4 turns and 1 reroll that rescues the first Farkle. The bot doesn't adapt its banking to a target or a house rule, so read them as relative, not exact.
+
+**Baseline from the simulation:** a plain-dice turn averages about 600 points and Farkles 19% of the time. A 4-turn table: median 2,400; clears 1,200 93% of the time, 2,000 67%.
+
+### What a house rule can change (the code shape)
+House rules and charms use **one set of hooks**, so the run needs one rule pipeline, not two systems:
+
+| Hook | House rules (bosses) | Charms |
+|---|---|---|
+| Table setup (dice count, rerolls) | Cold Dice, Short Hand | |
+| Score table (what each combo is worth) | Dead Ace | Loaded Fives |
+| After a roll (change faces) | Dutch's Thumb | |
+| Keep is legal? | Pair Rule | |
+| Keep (points, mult) | | Hot Hand, Third Time Lucky, Last Die, Triple Threat, Snowball, Greed, Double Down |
+| Bank | | Miser |
+| Farkle (what it costs) | Double Trouble | Insurance, Double Down |
+| Table end (money) | | Bagman |
+| Display only | | Tipster |
+
+Two code consequences:
+- **A Farkle is "no legal keep"**, not the classic shortcut. Today `hasScore` checks for 1s, 5s, triples and three pairs; under Pair Rule a roll whose only scorer is a lone 5 must also be a Farkle, and under Dead Ace a lone 1 doesn't save you. So `hasScore` becomes "does any subset pass the rules' legality and score", derived from the same rule-aware scorer as `scoreOf`. Classic mode keeps its current results.
+- **Short Hand (5 dice) forces generalising the hard-coded six now** (hot dice, the tray, the launch handful). Recommendation: accept it in step 1, since non-rolling uniques (Dutch's Thumb) need the same work later; doing it once, early, is cheaper than retrofitting.
+
+### The six bosses (the Dutch case)
+Ordered by how hard they hit plain dice (score a 4-turn table clears 2,000; no rule: 67%).
+
+| Ante | Den / boss | House rule | Hook | Clears 2,000 |
+|---|---|---|---|---|
+| 1 | The stoop game, Kid Lacy | **Cold Dice:** no rerolls at this table | Table setup | 56% |
+| 2 | The laundromat back room, Mrs. Ochs | **Double Trouble:** a Farkle costs two turns | Farkle | 63%* |
+| 3 | The card room over the bakery, Sal Vitti | **Pair Rule:** every keep must be 2+ dice | Legality | 44% |
+| 4 | The social club, Father Brennan | **Dead Ace:** single 1s don't score (three or more still do) | Score table | 29% |
+| 5 | The riverboat, the Captain | **Short Hand:** play with 5 dice; hot dice at 5 | Table setup | 20% |
+| 6 | Dutch's own table (kingpin) | **Dutch's Thumb:** after the first roll of each turn, the house nudges one of your dice ±1, whichever costs you most | After a roll | 25% |
+
+\* Double Trouble only looks mild because the bot doesn't bank earlier under it; a human pushing their luck will feel it. It's ante 2 because it punishes greed, which is the lesson the run teaches first.
+
+- **The Thumb was too strong on every roll** (clears 2,000 1% of the time), so it acts once per turn. It echoes the case unique of the same name: the kingpin's rule is what you get to own.
+- The nudged die should visibly turn after it lands (renderer only: the landed face is decided, then changed by the host, so physics stays deterministic).
+- Boss target = 1.5× the ante's small blind (below); the house rule supplies the rest of the difficulty. Per-boss multipliers can come later if one rule turns out much harsher.
+
+### Charms (12)
+5 slots. Favour ones that bend roll-or-bank.
+
+| Charm | Rarity | Effect | Hook |
+|---|---|---|---|
+| Hot Hand | Uncommon | After hot dice, ×2 mult for the rest of the turn | Keep |
+| Insurance | Common | Your first Farkle at each table banks half the turn's points | Farkle |
+| Miser | Common | +100 per die left unrolled when you bank | Bank |
+| Loaded Fives | Common | Single 5s score 100, like 1s | Score table |
+| Third Time Lucky | Common | Every third keep in a turn gets +3 mult | Keep |
+| Last Die | Uncommon | Keeping your last die (one left, and it scores): ×3 mult | Keep |
+| Triple Threat | Common | Keeps containing three of a kind or more: +2 mult | Keep |
+| Snowball | Rare | +1 mult on every keep for each turn in a row you've banked at this table; a Farkle resets it | Keep |
+| Double Down | Uncommon | After a Farkle, your next turn's keeps get ×2 mult | Farkle → keep |
+| Bagman | Common | +$1 more per unused turn at table end | Table end |
+| Tipster | Common | The Roll button shows the Farkle odds for the dice you'd throw | Display |
+| Greed | Rare | +1 mult on each keep for every roll already made this turn | Keep |
+
+Push-your-luck pairs to watch in the prototype: Greed and Snowball pull opposite ways (roll more vs bank every turn), and Insurance + Double Down make Farkles almost welcome. That's the intent, but check they don't make banking pointless.
+
+### Scoring and combo levels
+- A keep scores **points × mult**, mult starts at 1. Points are the classic values, so the table reads the same as Classic mode.
+- **Combo levels add points only, not mult** (recommendation). A keep often holds several combos (three 2s plus a 1), and per-combo mult would make the count-up hard to read. Mult comes from charms and stamps.
+- Combos that level: single 1, single 5, three of a kind, four/five/six of a kind, straight, three pairs, two triplets / four + pair. Placeholder: +50% of the combo's base points per level.
+
+### The Dutch case file (starter)
+- **Kingpin:** Dutch, who runs the city's loaded-dice trade.
+- **Starting dice:** six plain dice. **Money:** $4. **Twist:** none. It's the baseline every later case file is tuned against, so it should stay plain.
+- **Start choice:** pick 1 of 2 random Common charms, or take +$4 instead.
+- **Case set, Dutch's Loaded Set (4 pieces):** 2 pieces: each set die that scores in a keep adds +1 mult. 4 pieces: once per turn, turn one set die showing 2, 3, 4 or 6 into a 5. (Drops start in step 2 with lockers; step 1 needs only the names.)
+- **Case uniques:** Dutch's Thumb (non-rolling: once per turn, nudge one of your dice ±1) and Dutch's Knucklebone (rolling object: you can't Farkle when it's your last die). No general pool yet.
+
+### Numbers (placeholders)
+- **Turns per table:** 4. **Rerolls:** 1 per table (as decided).
+- **Targets:** small blind per ante 1,200 / 2,000 / 3,500 / 6,000 / 10,000 / 16,000; big blind 1.35×, boss 1.5× (ante 1: 1,200 / 1,600 / 1,800). Ante 1 is sized for plain dice (93% / 80% / ~70%); from ante 2 on the targets assume charms and levels. Growth is ×13 over the run against Balatro's much steeper curve, because Farkle has no hand-size lever; tune in the prototype.
+- **Money:** $3 / $4 / $5 for small / big / boss, +$1 per unused turn, interest $1 per $5 held (cap $5).
+- **Shop:** 2 charms, 1 combo level, 1 die upgrade. Charms $4 / $6 / $8 (Common / Uncommon / Rare), Tipster $3; combo level $3; die upgrade (one stamp) $4-6; +1 table reroll for the run $10 (once per run). Refresh $2, +$1 per refresh in the same shop. Sell a charm for half its price.
+- **Skipping a blind:** +$6 for now; Balatro-style tags later if skipping needs more pull.
+- **Die upgrades in the shop:** four stamps to start (face becomes a 5, face becomes a 1, ×2 mult face, +$1 face). The full stamp list and costs stay an open question.
 
 ## The idea in one line
 Play a solo roguelite run to build your tools: each boss you beat banks a better evidence locker, and when you stop or fail you open the last one you banked. Then risk your dice against other players in duels, which is where the real extraction risk lives. Duels feed back into runs through your faction, which raises your power floor in both modes.
