@@ -16,7 +16,7 @@ The whole game is one choice repeated at three levels:
 | Level | Push on | Cash out |
 |---|---|---|
 | Turn | Roll again | Bank |
-| Run | Fight the next ante for a better locker | Call the raid, open the banked locker |
+| Run | Fight the next ante for a better locker | Call the raid, open the banked locker (no risk: see section 2) |
 | Duel | Keep the streak, grow the pot | Cash the pot into dust |
 
 **The loop:** run → pack → bag → duel → (dice won, dust, faction rank, relic unlocks) → next run. Runs feed duels with dice; duels feed runs with faction rank, unlocked case files and relic unlocks. Duels must still be worth playing for what they give runs, for winners and losers alike. A season wipe (section 6) bounds the snowball.
@@ -63,6 +63,7 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 
 ## 2. Extraction and packs
 - **Banking (decided 2026-11-16, from the reference mode):** beating an ante's boss banks that ante's **evidence locker** (the pack). The banked locker is safe: if the run fails later, you still open it. Pushing on risks only the upgrade, never what's banked.
+- **Runs are the safe mode** (decided 2026-11-16). Pushing is always free except for time, so there is no extract gamble at the run level: the only risk is not getting more. Push-your-luck in a run lives in the turn (roll or bank) and the table targets; losing what you own lives in duels. No clean raid bonus. Calling the raid is for ending the session, e.g. to duel tonight.
 - After **each boss** (6 chances) the player chooses: **call the raid** (stop and open the banked locker) or push on toward the next tier.
 - **The locker is on screen at that choice** ("Locker tier 3: 4 dice shown, Rare odds, 120 dust"), the way unbanked points are on screen during a Farkle turn. Push-your-luck needs the stake to be visible.
 - The locker shows **3 random dice; keep 1** (contents may grow, see open questions). Rarity improves with depth.
@@ -189,7 +190,6 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Charm list; house-rule (boss) list; relic list.
 - Table targets, turns and rerolls per ante; money and interest; shop prices.
 - Locker rarity odds per tier.
-- **Banking makes pushing free:** failing still opens the last banked locker, so the only cost of pushing is time, and "call the raid" stops being a decision. Proposed fix: a **clean raid bonus** for stopping by choice (extra dust or +1 die shown) that a blown cover forfeits. Undecided.
 - **Locker contents:** dice only, or a die pick + dust + a part (a stamp or material to apply to any bag die)? Parts give players control over their duel bag, which fits runs as tool-building.
 - Dust values (breaking, crumbling, pot growth) and dust costs.
 - Duel bag rules: a points cap by rarity, or open bags? Decide after simulating bot duels (e.g. Ultra bag vs Common bag win rates).
