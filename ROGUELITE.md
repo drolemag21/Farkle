@@ -119,6 +119,8 @@ Decided 2026-11-16: these are **types beside the rarity ladder**, not new rungs.
 - **Relics:** each round adds a shared relic both players play under (it can bend the round's rules, e.g. last turn scores double). **Relics stack** (decided 2026-11-16): round 1 has one, round 2 two, round 3 all three. The deciding round is the most rule-bent.
 - **Duels are chaotic by design** (decided 2026-11-16): you bring your whole bag of loaded dice and play under stacking relics. The chaos and the risk are the point; they make the drama. Balance work in duels only guards against relic pairs that contradict each other or break scoring (undefined or endless results), not against swingy outcomes.
 - **One unique** among your six dice in play (decided 2026-11-16).
+- **Open bags, no gear matchmaking** (decided 2026-11-16). Beating a far better-geared opponent is the whole point. In a friend group of 2-4 there's no matchmaking anyway; the Before Start screen (both bags shown, both accept) *is* the matchmaking: an underdog who duels an Ultra bag chose the swing. The underdog is protected by floors, not by restricting what anyone brings: spoils and pot scale with the opponent's bag, the upside is asymmetric (they risk a Common, they can take an Ultra), Records' lock and catch-up perks. Runs are the safe route to a strong bag: a player who'd rather not duel often can build an Ultra bag through PvE, slower but without risk.
+- **Tune, don't cap:** simulate bot duels to set how much rarity adds, aiming for a target underdog win rate (Common bag vs Ultra bag, proposed 25-30%). Too low and underdogs stop accepting; too high and building a bag means nothing.
 - **Before Start:** both bags and both streak pots are shown, and both players accept. Nobody gets ambushed.
 - **Stakes:** the **winner picks one die from the loser's whole bag.** That's the risk of bringing your dice, and the zero-to-hero payoff.
 - **Streak pot:** each win adds game-created dust to the winner's own pot, scaled by the **opponent's** bag strength (beating a Common bag adds almost nothing; beating a strong bag adds a lot). The pot is at risk: losing a match hands it to the winner. Cash out any time into dust, which resets it. This is what the strong player plays for, and every match against them is a jackpot for the underdog.
@@ -211,7 +213,7 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Locker rarity odds per tier.
 - Part odds per tier: which layers (stamp, material, edition) can drop at which tier; can unwanted parts be broken into dust?
 - Dust values (breaking, crumbling, pot growth) and dust costs.
-- Duel bag rules: a points cap by rarity, or open bags? Decide after simulating bot duels (e.g. Ultra bag vs Common bag win rates).
+- Underdog win-rate target for Common vs Ultra bags (25-30% proposed), and the power budgets that hit it in bot duels.
 - Duel player count: strictly 2, or 3-4 using the existing rooms?
 - What's in the shop's reroll vs the table's reroll (one currency or two)?
 - Heat levels: how each scales table targets and pack odds.
