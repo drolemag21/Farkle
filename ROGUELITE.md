@@ -4,23 +4,62 @@ Status: **design only, nothing built.** Decisions below were agreed with the own
 
 Main influences: Balatro (the run), extraction shooters (bring gear in, lose it if you die; seasonal wipes). Rule of thumb: reuse the existing table (physics, dice art, turn flow, host path, sound, sheets) and add the mode as its own bounded section of `farkle-table.html`.
 
+## Next step (to-do)
+**Draft the step-1 content set** (build order step 1, the solo run), as a new section of this file for the owner to review before any code:
+- One starting case file: starting dice, charm, money, twist; its kingpin, case-unique pool and set.
+- About 12 charms.
+- 6 boss house rules, one per ante, the kingpin's included. Draft these first: what a house rule can change shapes the run's code.
+- Placeholder table targets, turns per table, money, interest and shop prices (tuned later in a prototype).
+
+The owner will start this in a new session.
+
 ## The idea in one line
-Play a solo roguelite run, extract after a boss to open a pack and keep one altered die, then risk your dice against friends in multiplayer duels. Duels feed back into runs: dice you win can be carried into a run, and duels unlock the season's workshop, which makes runs stronger.
+Play a solo roguelite run to build your tools: each boss you beat banks a better evidence locker, and when you stop or fail you open the last one you banked. Then risk your dice against other players in duels, which is where the real extraction risk lives. Duels feed back into runs through your faction, which raises your power floor in both modes.
+
+**Two modes, two kinds of freedom** (agreed 2026-11-16):
+- **Runs are curated.** You start from a preset case file, with a few choices about how it begins, but your bag never enters a run. Low risk: failing costs only the locker upgrade you were working toward, never what you've banked or anything you own.
+- **Duels are open.** You bring whatever you like from your bag, and the winner takes a die from the loser. Full control, full risk.
 
 The whole game is one choice repeated at three levels:
 
 | Level | Push on | Cash out |
 |---|---|---|
 | Turn | Roll again | Bank |
-| Run | Fight the next boss | Extract, open a pack |
+| Run | Fight the next ante for a better locker | Call the raid, open the banked locker (no risk: see section 2) |
 | Duel | Keep the streak, grow the pot | Cash the pot into dust |
 
-**The loop:** run → pack → bag → duel → (dice won, dust, workshop milestones, relic unlocks) → next run. The duel → run half is the point: duels must be strongly worth playing for what they give solo runs, for winners and losers alike. A season wipe (section 6) bounds the snowball that strong rewards would otherwise cause.
+**The loop:** run → pack → bag → duel → (dice won, dust, faction rank, relic unlocks) → next run. Runs feed duels with dice; duels feed runs with faction rank, unlocked case files and relic unlocks. Duels must still be worth playing for what they give runs, for winners and losers alike. A season wipe (section 6) bounds the snowball.
+
+## Premise
+Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city run on backroom dice games. You take down dens, and to get deeper you break the rules: pocketing seized dice, gambling them with other detectives after hours, and using what that earns you to keep compromised contacts (your faction) working for you. The factions carry the "gray": informants paid off, clerks who lose paperwork, bookmakers kept sweet, all in service of closing dens. Grounded in real police corruption around gambling (the Lexow and Seabury inquiries; the Knapp Commission's "grass-eaters and meat-eaters", NYC 1970-72). It fits the casino-at-night theme, so no new art direction.
+
+**A premise, not a story.** Like Balatro: no cutscenes or narrative arc. The fiction lives in boss names and house rules, extraction and pack wording, lineage text and titles.
+
+| Mechanic | In the fiction |
+|---|---|
+| Run | Working a case up an organisation: street games → backroom dens → the people who run them → the kingpin (ante 6) |
+| Table / boss house rules | A den's game; the boss is its owner, and the house rule is how that den rigs things. You play it straight to stay undercover |
+| Extract | Call the raid. Early is a small bust, deep is chasing the kingpin |
+| Pack (3 dice, keep 1) | Seized dice go to evidence; you pocket one |
+| Lose the run | Your cover is blown mid-ante; you keep what you'd already seized (the last banked locker) |
+| Case file (preset run start) | The case you're assigned: who you're after and what you start with |
+| Heat (stakes) | How hot the case is: the higher it is, the warier the dens and the better the seizures |
+| Duels | The after-hours locker-room game. Each detective is building their own case and needs particular tools, so evidence moves between them this way. Unofficial and competitive, and everyone involved knows it's wrong |
+| Durability / crumbling | A die that's been through too many hands is "hot", too recognisable to keep, so it's destroyed |
+| Season wipe | Internal Affairs audits the precinct; everything is confiscated |
+| Trophy case | What you hid well enough to keep |
+| Factions | Your compromised contacts: the Street (informants), Records (clerks), the Book (bookmakers and fences). See section 6 |
+| Dust | Open: needs an in-world name (cash? favours?) |
+
+**Keep the "takes down dens" half visible**, or players read the character as plain corrupt rather than gray: a city map where beaten dens are marked closed, a "Case closed" stamp on extraction, the season's kingpin named at the top of the faction track. These are copy and small screens, not story systems.
 
 ## 1. The run (solo)
-- **Structure:** 8 antes × (small blind, big blind, boss) = 24 tables, Balatro's full shape. Roughly 40-50 min, so save/resume is required.
+- **Structure:** 6 antes × (small blind, big blind, boss) = 18 tables (decided 2026-11-16; shorter than Balatro's 8 because runs are preparation for duels, not the main event). Roughly 30-35 min, so save/resume is still required, and each ante is a natural place to stop (the reference: an extraction game's PvE mode of 3 matches + a boss match per series).
 - **Table (blind):** bank a target score within a set number of turns. Turns are Balatro's hands.
-- **Rerolls:** a limited per-table currency to reroll chosen dice without keeping (Balatro's discards). The main tool the player has against Farkle's randomness.
+- **Rerolls:** a limited per-table currency to reroll chosen dice without keeping (Balatro's discards). The main tool the player has against Farkle's randomness. Decided 2026-11-16:
+  - **A reroll can rescue a Farkle:** after a scoreless roll, spend one to reroll some or all of those dice and save the turn.
+  - **Start with 1 per table**; the Street faction raises it (section 6), so rerolls are something you earn.
+  - **Two separate things, as in Balatro:** table rerolls (reset each table) and the shop refresh (paid with run money, restocks the shop). The shop can sell a permanent +1 table reroll for the rest of the run.
 - **Scoring:** every keep scores **points × mult**. The count-up belongs at the Keep moment.
 - **Combo levels:** the planet-card equivalent: level up a combo (three 2s, a straight, ...) to raise its base points.
 - **Charms:** Balatro's jokers. 5 slots, passive rule-benders. Favour ones that bend the push-your-luck tension (e.g. Hot Hand: ×2 mult after hot dice; Insurance: first Farkle at each table keeps half the turn; Miser: +1 mult per die left unrolled on a bank).
@@ -29,15 +68,21 @@ The whole game is one choice repeated at three levels:
 - **Shop** between tables: charms, dice upgrades, combo levels, rerolls. Money comes from leftover turns plus interest.
 - **Skip blinds** (small or big) for a reward, as in Balatro: shortens the run for confident players.
 - **Fast dice** setting: plays the same simulated throw back faster and shortens the keep glide. Same result, less waiting.
-- **Losing the run before extracting: you leave with nothing**, and a carried die is lost (below).
-- **Carry slot (proposed, undecided):** at run start, pick one bag die (more with the workshop's Vault) to replace one of the six starting dice. During the run it can be altered like any die, **up to its rarity's power budget**; a rarity upgrade can be a rare boss reward. **Extract:** it comes home changed, on top of the pack pick. **Lose the run:** it's gone (open: lost outright, or crumbles into dust). This is the extraction-shooter risk, and how a die won in a duel seeds a run.
-- **Heat (only with the carry slot):** each carried die raises table targets by its rarity (about +8% per tier, to tune). A carried die shapes the build rather than being free power, and stops Ultra → deep runs → better packs from snowballing.
-- **Stakes** (Balatro's): higher stakes mean harder tables and better packs. As the workshop makes runs easier over a season, players step up a stake on their own, so runs stay tense.
+- **Losing the run: you keep the last banked locker** (section 2). Failing in ante 1, before any boss, leaves you with nothing.
+- **Case files: preset starts** (Balatro's decks). Each run starts from a case file: six starting dice, perhaps a charm, money, and a twist (e.g. a case that starts with Glass dice, or one with fewer turns but more rerolls). The player picks a case file and makes a few choices at the start, but **bag dice never enter a run**. New case files unlock through duels (variety, not power), which is part of what duels give runs.
+- **No carry slot** (decided 2026-11-16). Runs stay curated and balanced, and all the risk and full control over what you bring lives in duels.
+- **Heat** (Balatro's stakes): higher Heat means harder tables and better packs. As a faction raises a player's floor over a season, they step up a level of Heat on their own, so runs stay tense.
 
 ## 2. Extraction and packs
-- After **each boss** (8 chances) the player may **extract**: the run ends and they open a pack.
-- The pack shows **3 random dice; keep 1.** Rarity improves with depth: extract early for a weak pack, push on for a better one.
-- Pack dice are random; they are not copies of the dice built during the run. The run's build decides how deep you get. If the carry slot is adopted, a carried die is the one exception: it comes home with what the run did to it, because it was at risk.
+- **Banking (decided 2026-11-16, from the reference mode):** beating an ante's boss banks that ante's **evidence locker** (the pack). The banked locker is safe: if the run fails later, you still open it. Pushing on risks only the upgrade, never what's banked.
+- **Runs are the safe mode** (decided 2026-11-16). Pushing is always free except for time, so there is no extract gamble at the run level: the only risk is not getting more. Push-your-luck in a run lives in the turn (roll or bank) and the table targets; losing what you own lives in duels. No clean raid bonus. Calling the raid is for ending the session, e.g. to duel tonight.
+- After **each boss** (6 chances) the player chooses: **call the raid** (stop and open the banked locker) or push on toward the next tier.
+- **The locker is on screen at that choice** ("Locker tier 3: 4 dice shown, Rare odds, 120 dust"), the way unbanked points are on screen during a Farkle turn. Push-your-luck needs the stake to be visible.
+- **Locker contents (decided 2026-11-16): a die pick + dust + a part.** All three improve with tier.
+  - **Die pick:** 3 random dice, keep 1. Rarity improves with depth.
+  - **Dust:** a lump scaled by tier.
+  - **Part:** one stamp, material or edition (never a trigger), applied later to any bag die of your choice. Parts are how a player shapes their duel bag on purpose instead of hoping a pack rolls the right die; that's the point of runs as tool-building.
+- Pack dice are random; they are not copies of the dice built during the run. The run's build decides how deep you get.
 
 ## 3. Dice: four layers
 | Layer | What it does | Examples |
@@ -45,60 +90,87 @@ The whole game is one choice repeated at three levels:
 | **Face stamps** | Change single faces, and so the die's odds | Face becomes a 5, wild, ×2 mult, +$1 |
 | **Material** (tiers I, II, III) | Whole-die behaviour, same tier pattern for every material | Glass: ×1.5 / ×2 / ×3 points, shatters on a Farkle 1 in 3 / 4 / 6. Gold: $1 / $2 / $4 when kept. Steel, Lead (biased) |
 | **Edition** | The rare shine plus a small bonus | Foil: +50 when it scores. Holographic: +1 mult |
-| **Trigger** | A build-around event effect (reuses the charm event system) | Earn $3 when part of hot dice. Can't Farkle if it's the last die |
+| **Trigger** | A build-around event effect (reuses the charm event system). **Only on unique dice and set bonuses** (decided 2026-11-16), never on the rarity ladder | Earn $3 when part of hot dice. Can't Farkle if it's the last die |
 
 **Rarities** (six):
 
-| Rarity | Stamps | Material | Edition | Trigger | Durability (times it can change hands) |
-|---|---|---|---|---|---|
-| Common | 1 | none | none | none | 5 |
-| Uncommon | 2 | I | none | none | 4 |
-| Rare | 3 | I | possible | none | 3 |
-| Epic | 4 | II | possible | possible | 3 |
-| Legendary | 5 | II | likely | 1 | 2 |
-| Ultra | 6 | III | always | 1 | 2 |
+| Rarity | Stamps | Material | Edition | Durability (times it can change hands) |
+|---|---|---|---|---|
+| Common | 1 | none | none | 5 |
+| Uncommon | 2 | I | none | 4 |
+| Rare | 3 | I | possible | 3 |
+| Epic | 4 | II | possible | 3 |
+| Legendary | 5 | II | likely | 2 |
+| Ultra | 6 | III | always | 2 |
+
+**Why no triggers on the ladder:** in a duel a trigger is a personal charm the opponent doesn't get, against a structure of a few shared relics. A bag of six Legendaries with a trigger each would decide matches. Reserving triggers for uniques (one copy each per bag) and set bonuses (2-4 pieces in play) keeps their count low by construction, and makes uniques and sets the dice that bend rules while Ultras are the most built. Epic and up get a larger power budget instead (to tune).
 
 **Power budget:** stamps aren't equal ("counts as a 1" is far stronger than "+$1"), so each stamp has a cost and each rarity a budget as well as a slot count. Packs roll within the budget; an Ultra always has some cheap stamps. The host later uses the same budget to reject tampered dice.
+
+### Set and unique dice (beside the ladder)
+Decided 2026-11-16: these are **types beside the rarity ladder**, not new rungs. The ladder controls power limit, durability and bag strength, and the economy leans on it; sets and uniques need their own rules.
+
+- **Set dice:** an ordinary die with a rarity, plus a set tag ("Dutch's Loaded Set, 1 of 4"). Bonuses unlock at 2 and 4 pieces among the six dice in play. Power limit, durability, parts and the host check work unchanged. **Any rarity can carry a set tag, Common included** (decided 2026-11-16): the set bonus belongs to the set, not to the die's budget, and piece rarity only decides that die's own strength. A set can be completed early on cheap pieces, then upgraded piece by piece (a higher-rarity copy of the same piece, or a promotion part). Duplicate pieces count once toward a bonus. **Sets are tied to case files only, no general pool** (decided 2026-11-16): a set needs 2-4 pieces, so a shared pool would spread drops across every set and make finishing one a grind. Set pieces drop from their case: one can appear among a locker's 3 dice, at the piece's rarity. Completing a set means repeat runs of that case or taking pieces from other players in duels. In duels, the winner's pick can break the loser's set and start their own: "Ana has my fourth Dutch die" is a reason to duel a particular friend.
+- **Unique dice:** hand-designed, named, fixed effect, outside slots and budget. Dropped by the kingpin (ante 6), echoing their house rule; in the fiction, the famous evidence from the case. **The case file decides which uniques can drop** (decided 2026-11-16): each case targets a kingpin, and that case has its own pool of case uniques, plus a chance at a general unique pool shared by all cases. A chance, never a guarantee; picking a case is how a player hunts a particular unique. No parts, no promotion. One copy of each per bag (global uniqueness can't be enforced without a server). Durability 1: taken once, crumbles the next time it's lost. The host validates them by id against a fixed list.
+- **Uniques don't have to be dice.** "Your sixth die is a thumb." Two kinds, both deterministic:
+  - **Rolling objects:** a cube collider like any die, drawn as something else (a knucklebone, a carved ivory block, a sugar cube). Physics is unchanged; only the renderer differs. The body must still read as having a top face when it lands.
+  - **Non-rolling objects:** take a die slot but don't roll; they act instead ("Dutch's Thumb": a thumb on the scale, nudge one die ±1 once per turn). Rolling 5 dice is the real cost. No physics at all. Hot dice and the tray assume six rolling dice, so this needs those spots generalised.
 
 **Not doing: polyhedral dice (d4, d8, d10, d20).** The physics treats dice as cubes and lands them through the tumble path; `drawDie` builds a cube; Farkle scoring assumes 1-6. Each shape would need new collision code (still deterministic), landing logic, art and its own scoring rules. Face stamps already make d6s that behave like different dice (1,1,5,5,5,5 never Farkles alone).
 
 ## 4. Collection
+- **Parts** wait in a parts drawer until applied (season-wiped like the bag; not at stake in duels, only dice are). Applying one is permanent and recorded in the die's lineage ("Glass II, seized at Dutch's, 16 Nov").
+  - **Promotion part (decided 2026-11-16):** a rare part that raises a die one rarity tier (one more slot, a bigger budget). Drops only from tier 5-6 lockers, so depth still controls how many big dice exist. Durability becomes the new rarity's value, capped at what the die has left: promotion makes a die stronger and more fragile in duels at once, and never restores durability. A raised die keeps its lineage ("Taken from Ana as a Common, now Epic").
+  - **A part fits only within the die's rarity:** a free slot of that layer and room in the power budget (section 3), or it replaces an existing stamp/material (the old one is lost). A Common can't become a monster, and the host's budget check still holds.
 - The bag: the dice you own, kept per device in localStorage for v1. Dice earned on the Artifact and on GitHub Pages are separate; the UI should say so. The bag belongs to the current season (section 6).
 - **Lineage:** every die records its history: where it came from (run, pack, duel), who it was taken from and when ("Taken from Ana, 16 Nov"). Nearly free to build and the strongest emotional hook in the design.
-- **Dust** is the only second currency. Sources: breaking unwanted dice, crumbled dice, cashed-out streak pots, duel spoils (both players). Spent on rerolling or upgrading faces, pack upgrades (see 4 dice instead of 3, or one rarity tier better at the next extraction), small run-start boons (+1 reroll at ante 1, +$5; nothing that stacks), and workshop upgrades.
+- **Dust** is the only second currency. Sources: breaking unwanted dice, crumbled dice, cashed-out streak pots, duel spoils (both players). Spent on rerolling or upgrading faces, pack upgrades (see 4 dice instead of 3, or one rarity tier better at the next extraction), small run-start boons (+1 reroll at ante 1, +$5; nothing that stacks), and faction ranks.
 
 ## 5. The duel (multiplayer)
+**Designed for a public player base, not a fixed friend group** (owner, 2026-11-16). Few people play today, but nothing here should assume a small circle.
+
+**Bot duels until matchmaking exists** (decided 2026-11-16). Until matchmaking is designed and built, duels are played against bots with a random spread of bags and difficulties, so the duel is fully playable now and the stakes are real. Reuses the existing bots and the host path they use. Bots keep nothing between games. **Lose to a bot:** you lose exactly what you'd lose to a player (it picks a die from your bag, and your streak pot), but the die is removed from the game rather than kept ("Lost to <bot name>" in lineage). **Beat a bot:** you pick a die from its bag, newly created for you ("Taken from <bot name>"). So the only thing bots add to the economy is the dice you win from them, and each loss removes one. **Bot dice come pre-worn** (decided 2026-11-16): they arrive with durability already reduced, as if they'd changed hands. Wear is **random and weighted by rarity**: the higher the rarity, the more likely it's nearly spent. A bot Ultra or Legendary usually arrives at 1 (ready to be dusted: it crumbles the next time it's lost), with a small chance of arriving at full durability; Epic and Rare usually 1-2; Uncommon and Common lightly worn or unworn. Never below 1. Odds to tune. They play at full strength, so bot duels feel the same, but dice won from bots leave circulation sooner, and fresh locker dice from runs stay the premium source. In the fiction, street dice that have been around. Duels between real players use the same rules once matchmaking lands.
+
 - **Format:** best of 3 rounds; each round both players get 3 turns, most points wins; a tie is one sudden-death turn each.
-- **Relics:** each round presents a shared relic both players play under (it can bend the round's rules, e.g. last turn scores double).
+- **Relics:** each round adds a shared relic both players play under (it can bend the round's rules, e.g. last turn scores double). **Relics stack** (decided 2026-11-16): round 1 has one, round 2 two, round 3 all three. The deciding round is the most rule-bent.
+- **Duels are chaotic by design** (decided 2026-11-16): you bring your whole bag of loaded dice and play under stacking relics. The chaos and the risk are the point; they make the drama. Balance work in duels only guards against relic pairs that contradict each other or break scoring (undefined or endless results), not against swingy outcomes.
+- **One unique** among your six dice in play (decided 2026-11-16).
+- **Open bags, no gear matchmaking** (decided 2026-11-16). Beating a far better-geared opponent is the whole point: rags to riches, playing well within your means for a big prize. The Before Start screen (both bags shown, both accept) means an underdog who duels an Ultra bag chose the swing. The underdog is protected by floors, not by restricting what anyone brings: spoils and pot scale with the opponent's bag, the upside is asymmetric (they risk a Common, they can take an Ultra), Records' lock and catch-up perks. Runs are the safe route to a strong bag: a player who'd rather not duel often can build an Ultra bag through PvE, slower but without risk.
+- **Tune, don't cap:** Farkle's luck is the point and is never tuned away. Simulated bot duels (thousands of games, so luck averages out) are a sanity check on the power budgets: they show whether an Ultra bag wins 60% or 98% against a Common one. If upsets are near-impossible, rags to riches is gone; if building a bag barely matters, there's nothing to win.
 - **Before Start:** both bags and both streak pots are shown, and both players accept. Nobody gets ambushed.
 - **Stakes:** the **winner picks one die from the loser's whole bag.** That's the risk of bringing your dice, and the zero-to-hero payoff.
 - **Streak pot:** each win adds game-created dust to the winner's own pot, scaled by the **opponent's** bag strength (beating a Common bag adds almost nothing; beating a strong bag adds a lot). The pot is at risk: losing a match hands it to the winner. Cash out any time into dust, which resets it. This is what the strong player plays for, and every match against them is a jackpot for the underdog.
 - **Durability:** a die loses 1 durability each time it changes hands (table above). At 0 it **crumbles into dust for the winner**, scaled by rarity. Big dice leave circulation fastest; new Ultras only come from runs. A fresh Ultra can be stolen once; the next time it's lost it crumbles.
 - **Spoils for both players:** every match pays dust to both, the loser less, both scaled by the opponent's bag strength. Losing to a strong bag still pays. Without this the weaker player's best move is not to duel.
-- **Relic unlocks:** win a round under a relic and its run-side counterpart joins your charm or boss pool for the season. Variety, not power (Balatro's unlocks), and a reason to duel different friends under different relics.
+- **Relic unlocks:** any relic you **see** in a duel, win or lose, unlocks its run-side counterpart in your charm or boss pool for the season (decided 2026-11-16). Both players get the same unlocks, in line with spoils for both. Variety, not power (Balatro's unlocks), and a reason to duel often. Up to 3 unlocks per duel, so size the relic pool so that seeing all of it takes most of a season.
 - **Reactions:** a small fixed set (tip hat, raise glass, slow clap), rate-limited, no free text. Cosmetic (section 7).
-- The economy only moves between people who play each other; in a friend group the same dice will change hands.
-- **Not doing:** flat run power per duel win (starting money, permanent mult). It snowballs strong players and trivialises solo runs. Duels give options and better dice to put at risk, gated by the workshop.
+- The economy only moves between people who play each other.
+- **Not doing:** flat run power per duel win (starting money, permanent mult). It snowballs strong players and trivialises solo runs. Duels give faction rank (a capped floor, section 6), case file and relic unlocks, and better dice to put at risk.
 
 ## 6. Seasons
-- **Full wipe** each season: the bag, the workshop, unlocked relics and dust all reset. Strong duel → run rewards are only affordable because they can't compound past a season. A wipe also restores late joiners and losers, and caps what a hand-edited bag is worth.
+- **Full wipe** each season: the bag, faction ranks, unlocked relics and case files, and dust all reset. Strong duel → run rewards are only affordable because they can't compound past a season. A wipe also restores late joiners and losers, and caps what a hand-edited bag is worth.
 - **Frozen bag:** at season end every bag die moves into the **trophy case**. Unplayable, but kept with its lineage and stats. Wipe the power, keep the memory.
 - **Kept across seasons:** the trophy case, cosmetics, titles.
-- **Length:** about 6-8 weeks to start. A group of 2-4 plays far fewer duels than a public game, so size everything so someone playing once a week finishes the track.
+- **Length:** about 6-8 weeks to start. Size everything so someone playing once a week finishes the track.
 - **v1 is cheap:** tag the bag with a season id computed from the date on each device. A new id freezes the old bag and starts a fresh one. No server.
 
-### The workshop (season progression)
-Permanent upgrades **within the season** that make runs stronger, with **duels as the gate** (the hideout from extraction shooters). Upgrades cost dust and require duel milestones; no new currency.
+### Factions (season progression)
+Factions replace the workshop (decided 2026-11-16). **Any player can rank up any faction; nobody is locked in.** Each faction has one main benefit that helps in **both** runs and duels, and the choice is which to invest in first. With limited dust and a wipe every season, that order is the decision. Ranks are permanent **within the season**, cost dust and require duel milestones (duels are the gate, the hideout from extraction shooters); no new currency.
 
-| Station | Effect on runs | Gate |
-|---|---|---|
-| Vault* | Carry slots 1 → 2 → 3 | Duels played |
-| Forge* | A carried die keeps 1 extra stamp after a failed run | Duels won |
-| Scout | See the next boss's house rule one table early | Distinct opponents faced |
-| Pack table | +1 die shown per pack, better rarity odds | Duels played + dust |
-| Bank | Starting money, interest cap | Dust |
+**Factions raise the power floor, not the ceiling.** A flat bonus everyone gets moves everyone up and leaves the gap where it was. So every faction perk is one of:
+1. **A guarantee:** a minimum outcome that only matters when things go badly.
+2. **Front-loaded:** strong in early antes, fading by the deep ones. Helps newer players reach mid-game without making ante 6 easier.
+3. **Catch-up in duels:** bigger the weaker your bag is than your opponent's.
 
-\* Only with the carry slot. Without it the workshop needs other run-side stations.
+Each perk caps out, so the floor never becomes a ceiling. Veterans who max a faction only reach the same guaranteed minimums.
+
+| Faction | Direction | Runs | Duels |
+|---|---|---|---|
+| **The Street** (informants) | Information | Ranks raise base rerolls per table (1 → 2 → 3, capped); first boss's house rule revealed at run start | The underdog sees the next round's relic a round early |
+| **Records** (clerks who lose paperwork) | Protection | Second chance: once per run, retry a failed table in antes 1-3 (banking already covers failure, so salvage is gone) | Your single best die can't be taken ("misfiled"). Needs a cost (dust per match, or once per match) or everyone picks Records |
+| **The Book** (bookmakers and fences) | Economy / dust | Minimum starting money and an interest floor | Minimum dust per match, scaled up for the underdog |
+
+Rank values and the exact perk per rank are open (below); the directions are decided.
 
 - **Gates count mostly duels played, a few count wins.** Paying for participation narrows the gap between players; paying only for wins widens it.
 - **"Distinct opponents" gates** stop two people (or two tabs) farming each other, and reward bringing new players in.
@@ -123,12 +195,12 @@ Permanent upgrades **within the season** that make runs stronger, with **duels a
 | Duel reactions | Small fixed set, rate-limited, no free text | |
 | Trophy case | Frozen season bags in a cabinet | |
 
-- **Sources:** workshop top tiers, end-of-season rank, feats (steal an Ultra, win on the champion's felt). Mostly earned through duels.
+- **Sources:** faction top ranks, end-of-season rank, feats (steal an Ultra, win on the champion's felt). Mostly earned through duels.
 - Anything other players see (felt, card, showcase die, reactions) rides in the snapshot and must be added to `cleanState`.
 
 ## 8. Cheating and storage
 - **v1: no verification.** Dice live in the player's browser and can be hand-edited. Seasons limit the damage.
-- **Host check now:** the host rejects any die over its rarity's budget (cheap, in `cleanState`). Required, not optional, once carried dice feed runs.
+- **Host check now:** the host rejects any die over its rarity's budget (cheap, in `cleanState`). Bag dice never enter runs, so this guards duels only.
 - **Designed for later verification:** run dice come from a **seeded RNG** (not `crypto`), and every run action goes through one **action log**. Later, the server hands out the seed, the client sends the log, and a Supabase Edge Function replays it with the same scoring code before granting the pack. That needs accounts (anonymous auth at minimum), a server copy of the scoring and charm logic, and database rules. The seed + log also give save/resume for free.
 
 ## 9. Code plan
@@ -141,25 +213,31 @@ Permanent upgrades **within the season** that make runs stronger, with **duels a
 
 ## 10. Build order
 1. Solo roguelite with extraction (seeded RNG, action log, save/resume from day one). Must be fun on its own.
-2. The bag screen and packs. Design the bag and the run start for carry slots from day one (a carry slot of zero until the workshop exists), and give every die a lineage field.
-3. The duel.
-4. Seasons: wipe, trophy case, workshop. Then cosmetics.
+2. Case files (preset starts), then the bag screen, lockers and the parts drawer (applying parts to bag dice). Give every die a lineage field.
+3. The duel, against bots with random bags and difficulties (real-player matchmaking later).
+4. Seasons: wipe, trophy case, factions. Then cosmetics.
 
 ## Open questions
-- **Carry slot: adopt it or not?** The owner is undecided (2026-11-16). With it, dice won in duels enter runs and the loop is strongest; without it, runs stay clean (Balatro) and the duel → run loop rests on dust, the workshop and relic unlocks. Heat, the Vault and the Forge depend on this. Settle it first.
+- **Is duel → run strong enough?** With no carry slot, duels give runs only faction rank (a capped floor), case file unlocks and relic unlocks. Check in playtests that this makes runners want to duel; if not, add more run-side faction perks before reopening the carry slot.
+- Case file list: starting dice, charm, money and twist per file; its kingpin and case-unique pool; which unlock through duels; what choices the player makes at run start.
+- Unique drop odds: chance at the kingpin, case pool vs general pool split. Set piece odds in lockers per tier.
+- Factions: perks per rank, rank costs and milestone counts; Records' lock cost. Size costs so maxing all three takes most of a season.
+- Premise copy: names for dust, the kingpin per season, den and boss names, how the city map shows closed dens.
 - Stamp list and costs; per-rarity budgets.
 - Materials list and their tier values; editions list; triggers list.
 - Charm list; house-rule (boss) list; relic list.
 - Table targets, turns and rerolls per ante; money and interest; shop prices.
-- Pack rarity odds per extraction depth.
+- Locker rarity odds per tier.
+- Part odds per tier: which layers (stamp, material, edition) can drop at which tier; can unwanted parts be broken into dust?
 - Dust values (breaking, crumbling, pot growth) and dust costs.
-- Duel bag rules: a points cap by rarity, or open bags? Decide after simulating bot duels (e.g. Ultra bag vs Common bag win rates).
+- Power budgets: check with simulated bot duels that upsets stay possible and bag strength still matters.
+- Bot duels: bag strength and difficulty spread; whether bot bags scale with yours or stay random.
+- Matchmaking for real-player duels (public, not friend-group): open bags means no gear matching; how the Before Start accept works with strangers (dodging).
 - Duel player count: strictly 2, or 3-4 using the existing rooms?
-- What's in the shop's reroll vs the table's reroll (one currency or two)?
-- Carried die on a failed run: lost outright, or crumbles into dust?
-- Heat per rarity tier (+8% is a placeholder); how stakes scale targets and pack odds.
+- Heat levels: how each scales table targets and pack odds.
 - Duel spoils: dust for winner and loser, and the scaling by opponent bag strength.
-- Workshop: stations, tier costs, milestone counts; season length and start dates (the same on every device).
+- Season length and start dates (the same on every device).
 - Which relics map to which charms or bosses for relic unlocks.
+- Set list (pieces, 2- and 4-piece bonuses, which den or case file); unique list per kingpin, rolling or not.
 - Holiday colours `ornament` and `frost`: classic mode only, or recolour them?
 - Champion's felt in duels: decided by streak, or by whoever has the bigger pot?
