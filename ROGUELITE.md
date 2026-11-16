@@ -101,7 +101,7 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 ### Set and unique dice (beside the ladder)
 Decided 2026-11-16: these are **types beside the rarity ladder**, not new rungs. The ladder controls power limit, durability and bag strength, and the economy leans on it; sets and uniques need their own rules.
 
-- **Set dice:** an ordinary die with a rarity, plus a set tag ("Dutch's Loaded Set, 1 of 4"). Bonuses unlock at 2 and 4 pieces among the six dice in play. Power limit, durability, parts and the host check work unchanged. Each set belongs to a den or case file, so completing one means repeat runs or taking pieces from friends. In duels, the winner's pick can break the loser's set and start their own: "Ana has my fourth Dutch die" is a reason to duel a particular friend.
+- **Set dice:** an ordinary die with a rarity, plus a set tag ("Dutch's Loaded Set, 1 of 4"). Bonuses unlock at 2 and 4 pieces among the six dice in play. Power limit, durability, parts and the host check work unchanged. **Sets are tied to case files only, no general pool** (decided 2026-11-16): a set needs 2-4 pieces, so a shared pool would spread drops across every set and make finishing one a grind. Set pieces drop from their case: one can appear among a locker's 3 dice, at the piece's rarity. Completing a set means repeat runs of that case or taking pieces from other players in duels. In duels, the winner's pick can break the loser's set and start their own: "Ana has my fourth Dutch die" is a reason to duel a particular friend.
 - **Unique dice:** hand-designed, named, fixed effect, outside slots and budget. Dropped by the kingpin (ante 6), echoing their house rule; in the fiction, the famous evidence from the case. **The case file decides which uniques can drop** (decided 2026-11-16): each case targets a kingpin, and that case has its own pool of case uniques, plus a chance at a general unique pool shared by all cases. A chance, never a guarantee; picking a case is how a player hunts a particular unique. No parts, no promotion. One copy of each per bag (global uniqueness can't be enforced without a server). Durability 1: taken once, crumbles the next time it's lost. The host validates them by id against a fixed list.
 - **Uniques don't have to be dice.** "Your sixth die is a thumb." Two kinds, both deterministic:
   - **Rolling objects:** a cube collider like any die, drawn as something else (a knucklebone, a carved ivory block, a sugar cube). Physics is unchanged; only the renderer differs. The body must still read as having a top face when it lands.
@@ -211,8 +211,7 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 ## Open questions
 - **Is duel → run strong enough?** With no carry slot, duels give runs only faction rank (a capped floor), case file unlocks and relic unlocks. Check in playtests that this makes runners want to duel; if not, add more run-side faction perks before reopening the carry slot.
 - Case file list: starting dice, charm, money and twist per file; its kingpin and case-unique pool; which unlock through duels; what choices the player makes at run start.
-- Unique drop odds: chance at the kingpin, case pool vs general pool split.
-- Sets: tied to case files only, or also a general pool like uniques?
+- Unique drop odds: chance at the kingpin, case pool vs general pool split. Set piece odds in lockers per tier.
 - Factions: perks per rank, rank costs and milestone counts; Records' lock cost. Size costs so maxing all three takes most of a season.
 - Premise copy: names for dust, the kingpin per season, den and boss names, how the city map shows closed dens.
 - Stamp list and costs; per-rarity budgets.
