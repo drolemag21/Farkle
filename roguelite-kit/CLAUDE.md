@@ -1,6 +1,6 @@
-# Farkle roguelite (working title)
+# Miami Dice
 
-A single-player Farkle roguelite (Balatro-style runs, a vice-detective premise) feeding a dice bag you risk in duels. Built on a copy of Farkle Table's dice engine. The name isn't chosen yet (see `HANDOFF.md`).
+A single-player Farkle roguelite (Balatro-style runs, a vice-detective premise) feeding a dice bag you risk in duels. Built on a copy of Farkle Table's dice engine.
 
 ## Read first
 - `HANDOFF.md`: where the project stands, how the repository was bootstrapped, architecture, publishing.

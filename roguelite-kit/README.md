@@ -1,4 +1,4 @@
-# Farkle roguelite (working title)
+# Miami Dice
 
 A push-your-luck dice roguelite. You're a vice detective working a case up a city's backroom dice games: beat each den's rigged house rule, build your six dice and your charms, and call the raid before your cover is blown. What you seize goes into your bag, which you can risk against other players in duels.
 

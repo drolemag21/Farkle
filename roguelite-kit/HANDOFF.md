@@ -1,12 +1,12 @@
-# Hand-off: starting the roguelite repository
+# Hand-off: starting Miami Dice
 
-Written 2026-11-16. The roguelite run, the dice bag and duels outgrew Farkle Table (classic multiplayer Farkle in one HTML file), so they get their own repository and their own game. This folder began as `roguelite-kit/` inside `drolemag21/Farkle`; its contents become the new repository's root.
+Written 2026-11-16. The roguelite run, the dice bag and duels outgrew Farkle Table (classic multiplayer Farkle in one HTML file), so they get their own repository and their own game: **Miami Dice** (named by the owner, 2026-11-16; repository `miami-dice`). This folder began as `roguelite-kit/` inside `drolemag21/Farkle`; its contents become the new repository's root.
 
 ## Where it stands
 - **Design:** `DESIGN.md` holds every decision so far, the open questions, and the step-1 content set (six boss house rules, 12 charms, the Dutch case file, placeholder numbers), which the owner agreed to start with. **Nothing is built.**
 - **Engine:** Farkle Table's physics, dice renderer, sound and look are the starting point. `ENGINE.md` lists what to take, adapt or leave from its `farkle-table.html`, pinned to one commit, and the invariants that keep the physics deterministic.
 - **Tuning tool:** `tools/sim.js` simulates tables under each house rule with plain dice (`node tools/sim.js [turns] [rerolls] [tables]`). The figures in `DESIGN.md` came from it.
-- **Name:** not chosen yet. "Farkle Showdown" is taken: it's an earlier, separate single-player roguelite of the owner's that shares no code with either repository. Decide whether this game replaces it, absorbs it, or needs a new name.
+- **Name:** Miami Dice. "Farkle Showdown", an earlier separate single-player roguelite of the owner's, is unrelated and shares no code.
 
 ## What's here
 | File | What it is |
@@ -14,19 +14,19 @@ Written 2026-11-16. The roguelite run, the dice bag and duels outgrew Farkle Tab
 | `DESIGN.md` | The game design: run, extraction, dice layers, collection, duels, seasons, step-1 content |
 | `ENGINE.md` | What comes from Farkle Table, from where (pinned commit), and the invariants |
 | `CLAUDE.md` | Instructions Claude loads automatically: how the owner works, architecture, testing |
-| `README.md` | Short public description (placeholder until the name is chosen) |
+| `README.md` | Short public description |
 | `tools/sim.js` | Table simulator for tuning targets and house rules |
 | `tests/serve.js` | Local static server (wraps skeleton-less pages like the Artifact publisher; serves ES modules) |
 | `.claude/launch.json` | Local server for the browser pane (:8765) |
 
 ## Bootstrapping the repository (owner, once)
-1. Create an empty GitHub repository (name: see above) and clone it next to a clone of `drolemag21/Farkle`.
+1. Create an empty GitHub repository, `miami-dice`, and clone it next to a clone of `drolemag21/Farkle`.
 2. Copy the kit and the engine reference in, then commit:
    ```sh
-   cp -r Farkle/roguelite-kit/. NEW_REPO/
-   mkdir -p NEW_REPO/reference
-   git -C Farkle show 62cdc2b7ae191d27a386bdbcca8ce0877dab5e8c:farkle-table.html > NEW_REPO/reference/farkle-table.html
-   cd NEW_REPO && git add -A && git commit -m "Start from Farkle Table's roguelite kit" && git push
+   cp -r Farkle/roguelite-kit/. miami-dice/
+   mkdir -p miami-dice/reference
+   git -C Farkle show 62cdc2b7ae191d27a386bdbcca8ce0877dab5e8c:farkle-table.html > miami-dice/reference/farkle-table.html
+   cd miami-dice && git add -A && git commit -m "Start from Farkle Table's roguelite kit" && git push
    ```
 3. Give the Claude GitHub App access to the new repository, so cloud sessions can push to it.
 4. Back in Farkle Table: delete `roguelite-kit/` and point its `CLAUDE.md` / `HANDOFF.md` at the new repository (a Claude session there can do this; ask it to).
@@ -62,5 +62,4 @@ reference/        farkle-table.html at the pinned commit (read-only, never serve
 
 ## Not decided yet
 Beyond `DESIGN.md` → Open questions:
-- The game's name (and how it relates to Farkle Showdown).
 - Whether players reach this game from Farkle Table (a link on its home screen) or it stands alone.

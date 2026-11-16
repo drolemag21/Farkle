@@ -1,4 +1,4 @@
-# Design
+# Miami Dice: design
 
 Status: **design only, nothing built.** The step-1 content set is agreed as the starting point. Decisions below were agreed with the owner (2026-11-16). This file began as `ROGUELITE.md` in the Farkle Table repository and moved here when the modes got their own repository. Open questions are listed at the end; settle them here before building the part they touch.
 
@@ -299,6 +299,7 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Case file list: starting dice, charm, money and twist per file; its kingpin and case-unique pool; which unlock through duels; what choices the player makes at run start.
 - Unique drop odds: chance at the kingpin, case pool vs general pool split. Set piece odds in lockers per tier.
 - Factions: perks per rank, rank costs and milestone counts; Records' lock cost. Size costs so maxing all three takes most of a season.
+- **Setting after the name (2026-11-16):** "Miami Dice" points at Miami and, through Miami Vice, the 1980s. The premise so far is an unnamed city grounded in New York corruption history, with den names to match (laundromat, bakery card room, social club) and a jazz-lounge, casino-at-night look. Decide whether the game is set in Miami (era, look and den names follow) or the name is only a nod.
 - Premise copy: names for dust, the kingpin per season, den and boss names, how the city map shows closed dens.
 - Stamp list and costs; per-rarity budgets.
 - Materials list and their tier values; editions list; triggers list.
