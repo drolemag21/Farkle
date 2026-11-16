@@ -299,7 +299,10 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Case file list: starting dice, charm, money and twist per file; its kingpin and case-unique pool; which unlock through duels; what choices the player makes at run start.
 - Unique drop odds: chance at the kingpin, case pool vs general pool split. Set piece odds in lockers per tier.
 - Factions: perks per rank, rank costs and milestone counts; Records' lock cost. Size costs so maxing all three takes most of a season.
-- **Setting after the name (2026-11-16):** "Miami Dice" points at Miami and, through Miami Vice, the 1980s. The premise so far is an unnamed city grounded in New York corruption history, with den names to match (laundromat, bakery card room, social club) and a jazz-lounge, casino-at-night look. Decide whether the game is set in Miami (era, look and den names follow) or the name is only a nod.
+- **Name and setting (owner deciding, 2026-11-16):** "Miami Dice" is provisional. Two directions:
+  - **Hot Dice, New York** (Claude's pick): the Farkle term plus slang for stolen goods (and a "hot" die is one that's changed hands too often). Fits the premise as designed (Lexow, Seabury, Knapp; laundromat, bakery card room, social club dens). Check for other games already using the name.
+  - **Miami Dice, Miami Beach around 1950:** the S&G bookmaking syndicate and its police protection, exposed by the Kefauver hearings (1950). Keeps the jazz-lounge look; dens become a bolita game behind a cigar shop, a hotel cabana game, the jai-alai fronton, a nightclub casino, a Biscayne Bay charter boat, Dutch's Star Island estate. A pun on the Miami Vice trademark. Verify the history before using it in game text.
+  - Rejected: 1980s Miami (new art direction, and its police scandal was about drugs rather than gambling).
 - Premise copy: names for dust, the kingpin per season, den and boss names, how the city map shows closed dens.
 - Stamp list and costs; per-rarity budgets.
 - Materials list and their tier values; editions list; triggers list.

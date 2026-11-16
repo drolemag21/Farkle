@@ -6,7 +6,7 @@ Written 2026-11-16. The roguelite run, the dice bag and duels outgrew Farkle Tab
 - **Design:** `DESIGN.md` holds every decision so far, the open questions, and the step-1 content set (six boss house rules, 12 charms, the Dutch case file, placeholder numbers), which the owner agreed to start with. **Nothing is built.**
 - **Engine:** Farkle Table's physics, dice renderer, sound and look are the starting point. `ENGINE.md` lists what to take, adapt or leave from its `farkle-table.html`, pinned to one commit, and the invariants that keep the physics deterministic.
 - **Tuning tool:** `tools/sim.js` simulates tables under each house rule with plain dice (`node tools/sim.js [turns] [rerolls] [tables]`). The figures in `DESIGN.md` came from it.
-- **Name:** Miami Dice. "Farkle Showdown", an earlier separate single-player roguelite of the owner's, is unrelated and shares no code.
+- **Name:** Miami Dice is provisional; the owner is choosing between it and Hot Dice (New York). See `DESIGN.md` → Open questions. Rename the repository and these files once decided. "Farkle Showdown", an earlier separate single-player roguelite of the owner's, is unrelated and shares no code.
 
 ## What's here
 | File | What it is |
