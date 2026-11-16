@@ -93,6 +93,15 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 
 **Power budget:** stamps aren't equal ("counts as a 1" is far stronger than "+$1"), so each stamp has a cost and each rarity a budget as well as a slot count. Packs roll within the budget; an Ultra always has some cheap stamps. The host later uses the same budget to reject tampered dice.
 
+### Set and unique dice (beside the ladder)
+Decided 2026-11-16: these are **types beside the rarity ladder**, not new rungs. The ladder controls power limit, durability and bag strength, and the economy leans on it; sets and uniques need their own rules.
+
+- **Set dice:** an ordinary die with a rarity, plus a set tag ("Dutch's Loaded Set, 1 of 4"). Bonuses unlock at 2 and 4 pieces among the six dice in play. Power limit, durability, parts and the host check work unchanged. Each set belongs to a den or case file, so completing one means repeat runs or taking pieces from friends. In duels, the winner's pick can break the loser's set and start their own: "Ana has my fourth Dutch die" is a reason to duel a particular friend.
+- **Unique dice:** hand-designed, named, fixed effect, outside slots and budget. Dropped by the kingpin (ante 6), echoing their house rule; in the fiction, the famous evidence from the case. No parts, no promotion. One copy of each per bag (global uniqueness can't be enforced without a server). Durability 1: taken once, crumbles the next time it's lost. The host validates them by id against a fixed list.
+- **Uniques don't have to be dice.** "Your sixth die is a thumb." Two kinds, both deterministic:
+  - **Rolling objects:** a cube collider like any die, drawn as something else (a knucklebone, a carved ivory block, a sugar cube). Physics is unchanged; only the renderer differs. The body must still read as having a top face when it lands.
+  - **Non-rolling objects:** take a die slot but don't roll; they act instead ("Dutch's Thumb": a thumb on the scale, nudge one die ±1 once per turn). Rolling 5 dice is the real cost. No physics at all. Hot dice and the tray assume six rolling dice, so this needs those spots generalised.
+
 **Not doing: polyhedral dice (d4, d8, d10, d20).** The physics treats dice as cubes and lands them through the tumble path; `drawDie` builds a cube; Farkle scoring assumes 1-6. Each shape would need new collision code (still deterministic), landing logic, art and its own scoring rules. Face stamps already make d6s that behave like different dice (1,1,5,5,5,5 never Farkles alone).
 
 ## 4. Collection
@@ -205,5 +214,6 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Duel spoils: dust for winner and loser, and the scaling by opponent bag strength.
 - Season length and start dates (the same on every device).
 - Which relics map to which charms or bosses for relic unlocks.
+- Set list (pieces, 2- and 4-piece bonuses, which den or case file); unique list per kingpin, rolling or not.
 - Holiday colours `ornament` and `frost`: classic mode only, or recolour them?
 - Champion's felt in duels: decided by streak, or by whoever has the bigger pot?
