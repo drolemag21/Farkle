@@ -69,7 +69,7 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 - **Locker contents (decided 2026-11-16): a die pick + dust + a part.** All three improve with tier.
   - **Die pick:** 3 random dice, keep 1. Rarity improves with depth.
   - **Dust:** a lump scaled by tier.
-  - **Part:** one stamp, material, edition or trigger, applied later to any bag die of your choice. Parts are how a player shapes their duel bag on purpose instead of hoping a pack rolls the right die; that's the point of runs as tool-building.
+  - **Part:** one stamp, material or edition (never a trigger), applied later to any bag die of your choice. Parts are how a player shapes their duel bag on purpose instead of hoping a pack rolls the right die; that's the point of runs as tool-building.
 - Pack dice are random; they are not copies of the dice built during the run. The run's build decides how deep you get.
 
 ## 3. Dice: four layers
@@ -78,18 +78,20 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 | **Face stamps** | Change single faces, and so the die's odds | Face becomes a 5, wild, ×2 mult, +$1 |
 | **Material** (tiers I, II, III) | Whole-die behaviour, same tier pattern for every material | Glass: ×1.5 / ×2 / ×3 points, shatters on a Farkle 1 in 3 / 4 / 6. Gold: $1 / $2 / $4 when kept. Steel, Lead (biased) |
 | **Edition** | The rare shine plus a small bonus | Foil: +50 when it scores. Holographic: +1 mult |
-| **Trigger** | A build-around event effect (reuses the charm event system) | Earn $3 when part of hot dice. Can't Farkle if it's the last die |
+| **Trigger** | A build-around event effect (reuses the charm event system). **Only on unique dice and set bonuses** (decided 2026-11-16), never on the rarity ladder | Earn $3 when part of hot dice. Can't Farkle if it's the last die |
 
 **Rarities** (six):
 
-| Rarity | Stamps | Material | Edition | Trigger | Durability (times it can change hands) |
-|---|---|---|---|---|---|
-| Common | 1 | none | none | none | 5 |
-| Uncommon | 2 | I | none | none | 4 |
-| Rare | 3 | I | possible | none | 3 |
-| Epic | 4 | II | possible | possible | 3 |
-| Legendary | 5 | II | likely | 1 | 2 |
-| Ultra | 6 | III | always | 1 | 2 |
+| Rarity | Stamps | Material | Edition | Durability (times it can change hands) |
+|---|---|---|---|---|
+| Common | 1 | none | none | 5 |
+| Uncommon | 2 | I | none | 4 |
+| Rare | 3 | I | possible | 3 |
+| Epic | 4 | II | possible | 3 |
+| Legendary | 5 | II | likely | 2 |
+| Ultra | 6 | III | always | 2 |
+
+**Why no triggers on the ladder:** in a duel a trigger is a personal charm the opponent doesn't get, against a structure of a few shared relics. A bag of six Legendaries with a trigger each would decide matches. Reserving triggers for uniques (one copy each per bag) and set bonuses (2-4 pieces in play) keeps their count low by construction, and makes uniques and sets the dice that bend rules while Ultras are the most built. Epic and up get a larger power budget instead (to tune).
 
 **Power budget:** stamps aren't equal ("counts as a 1" is far stronger than "+$1"), so each stamp has a cost and each rarity a budget as well as a slot count. Packs roll within the budget; an Ultra always has some cheap stamps. The host later uses the same budget to reject tampered dice.
 
@@ -205,7 +207,7 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Charm list; house-rule (boss) list; relic list.
 - Table targets, turns and rerolls per ante; money and interest; shop prices.
 - Locker rarity odds per tier.
-- Part odds per tier: which layers (stamp, material, edition, trigger) can drop at which tier; can unwanted parts be broken into dust?
+- Part odds per tier: which layers (stamp, material, edition) can drop at which tier; can unwanted parts be broken into dust?
 - Dust values (breaking, crumbling, pot growth) and dust costs.
 - Duel bag rules: a points cap by rarity, or open bags? Decide after simulating bot duels (e.g. Ultra bag vs Common bag win rates).
 - Duel player count: strictly 2, or 3-4 using the existing rooms?
@@ -215,5 +217,6 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Season length and start dates (the same on every device).
 - Which relics map to which charms or bosses for relic unlocks.
 - Set list (pieces, 2- and 4-piece bonuses, which den or case file); unique list per kingpin, rolling or not.
+- Duels: limit to one unique among your six dice in play (proposed)? Decide with the duel bag rules.
 - Holiday colours `ornament` and `frost`: classic mode only, or recolour them?
 - Champion's felt in duels: decided by streak, or by whoever has the bigger pot?
