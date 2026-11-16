@@ -97,6 +97,7 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 
 ## 4. Collection
 - **Parts** wait in a parts drawer until applied (season-wiped like the bag; not at stake in duels, only dice are). Applying one is permanent and recorded in the die's lineage ("Glass II, seized at Dutch's, 16 Nov").
+  - **Promotion part (decided 2026-11-16):** a rare part that raises a die one rarity tier (one more slot, a bigger budget). Drops only from tier 5-6 lockers, so depth still controls how many big dice exist. Durability becomes the new rarity's value, capped at what the die has left: promotion makes a die stronger and more fragile in duels at once, and never restores durability. A raised die keeps its lineage ("Taken from Ana as a Common, now Epic").
   - **A part fits only within the die's rarity:** a free slot of that layer and room in the power budget (section 3), or it replaces an existing stamp/material (the old one is lost). A Common can't become a monster, and the host's budget check still holds.
 - The bag: the dice you own, kept per device in localStorage for v1. Dice earned on the Artifact and on GitHub Pages are separate; the UI should say so. The bag belongs to the current season (section 6).
 - **Lineage:** every die records its history: where it came from (run, pack, duel), who it was taken from and when ("Taken from Ana, 16 Nov"). Nearly free to build and the strongest emotional hook in the design.
@@ -196,7 +197,7 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Table targets, turns and rerolls per ante; money and interest; shop prices.
 - Locker rarity odds per tier.
 - Part odds per tier: which layers (stamp, material, edition, trigger) can drop at which tier; can unwanted parts be broken into dust?
-- Can a part raise a die's rarity (more slots and budget), or is rarity fixed at the die's origin?
+
 - Dust values (breaking, crumbling, pot growth) and dust costs.
 - Duel bag rules: a points cap by rarity, or open bags? Decide after simulating bot duels (e.g. Ultra bag vs Common bag win rates).
 - Duel player count: strictly 2, or 3-4 using the existing rooms?
