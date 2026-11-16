@@ -4,6 +4,15 @@ Status: **design only, nothing built.** Decisions below were agreed with the own
 
 Main influences: Balatro (the run), extraction shooters (bring gear in, lose it if you die; seasonal wipes). Rule of thumb: reuse the existing table (physics, dice art, turn flow, host path, sound, sheets) and add the mode as its own bounded section of `farkle-table.html`.
 
+## Next step (to-do)
+**Draft the step-1 content set** (build order step 1, the solo run), as a new section of this file for the owner to review before any code:
+- One starting case file: starting dice, charm, money, twist; its kingpin, case-unique pool and set.
+- About 12 charms.
+- 6 boss house rules, one per ante, the kingpin's included. Draft these first: what a house rule can change shapes the run's code.
+- Placeholder table targets, turns per table, money, interest and shop prices (tuned later in a prototype).
+
+The owner will start this in a new session.
+
 ## The idea in one line
 Play a solo roguelite run to build your tools: each boss you beat banks a better evidence locker, and when you stop or fail you open the last one you banked. Then risk your dice against other players in duels, which is where the real extraction risk lives. Duels feed back into runs through your faction, which raises your power floor in both modes.
 
