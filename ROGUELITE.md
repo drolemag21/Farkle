@@ -116,7 +116,7 @@ Decided 2026-11-16: these are **types beside the rarity ladder**, not new rungs.
 
 ## 5. The duel (multiplayer)
 - **Format:** best of 3 rounds; each round both players get 3 turns, most points wins; a tie is one sudden-death turn each.
-- **Relics:** each round presents a shared relic both players play under (it can bend the round's rules, e.g. last turn scores double).
+- **Relics:** each round adds a shared relic both players play under (it can bend the round's rules, e.g. last turn scores double). **Relics stack** (decided 2026-11-16): round 1 has one, round 2 two, round 3 all three. The deciding round is the most rule-bent. The relic pool must avoid contradictory pairs, and the list should be checked for combos that break scoring when all three stack.
 - **Before Start:** both bags and both streak pots are shown, and both players accept. Nobody gets ambushed.
 - **Stakes:** the **winner picks one die from the loser's whole bag.** That's the risk of bringing your dice, and the zero-to-hero payoff.
 - **Streak pot:** each win adds game-created dust to the winner's own pot, scaled by the **opponent's** bag strength (beating a Common bag adds almost nothing; beating a strong bag adds a lot). The pot is at risk: losing a match hands it to the winner. Cash out any time into dust, which resets it. This is what the strong player plays for, and every match against them is a jackpot for the underdog.
@@ -216,6 +216,7 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Duel spoils: dust for winner and loser, and the scaling by opponent bag strength.
 - Season length and start dates (the same on every device).
 - Which relics map to which charms or bosses for relic unlocks.
+- Relic unlock with stacking: winning a round unlocks only the relic that round introduced (proposed), or every relic active in it? Otherwise winning round 3 unlocks three at once.
 - Set list (pieces, 2- and 4-piece bonuses, which den or case file); unique list per kingpin, rolling or not.
 - Duels: limit to one unique among your six dice in play (proposed)? Decide with the duel bag rules.
 - Holiday colours `ornament` and `frost`: classic mode only, or recolour them?
