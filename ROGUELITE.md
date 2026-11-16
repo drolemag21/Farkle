@@ -66,7 +66,10 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 - **Runs are the safe mode** (decided 2026-11-16). Pushing is always free except for time, so there is no extract gamble at the run level: the only risk is not getting more. Push-your-luck in a run lives in the turn (roll or bank) and the table targets; losing what you own lives in duels. No clean raid bonus. Calling the raid is for ending the session, e.g. to duel tonight.
 - After **each boss** (6 chances) the player chooses: **call the raid** (stop and open the banked locker) or push on toward the next tier.
 - **The locker is on screen at that choice** ("Locker tier 3: 4 dice shown, Rare odds, 120 dust"), the way unbanked points are on screen during a Farkle turn. Push-your-luck needs the stake to be visible.
-- The locker shows **3 random dice; keep 1** (contents may grow, see open questions). Rarity improves with depth.
+- **Locker contents (decided 2026-11-16): a die pick + dust + a part.** All three improve with tier.
+  - **Die pick:** 3 random dice, keep 1. Rarity improves with depth.
+  - **Dust:** a lump scaled by tier.
+  - **Part:** one stamp, material, edition or trigger, applied later to any bag die of your choice. Parts are how a player shapes their duel bag on purpose instead of hoping a pack rolls the right die; that's the point of runs as tool-building.
 - Pack dice are random; they are not copies of the dice built during the run. The run's build decides how deep you get.
 
 ## 3. Dice: four layers
@@ -93,6 +96,8 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 **Not doing: polyhedral dice (d4, d8, d10, d20).** The physics treats dice as cubes and lands them through the tumble path; `drawDie` builds a cube; Farkle scoring assumes 1-6. Each shape would need new collision code (still deterministic), landing logic, art and its own scoring rules. Face stamps already make d6s that behave like different dice (1,1,5,5,5,5 never Farkles alone).
 
 ## 4. Collection
+- **Parts** wait in a parts drawer until applied (season-wiped like the bag; not at stake in duels, only dice are). Applying one is permanent and recorded in the die's lineage ("Glass II, seized at Dutch's, 16 Nov").
+  - **A part fits only within the die's rarity:** a free slot of that layer and room in the power budget (section 3), or it replaces an existing stamp/material (the old one is lost). A Common can't become a monster, and the host's budget check still holds.
 - The bag: the dice you own, kept per device in localStorage for v1. Dice earned on the Artifact and on GitHub Pages are separate; the UI should say so. The bag belongs to the current season (section 6).
 - **Lineage:** every die records its history: where it came from (run, pack, duel), who it was taken from and when ("Taken from Ana, 16 Nov"). Nearly free to build and the strongest emotional hook in the design.
 - **Dust** is the only second currency. Sources: breaking unwanted dice, crumbled dice, cashed-out streak pots, duel spoils (both players). Spent on rerolling or upgrading faces, pack upgrades (see 4 dice instead of 3, or one rarity tier better at the next extraction), small run-start boons (+1 reroll at ante 1, +$5; nothing that stacks), and faction ranks.
@@ -176,7 +181,7 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 
 ## 10. Build order
 1. Solo roguelite with extraction (seeded RNG, action log, save/resume from day one). Must be fun on its own.
-2. Case files (preset starts), then the bag screen and packs. Give every die a lineage field.
+2. Case files (preset starts), then the bag screen, lockers and the parts drawer (applying parts to bag dice). Give every die a lineage field.
 3. The duel.
 4. Seasons: wipe, trophy case, factions. Then cosmetics.
 
@@ -190,7 +195,8 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Charm list; house-rule (boss) list; relic list.
 - Table targets, turns and rerolls per ante; money and interest; shop prices.
 - Locker rarity odds per tier.
-- **Locker contents:** dice only, or a die pick + dust + a part (a stamp or material to apply to any bag die)? Parts give players control over their duel bag, which fits runs as tool-building.
+- Part odds per tier: which layers (stamp, material, edition, trigger) can drop at which tier; can unwanted parts be broken into dust?
+- Can a part raise a die's rarity (more slots and budget), or is rarity fixed at the die's origin?
 - Dust values (breaking, crumbling, pot growth) and dust costs.
 - Duel bag rules: a points cap by rarity, or open bags? Decide after simulating bot duels (e.g. Ultra bag vs Common bag win rates).
 - Duel player count: strictly 2, or 3-4 using the existing rooms?
