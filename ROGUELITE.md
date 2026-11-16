@@ -5,10 +5,10 @@ Status: **design only, nothing built.** Decisions below were agreed with the own
 Main influences: Balatro (the run), extraction shooters (bring gear in, lose it if you die; seasonal wipes). Rule of thumb: reuse the existing table (physics, dice art, turn flow, host path, sound, sheets) and add the mode as its own bounded section of `farkle-table.html`.
 
 ## The idea in one line
-Play a solo roguelite run to build your tools: extract after a boss to open a pack and keep one die, and the deeper you go the better the die. Then risk your dice against friends in multiplayer duels, which is where the real extraction risk lives. Duels feed back into runs through your faction, which raises your power floor in both modes.
+Play a solo roguelite run to build your tools: each boss you beat banks a better evidence locker, and when you stop or fail you open the last one you banked. Then risk your dice against friends in multiplayer duels, which is where the real extraction risk lives. Duels feed back into runs through your faction, which raises your power floor in both modes.
 
 **Two modes, two kinds of freedom** (agreed 2026-11-16):
-- **Runs are curated.** You start from a preset case file, with a few choices about how it begins, but your bag never enters a run. Low risk: failing costs the pack you were working toward, nothing you own.
+- **Runs are curated.** You start from a preset case file, with a few choices about how it begins, but your bag never enters a run. Low risk: failing costs only the locker upgrade you were working toward, never what you've banked or anything you own.
 - **Duels are open.** You bring whatever you like from your bag, and the winner takes a die from the loser. Full control, full risk.
 
 The whole game is one choice repeated at three levels:
@@ -16,7 +16,7 @@ The whole game is one choice repeated at three levels:
 | Level | Push on | Cash out |
 |---|---|---|
 | Turn | Roll again | Bank |
-| Run | Fight the next boss | Extract, open a pack |
+| Run | Fight the next ante for a better locker | Call the raid, open the banked locker |
 | Duel | Keep the streak, grow the pot | Cash the pot into dust |
 
 **The loop:** run → pack → bag → duel → (dice won, dust, faction rank, relic unlocks) → next run. Runs feed duels with dice; duels feed runs with faction rank, unlocked case files and relic unlocks. Duels must still be worth playing for what they give runs, for winners and losers alike. A season wipe (section 6) bounds the snowball.
@@ -28,11 +28,11 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 
 | Mechanic | In the fiction |
 |---|---|
-| Run | Working a case up an organisation: street games → backroom dens → the people who run them → the kingpin (ante 8) |
+| Run | Working a case up an organisation: street games → backroom dens → the people who run them → the kingpin (ante 6) |
 | Table / boss house rules | A den's game; the boss is its owner, and the house rule is how that den rigs things. You play it straight to stay undercover |
 | Extract | Call the raid. Early is a small bust, deep is chasing the kingpin |
 | Pack (3 dice, keep 1) | Seized dice go to evidence; you pocket one |
-| Lose the run | Your cover is blown and you leave with nothing |
+| Lose the run | Your cover is blown mid-ante; you keep what you'd already seized (the last banked locker) |
 | Case file (preset run start) | The case you're assigned: who you're after and what you start with |
 | Heat (stakes) | How hot the case is: the higher it is, the warier the dens and the better the seizures |
 | Duels | The after-hours locker-room game. Each detective is building their own case and needs particular tools, so evidence moves between them this way. Unofficial and competitive, and everyone involved knows it's wrong |
@@ -45,7 +45,7 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 **Keep the "takes down dens" half visible**, or players read the character as plain corrupt rather than gray: a city map where beaten dens are marked closed, a "Case closed" stamp on extraction, the season's kingpin named at the top of the faction track. These are copy and small screens, not story systems.
 
 ## 1. The run (solo)
-- **Structure:** 8 antes × (small blind, big blind, boss) = 24 tables, Balatro's full shape. Roughly 40-50 min, so save/resume is required.
+- **Structure:** 6 antes × (small blind, big blind, boss) = 18 tables (decided 2026-11-16; shorter than Balatro's 8 because runs are preparation for duels, not the main event). Roughly 30-35 min, so save/resume is still required, and each ante is a natural place to stop (the reference: an extraction game's PvE mode of 3 matches + a boss match per series).
 - **Table (blind):** bank a target score within a set number of turns. Turns are Balatro's hands.
 - **Rerolls:** a limited per-table currency to reroll chosen dice without keeping (Balatro's discards). The main tool the player has against Farkle's randomness.
 - **Scoring:** every keep scores **points × mult**. The count-up belongs at the Keep moment.
@@ -56,14 +56,16 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 - **Shop** between tables: charms, dice upgrades, combo levels, rerolls. Money comes from leftover turns plus interest.
 - **Skip blinds** (small or big) for a reward, as in Balatro: shortens the run for confident players.
 - **Fast dice** setting: plays the same simulated throw back faster and shortens the keep glide. Same result, less waiting.
-- **Losing the run before extracting: you leave with nothing** (Records' salvage aside, section 6).
+- **Losing the run: you keep the last banked locker** (section 2). Failing in ante 1, before any boss, leaves you with nothing.
 - **Case files: preset starts** (Balatro's decks). Each run starts from a case file: six starting dice, perhaps a charm, money, and a twist (e.g. a case that starts with Glass dice, or one with fewer turns but more rerolls). The player picks a case file and makes a few choices at the start, but **bag dice never enter a run**. New case files unlock through duels (variety, not power), which is part of what duels give runs.
 - **No carry slot** (decided 2026-11-16). Runs stay curated and balanced, and all the risk and full control over what you bring lives in duels.
 - **Heat** (Balatro's stakes): higher Heat means harder tables and better packs. As a faction raises a player's floor over a season, they step up a level of Heat on their own, so runs stay tense.
 
 ## 2. Extraction and packs
-- After **each boss** (8 chances) the player may **extract**: the run ends and they open a pack.
-- The pack shows **3 random dice; keep 1.** Rarity improves with depth: extract early for a weak pack, push on for a better one.
+- **Banking (decided 2026-11-16, from the reference mode):** beating an ante's boss banks that ante's **evidence locker** (the pack). The banked locker is safe: if the run fails later, you still open it. Pushing on risks only the upgrade, never what's banked.
+- After **each boss** (6 chances) the player chooses: **call the raid** (stop and open the banked locker) or push on toward the next tier.
+- **The locker is on screen at that choice** ("Locker tier 3: 4 dice shown, Rare odds, 120 dust"), the way unbanked points are on screen during a Farkle turn. Push-your-luck needs the stake to be visible.
+- The locker shows **3 random dice; keep 1** (contents may grow, see open questions). Rarity improves with depth.
 - Pack dice are random; they are not copies of the dice built during the run. The run's build decides how deep you get.
 
 ## 3. Dice: four layers
@@ -119,7 +121,7 @@ Factions replace the workshop (decided 2026-11-16). **Any player can rank up any
 
 **Factions raise the power floor, not the ceiling.** A flat bonus everyone gets moves everyone up and leaves the gap where it was. So every faction perk is one of:
 1. **A guarantee:** a minimum outcome that only matters when things go badly.
-2. **Front-loaded:** strong in early antes, fading by the deep ones. Helps newer players reach mid-game without making ante 8 easier.
+2. **Front-loaded:** strong in early antes, fading by the deep ones. Helps newer players reach mid-game without making ante 6 easier.
 3. **Catch-up in duels:** bigger the weaker your bag is than your opponent's.
 
 Each perk caps out, so the floor never becomes a ceiling. Veterans who max a faction only reach the same guaranteed minimums.
@@ -127,7 +129,7 @@ Each perk caps out, so the floor never becomes a ceiling. Veterans who max a fac
 | Faction | Direction | Runs | Duels |
 |---|---|---|---|
 | **The Street** (informants) | Information | Free reroll per table in antes 1-3; first boss's house rule revealed at run start | The underdog sees the next round's relic a round early |
-| **Records** (clerks who lose paperwork) | Protection | Salvage: a failed run past ante 2 still gives a Common pick | Your single best die can't be taken ("misfiled"). Needs a cost (dust per match, or once per match) or everyone picks Records |
+| **Records** (clerks who lose paperwork) | Protection | Second chance: once per run, retry a failed table in antes 1-3 (banking already covers failure, so salvage is gone) | Your single best die can't be taken ("misfiled"). Needs a cost (dust per match, or once per match) or everyone picks Records |
 | **The Book** (bookmakers and fences) | Economy / dust | Minimum starting money and an interest floor | Minimum dust per match, scaled up for the underdog |
 
 Rank values and the exact perk per rank are open (below); the directions are decided.
@@ -186,7 +188,9 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Materials list and their tier values; editions list; triggers list.
 - Charm list; house-rule (boss) list; relic list.
 - Table targets, turns and rerolls per ante; money and interest; shop prices.
-- Pack rarity odds per extraction depth.
+- Locker rarity odds per tier.
+- **Banking makes pushing free:** failing still opens the last banked locker, so the only cost of pushing is time, and "call the raid" stops being a decision. Proposed fix: a **clean raid bonus** for stopping by choice (extra dust or +1 die shown) that a blown cover forfeits. Undecided.
+- **Locker contents:** dice only, or a die pick + dust + a part (a stamp or material to apply to any bag die)? Parts give players control over their duel bag, which fits runs as tool-building.
 - Dust values (breaking, crumbling, pot growth) and dust costs.
 - Duel bag rules: a points cap by rarity, or open bags? Decide after simulating bot duels (e.g. Ultra bag vs Common bag win rates).
 - Duel player count: strictly 2, or 3-4 using the existing rooms?
