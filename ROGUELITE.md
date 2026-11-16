@@ -30,14 +30,14 @@ The whole game is one choice repeated at three levels:
 - **Skip blinds** (small or big) for a reward, as in Balatro: shortens the run for confident players.
 - **Fast dice** setting: plays the same simulated throw back faster and shortens the keep glide. Same result, less waiting.
 - **Losing the run before extracting: you leave with nothing**, and a carried die is lost (below).
-- **Carry slot:** at run start, pick one bag die (more with the workshop's Vault) to replace one of the six starting dice. During the run it can be altered like any die, **up to its rarity's power budget**; a rarity upgrade can be a rare boss reward. **Extract:** it comes home changed, on top of the pack pick. **Lose the run:** it's gone (open: lost outright, or crumbles into dust). This is the extraction-shooter risk, and how a die won in a duel seeds a run.
-- **Heat:** each carried die raises table targets by its rarity (about +8% per tier, to tune). A carried die shapes the build rather than being free power, and stops Ultra → deep runs → better packs from snowballing.
+- **Carry slot (proposed, undecided):** at run start, pick one bag die (more with the workshop's Vault) to replace one of the six starting dice. During the run it can be altered like any die, **up to its rarity's power budget**; a rarity upgrade can be a rare boss reward. **Extract:** it comes home changed, on top of the pack pick. **Lose the run:** it's gone (open: lost outright, or crumbles into dust). This is the extraction-shooter risk, and how a die won in a duel seeds a run.
+- **Heat (only with the carry slot):** each carried die raises table targets by its rarity (about +8% per tier, to tune). A carried die shapes the build rather than being free power, and stops Ultra → deep runs → better packs from snowballing.
 - **Stakes** (Balatro's): higher stakes mean harder tables and better packs. As the workshop makes runs easier over a season, players step up a stake on their own, so runs stay tense.
 
 ## 2. Extraction and packs
 - After **each boss** (8 chances) the player may **extract**: the run ends and they open a pack.
 - The pack shows **3 random dice; keep 1.** Rarity improves with depth: extract early for a weak pack, push on for a better one.
-- Pack dice are random; they are not copies of the dice built during the run. The run's build decides how deep you get. The one exception is a carried die, which comes home with what the run did to it, because it was at risk.
+- Pack dice are random; they are not copies of the dice built during the run. The run's build decides how deep you get. If the carry slot is adopted, a carried die is the one exception: it comes home with what the run did to it, because it was at risk.
 
 ## 3. Dice: four layers
 | Layer | What it does | Examples |
@@ -92,11 +92,13 @@ Permanent upgrades **within the season** that make runs stronger, with **duels a
 
 | Station | Effect on runs | Gate |
 |---|---|---|
-| Vault | Carry slots 1 → 2 → 3 | Duels played |
-| Forge | A carried die keeps 1 extra stamp after a failed run | Duels won |
+| Vault* | Carry slots 1 → 2 → 3 | Duels played |
+| Forge* | A carried die keeps 1 extra stamp after a failed run | Duels won |
 | Scout | See the next boss's house rule one table early | Distinct opponents faced |
 | Pack table | +1 die shown per pack, better rarity odds | Duels played + dust |
 | Bank | Starting money, interest cap | Dust |
+
+\* Only with the carry slot. Without it the workshop needs other run-side stations.
 
 - **Gates count mostly duels played, a few count wins.** Paying for participation narrows the gap between players; paying only for wins widens it.
 - **"Distinct opponents" gates** stop two people (or two tabs) farming each other, and reward bringing new players in.
@@ -144,6 +146,7 @@ Permanent upgrades **within the season** that make runs stronger, with **duels a
 4. Seasons: wipe, trophy case, workshop. Then cosmetics.
 
 ## Open questions
+- **Carry slot: adopt it or not?** The owner is undecided (2026-11-16). With it, dice won in duels enter runs and the loop is strongest; without it, runs stay clean (Balatro) and the duel → run loop rests on dust, the workshop and relic unlocks. Heat, the Vault and the Forge depend on this. Settle it first.
 - Stamp list and costs; per-rarity budgets.
 - Materials list and their tier values; editions list; triggers list.
 - Charm list; house-rule (boss) list; relic list.
