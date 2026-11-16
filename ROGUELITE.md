@@ -47,7 +47,10 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 ## 1. The run (solo)
 - **Structure:** 6 antes × (small blind, big blind, boss) = 18 tables (decided 2026-11-16; shorter than Balatro's 8 because runs are preparation for duels, not the main event). Roughly 30-35 min, so save/resume is still required, and each ante is a natural place to stop (the reference: an extraction game's PvE mode of 3 matches + a boss match per series).
 - **Table (blind):** bank a target score within a set number of turns. Turns are Balatro's hands.
-- **Rerolls:** a limited per-table currency to reroll chosen dice without keeping (Balatro's discards). The main tool the player has against Farkle's randomness.
+- **Rerolls:** a limited per-table currency to reroll chosen dice without keeping (Balatro's discards). The main tool the player has against Farkle's randomness. Decided 2026-11-16:
+  - **A reroll can rescue a Farkle:** after a scoreless roll, spend one to reroll some or all of those dice and save the turn.
+  - **Start with 1 per table**; the Street faction raises it (section 6), so rerolls are something you earn.
+  - **Two separate things, as in Balatro:** table rerolls (reset each table) and the shop refresh (paid with run money, restocks the shop). The shop can sell a permanent +1 table reroll for the rest of the run.
 - **Scoring:** every keep scores **points × mult**. The count-up belongs at the Keep moment.
 - **Combo levels:** the planet-card equivalent: level up a combo (three 2s, a straight, ...) to raise its base points.
 - **Charms:** Balatro's jokers. 5 slots, passive rule-benders. Favour ones that bend the push-your-luck tension (e.g. Hot Hand: ×2 mult after hot dice; Insurance: first Farkle at each table keeps half the turn; Miser: +1 mult per die left unrolled on a bank).
@@ -154,7 +157,7 @@ Each perk caps out, so the floor never becomes a ceiling. Veterans who max a fac
 
 | Faction | Direction | Runs | Duels |
 |---|---|---|---|
-| **The Street** (informants) | Information | Free reroll per table in antes 1-3; first boss's house rule revealed at run start | The underdog sees the next round's relic a round early |
+| **The Street** (informants) | Information | Ranks raise base rerolls per table (1 → 2 → 3, capped); first boss's house rule revealed at run start | The underdog sees the next round's relic a round early |
 | **Records** (clerks who lose paperwork) | Protection | Second chance: once per run, retry a failed table in antes 1-3 (banking already covers failure, so salvage is gone) | Your single best die can't be taken ("misfiled"). Needs a cost (dust per match, or once per match) or everyone picks Records |
 | **The Book** (bookmakers and fences) | Economy / dust | Minimum starting money and an interest floor | Minimum dust per match, scaled up for the underdog |
 
@@ -221,7 +224,6 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Bot duels: bag strength and difficulty spread; whether bot bags scale with yours or stay random.
 - Matchmaking for real-player duels (public, not friend-group): open bags means no gear matching; how the Before Start accept works with strangers (dodging).
 - Duel player count: strictly 2, or 3-4 using the existing rooms?
-- What's in the shop's reroll vs the table's reroll (one currency or two)?
 - Heat levels: how each scales table targets and pack odds.
 - Duel spoils: dust for winner and loser, and the scaling by opponent bag strength.
 - Season length and start dates (the same on every device).
