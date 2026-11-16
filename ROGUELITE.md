@@ -17,6 +17,31 @@ The whole game is one choice repeated at three levels:
 
 **The loop:** run → pack → bag → duel → (dice won, dust, workshop milestones, relic unlocks) → next run. The duel → run half is the point: duels must be strongly worth playing for what they give solo runs, for winners and losers alike. A season wipe (section 6) bounds the snowball that strong rewards would otherwise cause.
 
+## Premise
+Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city run on backroom dice games. You take down dens, and to get deeper you break the rules: pocketing seized dice, working cases with evidence that should be locked up, and gambling it with other detectives after hours. Grounded in real police corruption around gambling (the Lexow and Seabury inquiries; the Knapp Commission's "grass-eaters and meat-eaters", NYC 1970-72). It fits the casino-at-night theme, so no new art direction.
+
+**A premise, not a story.** Like Balatro: no cutscenes or narrative arc. The fiction lives in boss names and house rules, extraction and pack wording, lineage text and titles.
+
+| Mechanic | In the fiction |
+|---|---|
+| Run | Working a case up an organisation: street games → backroom dens → the people who run them → the kingpin (ante 8) |
+| Table / boss house rules | A den's game; the boss is its owner, and the house rule is how that den rigs things. You play it straight to stay undercover |
+| Extract | Call the raid. Early is a small bust, deep is chasing the kingpin |
+| Pack (3 dice, keep 1) | Seized dice go to evidence; you pocket one |
+| Lose the run | Your cover is blown and you leave with nothing |
+| Carry slot | Taking evidence out of the locker to work a case with it. **This is the "gray" part**, see the carry slot open question |
+| Heat | Using evidence draws attention: dens are warier, targets rise |
+| Carried die lost | The evidence goes missing on your watch |
+| Carried die extracted altered | It comes back "processed"; nobody asks |
+| Duels | The after-hours locker-room game. Each detective is building their own case and needs particular tools, so evidence moves between them this way. Unofficial and competitive, and everyone involved knows it's wrong |
+| Durability / crumbling | A die that's been through too many hands is "hot", too recognisable to keep, so it's destroyed |
+| Season wipe | Internal Affairs audits the precinct; everything is confiscated |
+| Trophy case | What you hid well enough to keep |
+| Workshop | Your contacts inside the department (Vault: people in records who look the other way; Forge: covering your tracks) |
+| Dust | Open: needs an in-world name (cash? favours?) |
+
+**Keep the "takes down dens" half visible**, or players read the character as plain corrupt rather than gray: a city map where beaten dens are marked closed, a "Case closed" stamp on extraction, the season's kingpin named at the top of the workshop track. These are copy and small screens, not story systems.
+
 ## 1. The run (solo)
 - **Structure:** 8 antes × (small blind, big blind, boss) = 24 tables, Balatro's full shape. Roughly 40-50 min, so save/resume is required.
 - **Table (blind):** bank a target score within a set number of turns. Turns are Balatro's hands.
@@ -146,7 +171,8 @@ Permanent upgrades **within the season** that make runs stronger, with **duels a
 4. Seasons: wipe, trophy case, workshop. Then cosmetics.
 
 ## Open questions
-- **Carry slot: adopt it or not?** The owner is undecided (2026-11-16). With it, dice won in duels enter runs and the loop is strongest; without it, runs stay clean (Balatro) and the duel → run loop rests on dust, the workshop and relic unlocks. Heat, the Vault and the Forge depend on this. Settle it first.
+- **Carry slot: adopt it or not?** The owner is undecided (2026-11-16). With it, dice won in duels enter runs and the loop is strongest; without it, runs stay clean (Balatro) and the duel → run loop rests on dust, the workshop and relic unlocks. Heat, the Vault and the Forge depend on this. Settle it first. **The premise leans toward adopting it:** using seized evidence to get deeper is what makes the detective gray rather than corrupt. Without the carry slot, evidence is only pocketed and gambled, and the premise loses its justification.
+- Premise copy: names for dust, the kingpin per season, den and boss names, how the city map shows closed dens.
 - Stamp list and costs; per-rarity budgets.
 - Materials list and their tier values; editions list; triggers list.
 - Charm list; house-rule (boss) list; relic list.
