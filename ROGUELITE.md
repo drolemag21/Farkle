@@ -197,7 +197,6 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Table targets, turns and rerolls per ante; money and interest; shop prices.
 - Locker rarity odds per tier.
 - Part odds per tier: which layers (stamp, material, edition, trigger) can drop at which tier; can unwanted parts be broken into dust?
-
 - Dust values (breaking, crumbling, pot growth) and dust costs.
 - Duel bag rules: a points cap by rarity, or open bags? Decide after simulating bot duels (e.g. Ultra bag vs Common bag win rates).
 - Duel player count: strictly 2, or 3-4 using the existing rooms?
