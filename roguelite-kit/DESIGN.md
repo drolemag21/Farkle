@@ -1,17 +1,93 @@
-# Roguelite mode: design
+# The Commission: design
 
-Status: **design only, nothing built.** Decisions below were agreed with the owner (2026-11-16). Open questions are listed at the end; settle them here before building the part they touch.
+Status: **design only, nothing built.** The step-1 content set is agreed as the starting point. Decisions below were agreed with the owner (2026-11-16). This file began as `ROGUELITE.md` in the Farkle Table repository and moved here when the modes got their own repository. Open questions are listed at the end; settle them here before building the part they touch.
 
-Main influences: Balatro (the run), extraction shooters (bring gear in, lose it if you die; seasonal wipes). Rule of thumb: reuse the existing table (physics, dice art, turn flow, host path, sound, sheets) and add the mode as its own bounded section of `farkle-table.html`.
+Main influences: Balatro (the run), extraction shooters (bring gear in, lose it if you die; seasonal wipes). Rule of thumb: start from Farkle Table's engine (physics, dice art, turn flow, sound, sheets), copied in at a pinned commit (see `ENGINE.md`), and build the modes around it.
 
 ## Next step (to-do)
-**Draft the step-1 content set** (build order step 1, the solo run), as a new section of this file for the owner to review before any code:
-- One starting case file: starting dice, charm, money, twist; its kingpin, case-unique pool and set.
-- About 12 charms.
-- 6 boss house rules, one per ante, the kingpin's included. Draft these first: what a house rule can change shapes the run's code.
-- Placeholder table targets, turns per table, money, interest and shop prices (tuned later in a prototype).
+Bootstrap the repository (`HANDOFF.md` → First session), then prototype the solo run (build order step 1) with the content set below.
 
-The owner will start this in a new session.
+## Step-1 content set (agreed starting point)
+Drafted 2026-11-16; the owner agreed to start with it the same day (the six house rules, their order, and the recommendations below). Numbers are placeholders for the prototype. Difficulty figures come from a quick simulation of Farkle Table's bot strategy (`botKeep` + `BOT_BANK`; reproduce with `node tools/sim.js`) over 20-40k tables with plain dice, no charms, 4 turns and 1 reroll that rescues the first Farkle. The bot doesn't adapt its banking to a target or a house rule, so read them as relative, not exact.
+
+**Baseline from the simulation:** a plain-dice turn averages about 600 points and Farkles 19% of the time. A 4-turn table: median 2,400; clears 1,200 93% of the time, 2,000 67%.
+
+### What a house rule can change (the code shape)
+House rules and charms use **one set of hooks**, so the run needs one rule pipeline, not two systems:
+
+| Hook | House rules (bosses) | Charms |
+|---|---|---|
+| Table setup (dice count, rerolls) | Cold Dice, Short Hand | |
+| Score table (what each combo is worth) | Dead Ace | Loaded Fives |
+| After a roll (change faces) | Dutch's Thumb | |
+| Keep is legal? | Pair Rule | |
+| Keep (points, mult) | | Hot Hand, Third Time Lucky, Last Die, Triple Threat, Snowball, Greed, Double Down |
+| Bank | | Miser |
+| Farkle (what it costs) | Double Trouble | Insurance, Double Down |
+| Table end (money) | | Bagman |
+| Display only | | Tipster |
+
+Two code consequences:
+- **A Farkle is "no legal keep"**, not the classic shortcut. Today `hasScore` checks for 1s, 5s, triples and three pairs; under Pair Rule a roll whose only scorer is a lone 5 must also be a Farkle, and under Dead Ace a lone 1 doesn't save you. So `hasScore` becomes "does any subset pass the rules' legality and score", derived from the same rule-aware scorer as `scoreOf`. Classic mode keeps its current results.
+- **Short Hand (5 dice) forces generalising the hard-coded six now** (hot dice, the tray, the launch handful). Accepted for step 1: non-rolling uniques (Dutch's Thumb) need the same work later, and doing it once, early, is cheaper than retrofitting.
+
+### The six bosses (the Dutch case)
+Ordered by how hard they hit plain dice (score a 4-turn table clears 2,000; no rule: 67%).
+
+| Ante | Den / boss | House rule | Hook | Clears 2,000 |
+|---|---|---|---|---|
+| 1 | The stoop game, Kid Lacy | **Cold Dice:** no rerolls at this table | Table setup | 56% |
+| 2 | The laundromat back room, Mrs. Ochs | **Double Trouble:** a Farkle costs two turns | Farkle | 63%* |
+| 3 | The card room over the bakery, Sal Vitti | **Pair Rule:** every keep must be 2+ dice | Legality | 44% |
+| 4 | The social club, Father Brennan | **Dead Ace:** single 1s don't score (three or more still do) | Score table | 29% |
+| 5 | The riverboat, the Captain | **Short Hand:** play with 5 dice; hot dice at 5 | Table setup | 20% |
+| 6 | Dutch's own table (kingpin) | **Dutch's Thumb:** after the first roll of each turn, the house nudges one of your dice ±1, whichever costs you most | After a roll | 25% |
+
+\* Double Trouble only looks mild because the bot doesn't bank earlier under it; a human pushing their luck will feel it. It's ante 2 because it punishes greed, which is the lesson the run teaches first.
+
+- **The Thumb was too strong on every roll** (clears 2,000 1% of the time), so it acts once per turn. It echoes the case unique of the same name: the kingpin's rule is what you get to own.
+- The nudged die should visibly turn after it lands (renderer only: the landed face is decided, then changed by the host, so physics stays deterministic).
+- Boss target = 1.5× the ante's small blind (below); the house rule supplies the rest of the difficulty. Per-boss multipliers can come later if one rule turns out much harsher.
+
+### Charms (12)
+5 slots. Favour ones that bend roll-or-bank.
+
+| Charm | Rarity | Effect | Hook |
+|---|---|---|---|
+| Hot Hand | Uncommon | After hot dice, ×2 mult for the rest of the turn | Keep |
+| Insurance | Common | Your first Farkle at each table banks half the turn's points | Farkle |
+| Miser | Common | +100 per die left unrolled when you bank | Bank |
+| Loaded Fives | Common | Single 5s score 100, like 1s | Score table |
+| Third Time Lucky | Common | Every third keep in a turn gets +3 mult | Keep |
+| Last Die | Uncommon | Keeping your last die (one left, and it scores): ×3 mult | Keep |
+| Triple Threat | Common | Keeps containing three of a kind or more: +2 mult | Keep |
+| Snowball | Rare | +1 mult on every keep for each turn in a row you've banked at this table; a Farkle resets it | Keep |
+| Double Down | Uncommon | After a Farkle, your next turn's keeps get ×2 mult | Farkle → keep |
+| Bagman | Common | +$1 more per unused turn at table end | Table end |
+| Tipster | Common | The Roll button shows the Farkle odds for the dice you'd throw | Display |
+| Greed | Rare | +1 mult on each keep for every roll already made this turn | Keep |
+
+Push-your-luck pairs to watch in the prototype: Greed and Snowball pull opposite ways (roll more vs bank every turn), and Insurance + Double Down make Farkles almost welcome. That's the intent, but check they don't make banking pointless.
+
+### Scoring and combo levels
+- A keep scores **points × mult**, mult starts at 1. Points are the classic values, so the table reads the same as Classic mode.
+- **Combo levels add points only, not mult.** A keep often holds several combos (three 2s plus a 1), and per-combo mult would make the count-up hard to read. Mult comes from charms and stamps.
+- Combos that level: single 1, single 5, three of a kind, four/five/six of a kind, straight, three pairs, two triplets / four + pair. Placeholder: +50% of the combo's base points per level.
+
+### The Dutch case file (starter)
+- **Kingpin:** Dutch, who runs the city's loaded-dice trade.
+- **Starting dice:** six plain dice. **Money:** $4. **Twist:** none. It's the baseline every later case file is tuned against, so it should stay plain.
+- **Start choice:** pick 1 of 2 random Common charms, or take +$4 instead.
+- **Case set, Dutch's Loaded Set (4 pieces):** 2 pieces: each set die that scores in a keep adds +1 mult. 4 pieces: once per turn, turn one set die showing 2, 3, 4 or 6 into a 5. (Drops start in step 2 with lockers; step 1 needs only the names.)
+- **Case uniques:** Dutch's Thumb (non-rolling: once per turn, nudge one of your dice ±1) and Dutch's Knucklebone (rolling object: you can't Farkle when it's your last die). No general pool yet.
+
+### Numbers (placeholders)
+- **Turns per table:** 4. **Rerolls:** 1 per table (as decided).
+- **Targets:** small blind per ante 1,200 / 2,000 / 3,500 / 6,000 / 10,000 / 16,000; big blind 1.35×, boss 1.5× (ante 1: 1,200 / 1,600 / 1,800). Ante 1 is sized for plain dice (93% / 80% / ~70%); from ante 2 on the targets assume charms and levels. Growth is ×13 over the run against Balatro's much steeper curve, because Farkle has no hand-size lever; tune in the prototype.
+- **Money:** $3 / $4 / $5 for small / big / boss, +$1 per unused turn, interest $1 per $5 held (cap $5).
+- **Shop:** 2 charms, 1 combo level, 1 die upgrade. Charms $4 / $6 / $8 (Common / Uncommon / Rare), Tipster $3; combo level $3; die upgrade (one stamp) $4-6; +1 table reroll for the run $10 (once per run). Refresh $2, +$1 per refresh in the same shop. Sell a charm for half its price.
+- **Skipping a blind:** +$6 for now; Balatro-style tags later if skipping needs more pull.
+- **Die upgrades in the shop:** four stamps to start (face becomes a 5, face becomes a 1, ×2 mult face, +$1 face). The full stamp list and costs stay an open question.
 
 ## The idea in one line
 Play a solo roguelite run to build your tools: each boss you beat banks a better evidence locker, and when you stop or fail you open the last one you banked. Then risk your dice against other players in duels, which is where the real extraction risk lives. Duels feed back into runs through your faction, which raises your power floor in both modes.
@@ -31,7 +107,15 @@ The whole game is one choice repeated at three levels:
 **The loop:** run → pack → bag → duel → (dice won, dust, faction rank, relic unlocks) → next run. Runs feed duels with dice; duels feed runs with faction rank, unlocked case files and relic unlocks. Duels must still be worth playing for what they give runs, for winners and losers alike. A season wipe (section 6) bounds the snowball.
 
 ## Premise
-Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city run on backroom dice games. You take down dens, and to get deeper you break the rules: pocketing seized dice, gambling them with other detectives after hours, and using what that earns you to keep compromised contacts (your faction) working for you. The factions carry the "gray": informants paid off, clerks who lose paperwork, bookmakers kept sweet, all in service of closing dens. Grounded in real police corruption around gambling (the Lexow and Seabury inquiries; the Knapp Commission's "grass-eaters and meat-eaters", NYC 1970-72). It fits the casino-at-night theme, so no new art direction.
+Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city run on backroom dice games. You take down dens, and to get deeper you break the rules: pocketing seized dice, gambling them with other detectives after hours, and using what that earns you to keep compromised contacts (your faction) working for you. The factions carry the "gray": informants paid off, clerks who lose paperwork, bookmakers kept sweet, all in service of closing dens. Grounded in real police corruption around gambling (the Lexow and Seabury inquiries; the Knapp Commission's "grass-eaters and meat-eaters", NYC 1970-72).
+
+**Name: The Commission** (owner, 2026-11-16). Three meanings: the anti-corruption inquiry that hangs over every season (the Knapp Commission, fictionalised, no real names), the Mob's ruling body that the kingpins answer to, and a commission as in a cut of the payoffs. Setting: New York. Considered and dropped: Miami Dice (a pun on a trademark, and it pulled the setting to Miami), Hot Dice, Shakedown, Bust-Out.
+
+**Art direction: adjust the look to the theme** (owner, 2026-11-16; mockups to come). This replaces the earlier "no new art direction": Farkle Table's casino table at night is the technical starting point (renderer, felt, lighting), restyled rather than rebuilt. Starting points for the mockups, not decisions:
+- Two worlds: the **dens** (back-room felt, smoke, tungsten light, worn wood) where you play, and the **precinct** (case files, manila folders, rubber stamps, typewriter type, evidence tags) for menus, the run map, the shop and lockers.
+- The Commission as a visual threat: redaction bars, subpoena paper, "CONFIDENTIAL" stamps on the season screens.
+- Music: Farkle Table's synthesized jazz lounge, possibly moved toward early-1970s funk and soul; new tunes cost code, not files.
+- Constraints that stay: gameplay owns the die's surface (section 7), player colour stays a hue choice, usable at 375 px.
 
 **A premise, not a story.** Like Balatro: no cutscenes or narrative arc. The fiction lives in boss names and house rules, extraction and pack wording, lineage text and titles.
 
@@ -46,7 +130,7 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 | Heat (stakes) | How hot the case is: the higher it is, the warier the dens and the better the seizures |
 | Duels | The after-hours locker-room game. Each detective is building their own case and needs particular tools, so evidence moves between them this way. Unofficial and competitive, and everyone involved knows it's wrong |
 | Durability / crumbling | A die that's been through too many hands is "hot", too recognisable to keep, so it's destroyed |
-| Season wipe | Internal Affairs audits the precinct; everything is confiscated |
+| Season wipe | The Commission sweeps the precinct; everything is confiscated. Knapp's "grass-eater" and "meat-eater" can serve as season titles |
 | Trophy case | What you hid well enough to keep |
 | Factions | Your compromised contacts: the Street (informants), Records (clerks), the Book (bookmakers and fences). See section 6 |
 | Dust | Open: needs an in-world name (cash? favours?) |
@@ -204,12 +288,13 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - **Designed for later verification:** run dice come from a **seeded RNG** (not `crypto`), and every run action goes through one **action log**. Later, the server hands out the seed, the client sends the log, and a Supabase Edge Function replays it with the same scoring code before granting the pack. That needs accounts (anonymous auth at minimum), a server copy of the scoring and charm logic, and database rules. The seed + log also give save/resume for free.
 
 ## 9. Code plan
-- **Reused as is:** `makeLaunch` / `simulate` and the dice renderer, the turn stages (`pre → rolled → kept → banked/farkle`), `SoloNet` and the host path the bots use, `FIRE` / `hotFlair`, `SND`, sheets, the phone layout.
+- **Taken from Farkle Table** (inventory and invariants in `ENGINE.md`): `makeLaunch` / `simulate` and the dice renderer, the turn stages (`pre → rolled → kept → banked/farkle`), the bot strategy, `FIRE` / `hotFlair`, `SND`, sheets, the phone layout. The transports and host path come later, for duels.
+- **The run is a pure reducer:** `step(state, action) → { state, events }`, deterministic from the run seed, with no DOM. It plays the role Farkle Table's host plays (the only writer), and the same code serves save/resume (replay the log), the simulator, Node tests, and later the Edge Function that verifies a run (section 8) and the duel host.
 - **Custom faces don't touch physics:** the host picks a face index, the die lands on it, and the renderer draws that face's contents. Determinism is unaffected.
-- **Refactor:** `scoreOf` returns one number from `best(counts)`; charms and mult need a **breakdown** (which combos, base points each). Classic scoring must stay exactly the same.
+- **Scoring returns a breakdown**, not one number: Farkle Table's `scoreOf` returns one number from `best(counts)`; charms and mult need which combos and base points each. With no rules and no charms it must give exactly the classic totals (a test, `tests/`).
 - **Multiplayer:** each roller's dice faces ride in the snapshot (`player.bag` or similar), switched per roller the way `BODY` colour is today; add the field to `cleanState`.
-- **Six is hard-coded** in a few places (hot dice, the tray). Fine while every bag is six dice.
-- Keep the single file (publishing needs it), but put the mode in its own clearly bounded section with its own `NOTES.md` entry.
+- **Six is hard-coded** in Farkle Table (hot dice, the tray, the launch handful). Generalise it in step 1 (Short Hand needs it).
+- **Files:** see `HANDOFF.md` → Architecture.
 
 ## 10. Build order
 1. Solo roguelite with extraction (seeded RNG, action log, save/resume from day one). Must be fun on its own.
@@ -222,6 +307,8 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Case file list: starting dice, charm, money and twist per file; its kingpin and case-unique pool; which unlock through duels; what choices the player makes at run start.
 - Unique drop odds: chance at the kingpin, case pool vs general pool split. Set piece odds in lockers per tier.
 - Factions: perks per rank, rank costs and milestone counts; Records' lock cost. Size costs so maxing all three takes most of a season.
+- **Art direction:** the look for the theme (section Premise → Art direction). The owner will ask for mockups.
+- Era: early-1970s New York (the Knapp years) is the natural reading of the name; confirm with the art mockups.
 - Premise copy: names for dust, the kingpin per season, den and boss names, how the city map shows closed dens.
 - Stamp list and costs; per-rarity budgets.
 - Materials list and their tier values; editions list; triggers list.
