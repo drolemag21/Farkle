@@ -1,12 +1,13 @@
-# Hand-off: starting Miami Dice
+# Hand-off: starting The Commission
 
-Written 2026-11-16. The roguelite run, the dice bag and duels outgrew Farkle Table (classic multiplayer Farkle in one HTML file), so they get their own repository and their own game: **Miami Dice** (named by the owner, 2026-11-16; repository `miami-dice`). This folder began as `roguelite-kit/` inside `drolemag21/Farkle`; its contents become the new repository's root.
+Written 2026-11-16. The roguelite run, the dice bag and duels outgrew Farkle Table (classic multiplayer Farkle in one HTML file), so they get their own repository and their own game: **The Commission** (named by the owner, 2026-11-16; repository `the-commission`). This folder began as `roguelite-kit/` inside `drolemag21/Farkle`; its contents become the new repository's root.
 
 ## Where it stands
 - **Design:** `DESIGN.md` holds every decision so far, the open questions, and the step-1 content set (six boss house rules, 12 charms, the Dutch case file, placeholder numbers), which the owner agreed to start with. **Nothing is built.**
 - **Engine:** Farkle Table's physics, dice renderer, sound and look are the starting point. `ENGINE.md` lists what to take, adapt or leave from its `farkle-table.html`, pinned to one commit, and the invariants that keep the physics deterministic.
 - **Tuning tool:** `tools/sim.js` simulates tables under each house rule with plain dice (`node tools/sim.js [turns] [rerolls] [tables]`). The figures in `DESIGN.md` came from it.
-- **Name:** Miami Dice is provisional; the owner is choosing between it and Hot Dice (New York). See `DESIGN.md` → Open questions. Rename the repository and these files once decided. "Farkle Showdown", an earlier separate single-player roguelite of the owner's, is unrelated and shares no code.
+- **Name:** The Commission, set in New York. "Farkle Showdown", an earlier separate single-player roguelite of the owner's, is unrelated and shares no code.
+- **Art:** the look is being adapted to the theme, starting from Farkle Table's table; the owner will ask for mockups (`DESIGN.md` → Premise → Art direction).
 
 ## What's here
 | File | What it is |
@@ -20,13 +21,13 @@ Written 2026-11-16. The roguelite run, the dice bag and duels outgrew Farkle Tab
 | `.claude/launch.json` | Local server for the browser pane (:8765) |
 
 ## Bootstrapping the repository (owner, once)
-1. Create an empty GitHub repository, `miami-dice`, and clone it next to a clone of `drolemag21/Farkle`.
+1. Create an empty GitHub repository, `the-commission`, and clone it next to a clone of `drolemag21/Farkle`.
 2. Copy the kit and the engine reference in, then commit:
    ```sh
-   cp -r Farkle/roguelite-kit/. miami-dice/
-   mkdir -p miami-dice/reference
-   git -C Farkle show 62cdc2b7ae191d27a386bdbcca8ce0877dab5e8c:farkle-table.html > miami-dice/reference/farkle-table.html
-   cd miami-dice && git add -A && git commit -m "Start from Farkle Table's roguelite kit" && git push
+   cp -r Farkle/roguelite-kit/. the-commission/
+   mkdir -p the-commission/reference
+   git -C Farkle show 62cdc2b7ae191d27a386bdbcca8ce0877dab5e8c:farkle-table.html > the-commission/reference/farkle-table.html
+   cd the-commission && git add -A && git commit -m "Start from Farkle Table's roguelite kit" && git push
    ```
 3. Give the Claude GitHub App access to the new repository, so cloud sessions can push to it.
 4. Back in Farkle Table: delete `roguelite-kit/` and point its `CLAUDE.md` / `HANDOFF.md` at the new repository (a Claude session there can do this; ask it to).

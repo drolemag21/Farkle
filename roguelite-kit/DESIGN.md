@@ -1,4 +1,4 @@
-# Miami Dice: design
+# The Commission: design
 
 Status: **design only, nothing built.** The step-1 content set is agreed as the starting point. Decisions below were agreed with the owner (2026-11-16). This file began as `ROGUELITE.md` in the Farkle Table repository and moved here when the modes got their own repository. Open questions are listed at the end; settle them here before building the part they touch.
 
@@ -107,7 +107,15 @@ The whole game is one choice repeated at three levels:
 **The loop:** run → pack → bag → duel → (dice won, dust, faction rank, relic unlocks) → next run. Runs feed duels with dice; duels feed runs with faction rank, unlocked case files and relic unlocks. Duels must still be worth playing for what they give runs, for winners and losers alike. A season wipe (section 6) bounds the snowball.
 
 ## Premise
-Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city run on backroom dice games. You take down dens, and to get deeper you break the rules: pocketing seized dice, gambling them with other detectives after hours, and using what that earns you to keep compromised contacts (your faction) working for you. The factions carry the "gray": informants paid off, clerks who lose paperwork, bookmakers kept sweet, all in service of closing dens. Grounded in real police corruption around gambling (the Lexow and Seabury inquiries; the Knapp Commission's "grass-eaters and meat-eaters", NYC 1970-72). It fits the casino-at-night theme, so no new art direction.
+Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city run on backroom dice games. You take down dens, and to get deeper you break the rules: pocketing seized dice, gambling them with other detectives after hours, and using what that earns you to keep compromised contacts (your faction) working for you. The factions carry the "gray": informants paid off, clerks who lose paperwork, bookmakers kept sweet, all in service of closing dens. Grounded in real police corruption around gambling (the Lexow and Seabury inquiries; the Knapp Commission's "grass-eaters and meat-eaters", NYC 1970-72).
+
+**Name: The Commission** (owner, 2026-11-16). Three meanings: the anti-corruption inquiry that hangs over every season (the Knapp Commission, fictionalised, no real names), the Mob's ruling body that the kingpins answer to, and a commission as in a cut of the payoffs. Setting: New York. Considered and dropped: Miami Dice (a pun on a trademark, and it pulled the setting to Miami), Hot Dice, Shakedown, Bust-Out.
+
+**Art direction: adjust the look to the theme** (owner, 2026-11-16; mockups to come). This replaces the earlier "no new art direction": Farkle Table's casino table at night is the technical starting point (renderer, felt, lighting), restyled rather than rebuilt. Starting points for the mockups, not decisions:
+- Two worlds: the **dens** (back-room felt, smoke, tungsten light, worn wood) where you play, and the **precinct** (case files, manila folders, rubber stamps, typewriter type, evidence tags) for menus, the run map, the shop and lockers.
+- The Commission as a visual threat: redaction bars, subpoena paper, "CONFIDENTIAL" stamps on the season screens.
+- Music: Farkle Table's synthesized jazz lounge, possibly moved toward early-1970s funk and soul; new tunes cost code, not files.
+- Constraints that stay: gameplay owns the die's surface (section 7), player colour stays a hue choice, usable at 375 px.
 
 **A premise, not a story.** Like Balatro: no cutscenes or narrative arc. The fiction lives in boss names and house rules, extraction and pack wording, lineage text and titles.
 
@@ -122,7 +130,7 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 | Heat (stakes) | How hot the case is: the higher it is, the warier the dens and the better the seizures |
 | Duels | The after-hours locker-room game. Each detective is building their own case and needs particular tools, so evidence moves between them this way. Unofficial and competitive, and everyone involved knows it's wrong |
 | Durability / crumbling | A die that's been through too many hands is "hot", too recognisable to keep, so it's destroyed |
-| Season wipe | Internal Affairs audits the precinct; everything is confiscated |
+| Season wipe | The Commission sweeps the precinct; everything is confiscated. Knapp's "grass-eater" and "meat-eater" can serve as season titles |
 | Trophy case | What you hid well enough to keep |
 | Factions | Your compromised contacts: the Street (informants), Records (clerks), the Book (bookmakers and fences). See section 6 |
 | Dust | Open: needs an in-world name (cash? favours?) |
@@ -299,10 +307,8 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Case file list: starting dice, charm, money and twist per file; its kingpin and case-unique pool; which unlock through duels; what choices the player makes at run start.
 - Unique drop odds: chance at the kingpin, case pool vs general pool split. Set piece odds in lockers per tier.
 - Factions: perks per rank, rank costs and milestone counts; Records' lock cost. Size costs so maxing all three takes most of a season.
-- **Name and setting (owner deciding, 2026-11-16):** "Miami Dice" is provisional. Two directions:
-  - **Hot Dice, New York** (Claude's pick): the Farkle term plus slang for stolen goods (and a "hot" die is one that's changed hands too often). Fits the premise as designed (Lexow, Seabury, Knapp; laundromat, bakery card room, social club dens). Check for other games already using the name.
-  - **Miami Dice, Miami Beach around 1950:** the S&G bookmaking syndicate and its police protection, exposed by the Kefauver hearings (1950). Keeps the jazz-lounge look; dens become a bolita game behind a cigar shop, a hotel cabana game, the jai-alai fronton, a nightclub casino, a Biscayne Bay charter boat, Dutch's Star Island estate. A pun on the Miami Vice trademark. Verify the history before using it in game text.
-  - Rejected: 1980s Miami (new art direction, and its police scandal was about drugs rather than gambling).
+- **Art direction:** the look for the theme (section Premise → Art direction). The owner will ask for mockups.
+- Era: early-1970s New York (the Knapp years) is the natural reading of the name; confirm with the art mockups.
 - Premise copy: names for dust, the kingpin per season, den and boss names, how the city map shows closed dens.
 - Stamp list and costs; per-rarity budgets.
 - Materials list and their tier values; editions list; triggers list.

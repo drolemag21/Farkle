@@ -20,7 +20,7 @@ This game starts from Farkle Table's engine, copied rather than shared. Farkle T
 
 | Lines | Section | Verdict | Notes |
 |---|---|---|---|
-| 6-525 | CSS (`:root` tokens, panels, buttons, sheets, game screen, title scene) | Take | The casino-at-night theme. Drop the lobby, rules-picker and holiday rules when you reach them |
+| 6-525 | CSS (`:root` tokens, panels, buttons, sheets, game screen, title scene) | Take, then restyle | Farkle Table's casino-at-night theme, to be restyled for The Commission (`DESIGN.md` → Art direction). Drop the lobby, rules-picker and holiday rules when you reach them |
 | 526-776 | Markup (screens, sheets, the table canvas) | Adapt | Keep the game screen, sheets and splash; the lobby and rules sheet are classic-only |
 | 803-835 | 1. Small helpers (`fmt`, `clamp`, `el`, `mulberry32`, `toast`, `load`/`save`, `loadScript`) | Take | `rollDie` / `rand32` use `crypto`: runs use the seeded RNG instead |
 | 836-875 | 2. Constants (`DICE_COLORS`, glide timings, `CLASSIC`, `cleanRules`, `onBoard`) | Adapt | Keep colours (not the holiday ones: `DESIGN.md` section 7) and glide timings; leave `CLASSIC` / `cleanRules` / `onBoard` (opening score, three-Farkle penalty) |

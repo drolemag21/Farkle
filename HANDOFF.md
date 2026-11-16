@@ -56,5 +56,5 @@ The Artifact can't use Supabase: Claude Artifacts block outside connections.
 - The GitHub Pages deployment itself hasn't been opened yet, and no game has been played on real phones over Supabase.
 
 ## Good next steps
-- Roguelite: moving to its own repository, Miami Dice (`miami-dice`). Follow `roguelite-kit/HANDOFF.md` → Bootstrapping, then remove `roguelite-kit/` from this repository.
+- Roguelite: moving to its own repository, The Commission (`the-commission`). Follow `roguelite-kit/HANDOFF.md` → Bootstrapping, then remove `roguelite-kit/` from this repository.
 - Play a real game on the GitHub Pages link with friends on phones, and collect feedback.

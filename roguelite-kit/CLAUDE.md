@@ -1,4 +1,4 @@
-# Miami Dice
+# The Commission
 
 A single-player Farkle roguelite (Balatro-style runs, a vice-detective premise) feeding a dice bag you risk in duels. Built on a copy of Farkle Table's dice engine.
 
@@ -19,7 +19,7 @@ A single-player Farkle roguelite (Balatro-style runs, a vice-detective premise) 
 - Native ES modules, no bundler, no npm dependencies (`HANDOFF.md` → Architecture). `src/rules/` and `src/run/` never touch the DOM: they must run in Node for tests and the simulator.
 - The run reducer is the only writer of run state. Every random draw comes from the run's seeded RNG, never `Math.random` or `crypto`, so the seed plus the action log replays a run exactly.
 - The dice physics must stay deterministic across browsers: only + - * / and sqrt in `simulate` (`ENGINE.md` → Invariants).
-- One theme: a casino table at night. CSS tokens on `:root`.
+- One theme: vice in early-1970s New York, dens and precinct (`DESIGN.md` → Premise → Art direction; the look is being redesigned from Farkle Table's casino table at night). CSS tokens on `:root`.
 - Comments explain why, not what. Match the surrounding comment density and naming.
 
 ## Testing
