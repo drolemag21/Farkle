@@ -1,14 +1,14 @@
-# Roguelite mode: design
+# Design
 
-Status: **design only, nothing built; step-1 content set drafted, awaiting review.** Decisions below were agreed with the owner (2026-11-16). Open questions are listed at the end; settle them here before building the part they touch.
+Status: **design only, nothing built.** The step-1 content set is agreed as the starting point. Decisions below were agreed with the owner (2026-11-16). This file began as `ROGUELITE.md` in the Farkle Table repository and moved here when the modes got their own repository. Open questions are listed at the end; settle them here before building the part they touch.
 
-Main influences: Balatro (the run), extraction shooters (bring gear in, lose it if you die; seasonal wipes). Rule of thumb: reuse the existing table (physics, dice art, turn flow, host path, sound, sheets) and add the mode as its own bounded section of `farkle-table.html`.
+Main influences: Balatro (the run), extraction shooters (bring gear in, lose it if you die; seasonal wipes). Rule of thumb: start from Farkle Table's engine (physics, dice art, turn flow, sound, sheets), copied in at a pinned commit (see `ENGINE.md`), and build the modes around it.
 
 ## Next step (to-do)
-**Owner review of the step-1 content set draft** (next section). Once it's agreed, prototype the solo run (build order step 1).
+Bootstrap the repository (`HANDOFF.md` → First session), then prototype the solo run (build order step 1) with the content set below.
 
-## Step-1 content set (DRAFT, not agreed)
-Drafted 2026-11-16 for the owner to review. Numbers are placeholders for the prototype. Difficulty figures come from a quick simulation of the existing bot strategy (`botKeep` + `BOT_BANK`) over 20-40k tables with plain dice, no charms, 4 turns and 1 reroll that rescues the first Farkle. The bot doesn't adapt its banking to a target or a house rule, so read them as relative, not exact.
+## Step-1 content set (agreed starting point)
+Drafted 2026-11-16; the owner agreed to start with it the same day (the six house rules, their order, and the recommendations below). Numbers are placeholders for the prototype. Difficulty figures come from a quick simulation of Farkle Table's bot strategy (`botKeep` + `BOT_BANK`; reproduce with `node tools/sim.js`) over 20-40k tables with plain dice, no charms, 4 turns and 1 reroll that rescues the first Farkle. The bot doesn't adapt its banking to a target or a house rule, so read them as relative, not exact.
 
 **Baseline from the simulation:** a plain-dice turn averages about 600 points and Farkles 19% of the time. A 4-turn table: median 2,400; clears 1,200 93% of the time, 2,000 67%.
 
@@ -29,7 +29,7 @@ House rules and charms use **one set of hooks**, so the run needs one rule pipel
 
 Two code consequences:
 - **A Farkle is "no legal keep"**, not the classic shortcut. Today `hasScore` checks for 1s, 5s, triples and three pairs; under Pair Rule a roll whose only scorer is a lone 5 must also be a Farkle, and under Dead Ace a lone 1 doesn't save you. So `hasScore` becomes "does any subset pass the rules' legality and score", derived from the same rule-aware scorer as `scoreOf`. Classic mode keeps its current results.
-- **Short Hand (5 dice) forces generalising the hard-coded six now** (hot dice, the tray, the launch handful). Recommendation: accept it in step 1, since non-rolling uniques (Dutch's Thumb) need the same work later; doing it once, early, is cheaper than retrofitting.
+- **Short Hand (5 dice) forces generalising the hard-coded six now** (hot dice, the tray, the launch handful). Accepted for step 1: non-rolling uniques (Dutch's Thumb) need the same work later, and doing it once, early, is cheaper than retrofitting.
 
 ### The six bosses (the Dutch case)
 Ordered by how hard they hit plain dice (score a 4-turn table clears 2,000; no rule: 67%).
@@ -71,7 +71,7 @@ Push-your-luck pairs to watch in the prototype: Greed and Snowball pull opposite
 
 ### Scoring and combo levels
 - A keep scores **points × mult**, mult starts at 1. Points are the classic values, so the table reads the same as Classic mode.
-- **Combo levels add points only, not mult** (recommendation). A keep often holds several combos (three 2s plus a 1), and per-combo mult would make the count-up hard to read. Mult comes from charms and stamps.
+- **Combo levels add points only, not mult.** A keep often holds several combos (three 2s plus a 1), and per-combo mult would make the count-up hard to read. Mult comes from charms and stamps.
 - Combos that level: single 1, single 5, three of a kind, four/five/six of a kind, straight, three pairs, two triplets / four + pair. Placeholder: +50% of the combo's base points per level.
 
 ### The Dutch case file (starter)
@@ -280,12 +280,13 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - **Designed for later verification:** run dice come from a **seeded RNG** (not `crypto`), and every run action goes through one **action log**. Later, the server hands out the seed, the client sends the log, and a Supabase Edge Function replays it with the same scoring code before granting the pack. That needs accounts (anonymous auth at minimum), a server copy of the scoring and charm logic, and database rules. The seed + log also give save/resume for free.
 
 ## 9. Code plan
-- **Reused as is:** `makeLaunch` / `simulate` and the dice renderer, the turn stages (`pre → rolled → kept → banked/farkle`), `SoloNet` and the host path the bots use, `FIRE` / `hotFlair`, `SND`, sheets, the phone layout.
+- **Taken from Farkle Table** (inventory and invariants in `ENGINE.md`): `makeLaunch` / `simulate` and the dice renderer, the turn stages (`pre → rolled → kept → banked/farkle`), the bot strategy, `FIRE` / `hotFlair`, `SND`, sheets, the phone layout. The transports and host path come later, for duels.
+- **The run is a pure reducer:** `step(state, action) → { state, events }`, deterministic from the run seed, with no DOM. It plays the role Farkle Table's host plays (the only writer), and the same code serves save/resume (replay the log), the simulator, Node tests, and later the Edge Function that verifies a run (section 8) and the duel host.
 - **Custom faces don't touch physics:** the host picks a face index, the die lands on it, and the renderer draws that face's contents. Determinism is unaffected.
-- **Refactor:** `scoreOf` returns one number from `best(counts)`; charms and mult need a **breakdown** (which combos, base points each). Classic scoring must stay exactly the same.
+- **Scoring returns a breakdown**, not one number: Farkle Table's `scoreOf` returns one number from `best(counts)`; charms and mult need which combos and base points each. With no rules and no charms it must give exactly the classic totals (a test, `tests/`).
 - **Multiplayer:** each roller's dice faces ride in the snapshot (`player.bag` or similar), switched per roller the way `BODY` colour is today; add the field to `cleanState`.
-- **Six is hard-coded** in a few places (hot dice, the tray). Fine while every bag is six dice.
-- Keep the single file (publishing needs it), but put the mode in its own clearly bounded section with its own `NOTES.md` entry.
+- **Six is hard-coded** in Farkle Table (hot dice, the tray, the launch handful). Generalise it in step 1 (Short Hand needs it).
+- **Files:** see `HANDOFF.md` → Architecture.
 
 ## 10. Build order
 1. Solo roguelite with extraction (seeded RNG, action log, save/resume from day one). Must be fun on its own.

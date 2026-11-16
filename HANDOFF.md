@@ -56,5 +56,5 @@ The Artifact can't use Supabase: Claude Artifacts block outside connections.
 - The GitHub Pages deployment itself hasn't been opened yet, and no game has been played on real phones over Supabase.
 
 ## Good next steps
-- Roguelite mode: the step-1 content set is drafted in `ROGUELITE.md` and waits for owner review; then prototype the solo run.
+- Roguelite: moving to its own repository. Follow `roguelite-kit/HANDOFF.md` → Bootstrapping, then remove `roguelite-kit/` from this repository.
 - Play a real game on the GitHub Pages link with friends on phones, and collect feedback.
