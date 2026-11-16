@@ -115,7 +115,7 @@ Agreed with the owner (2026-11-16). **You're a gray vice detective** in a city r
 - **v1 is cheap:** tag the bag with a season id computed from the date on each device. A new id freezes the old bag and starts a fresh one. No server.
 
 ### Factions (season progression)
-Factions replace the workshop (decided 2026-11-16). **Pick one faction for the season**; it is a single direction that helps in one way, in **both** runs and duels. Ranks are permanent **within the season**, cost dust and require duel milestones (duels are the gate, the hideout from extraction shooters); no new currency.
+Factions replace the workshop (decided 2026-11-16). **Any player can rank up any faction; nobody is locked in.** Each faction has one main benefit that helps in **both** runs and duels, and the choice is which to invest in first. With limited dust and a wipe every season, that order is the decision. Ranks are permanent **within the season**, cost dust and require duel milestones (duels are the gate, the hideout from extraction shooters); no new currency.
 
 **Factions raise the power floor, not the ceiling.** A flat bonus everyone gets moves everyone up and leaves the gap where it was. So every faction perk is one of:
 1. **A guarantee:** a minimum outcome that only matters when things go badly.
@@ -180,7 +180,7 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 ## Open questions
 - **Is duel → run strong enough?** With no carry slot, duels give runs only faction rank (a capped floor), case file unlocks and relic unlocks. Check in playtests that this makes runners want to duel; if not, add more run-side faction perks before reopening the carry slot.
 - Case file list: starting dice, charm, money and twist per file; which unlock through duels; what choices the player makes at run start.
-- Factions: perks per rank, rank costs and milestone counts; can a player switch faction mid-season (and at what cost)? Records' lock cost.
+- Factions: perks per rank, rank costs and milestone counts; Records' lock cost. Size costs so maxing all three takes most of a season.
 - Premise copy: names for dust, the kingpin per season, den and boss names, how the city map shows closed dens.
 - Stamp list and costs; per-rarity budgets.
 - Materials list and their tier values; editions list; triggers list.
