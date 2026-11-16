@@ -116,13 +116,15 @@ Decided 2026-11-16: these are **types beside the rarity ladder**, not new rungs.
 
 ## 5. The duel (multiplayer)
 - **Format:** best of 3 rounds; each round both players get 3 turns, most points wins; a tie is one sudden-death turn each.
-- **Relics:** each round adds a shared relic both players play under (it can bend the round's rules, e.g. last turn scores double). **Relics stack** (decided 2026-11-16): round 1 has one, round 2 two, round 3 all three. The deciding round is the most rule-bent. The relic pool must avoid contradictory pairs, and the list should be checked for combos that break scoring when all three stack.
+- **Relics:** each round adds a shared relic both players play under (it can bend the round's rules, e.g. last turn scores double). **Relics stack** (decided 2026-11-16): round 1 has one, round 2 two, round 3 all three. The deciding round is the most rule-bent.
+- **Duels are chaotic by design** (decided 2026-11-16): you bring your whole bag of loaded dice and play under stacking relics. The chaos and the risk are the point; they make the drama. Balance work in duels only guards against relic pairs that contradict each other or break scoring (undefined or endless results), not against swingy outcomes.
+- **One unique** among your six dice in play (decided 2026-11-16).
 - **Before Start:** both bags and both streak pots are shown, and both players accept. Nobody gets ambushed.
 - **Stakes:** the **winner picks one die from the loser's whole bag.** That's the risk of bringing your dice, and the zero-to-hero payoff.
 - **Streak pot:** each win adds game-created dust to the winner's own pot, scaled by the **opponent's** bag strength (beating a Common bag adds almost nothing; beating a strong bag adds a lot). The pot is at risk: losing a match hands it to the winner. Cash out any time into dust, which resets it. This is what the strong player plays for, and every match against them is a jackpot for the underdog.
 - **Durability:** a die loses 1 durability each time it changes hands (table above). At 0 it **crumbles into dust for the winner**, scaled by rarity. Big dice leave circulation fastest; new Ultras only come from runs. A fresh Ultra can be stolen once; the next time it's lost it crumbles.
 - **Spoils for both players:** every match pays dust to both, the loser less, both scaled by the opponent's bag strength. Losing to a strong bag still pays. Without this the weaker player's best move is not to duel.
-- **Relic unlocks:** win a round under a relic and its run-side counterpart joins your charm or boss pool for the season. Variety, not power (Balatro's unlocks), and a reason to duel different friends under different relics.
+- **Relic unlocks:** any relic you **see** in a duel, win or lose, unlocks its run-side counterpart in your charm or boss pool for the season (decided 2026-11-16). Both players get the same unlocks, in line with spoils for both. Variety, not power (Balatro's unlocks), and a reason to duel often. Up to 3 unlocks per duel, so size the relic pool so that seeing all of it takes most of a season.
 - **Reactions:** a small fixed set (tip hat, raise glass, slow clap), rate-limited, no free text. Cosmetic (section 7).
 - The economy only moves between people who play each other; in a friend group the same dice will change hands.
 - **Not doing:** flat run power per duel win (starting money, permanent mult). It snowballs strong players and trivialises solo runs. Duels give faction rank (a capped floor, section 6), case file and relic unlocks, and better dice to put at risk.
@@ -216,8 +218,6 @@ Rank values and the exact perk per rank are open (below); the directions are dec
 - Duel spoils: dust for winner and loser, and the scaling by opponent bag strength.
 - Season length and start dates (the same on every device).
 - Which relics map to which charms or bosses for relic unlocks.
-- Relic unlock with stacking: winning a round unlocks only the relic that round introduced (proposed), or every relic active in it? Otherwise winning round 3 unlocks three at once.
 - Set list (pieces, 2- and 4-piece bonuses, which den or case file); unique list per kingpin, rolling or not.
-- Duels: limit to one unique among your six dice in play (proposed)? Decide with the duel bag rules.
 - Holiday colours `ornament` and `frost`: classic mode only, or recolour them?
 - Champion's felt in duels: decided by streak, or by whoever has the bigger pot?
