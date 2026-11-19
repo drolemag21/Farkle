@@ -13,6 +13,8 @@ It runs in two places, from one source file:
 
 The Artifact can't use Supabase: Claude Artifacts block outside connections.
 
+The roguelite (runs, dice bag, duels) is a separate game, The Commission, in its own repository: https://github.com/drolemag21/the-commission. It copied this file's physics, renderer and sound at a pinned commit and ports later fixes itself, so changes here don't need to account for it.
+
 ## What's in this repository
 | File | What it is |
 |---|---|
