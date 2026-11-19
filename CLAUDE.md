@@ -7,7 +7,7 @@ Classic Farkle for 2-4 players online, in one HTML file (`farkle-table.html`). I
 ## Read first
 - `HANDOFF.md`: where the project stands, links, the Supabase setup, and how to ship a change.
 - `NOTES.md`: how the code is organized (networking, physics, sound, rendering, function names). Keep it current when you change a system.
-- The roguelite (runs, dice bag, duels) is moving to its own repository, The Commission (`the-commission`), and is not built here. Until that repository exists, its design and starter files wait in `roguelite-kit/` (start with `roguelite-kit/HANDOFF.md`). Once it's bootstrapped, delete `roguelite-kit/` and replace this line with a link.
+- The roguelite (runs, dice bag, duels) lives in its own repository, The Commission: https://github.com/drolemag21/the-commission. It is not built here. It copied this file's physics, renderer and sound at a pinned commit and ports later fixes itself, so nothing here has to stay compatible with it.
 
 ## Working with the owner
 - Bring up design and structural suggestions on your own when they'd pay off. Keep them brief, explain the payoff, and propose rather than silently doing big refactors.
