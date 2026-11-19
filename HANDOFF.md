@@ -13,6 +13,8 @@ It runs in two places, from one source file:
 
 The Artifact can't use Supabase: Claude Artifacts block outside connections.
 
+The roguelite (runs, dice bag, duels) is a separate game, The Commission, in its own repository: https://github.com/drolemag21/the-commission. It copied this file's physics, renderer and sound at a pinned commit and ports later fixes itself, so changes here don't need to account for it.
+
 ## What's in this repository
 | File | What it is |
 |---|---|
@@ -56,5 +58,4 @@ The Artifact can't use Supabase: Claude Artifacts block outside connections.
 - The GitHub Pages deployment itself hasn't been opened yet, and no game has been played on real phones over Supabase.
 
 ## Good next steps
-- Roguelite: moving to its own repository, The Commission (`the-commission`). Follow `roguelite-kit/HANDOFF.md` → Bootstrapping, then remove `roguelite-kit/` from this repository.
 - Play a real game on the GitHub Pages link with friends on phones, and collect feedback.
